@@ -382,7 +382,7 @@ void CPatEd::ExportPattern()
 	if (expfile)  
     {
 		// Export the pattern in a csv format
-		// Fiste line : column header		
+		// First line : column header		
 		for (int col = 0; col < (int)ppat->columns.size(); col++)
 		{
 			CColumn *pc = ppat->columns[col].get();
@@ -411,7 +411,7 @@ void CPatEd::ExportPattern()
 					data = (*ei).second;
 					ei++;
 				}
-				 if (pc->GetRealNoValue() < 0)
+				if (pc->GetRealNoValue() < 0)
 					hasvalue = true;
 
 				char txt[6];
@@ -507,6 +507,109 @@ void CPatEd::ImportPattern()
 	
 	pCB->SetModifiedFlag();
 	Invalidate();
+}
+
+void CPatEd::InflatePattern(int delta)
+{
+	// char debugtxt[256];
+	if (delta > 0) {
+		// Confirm action first
+		 
+		// Expand pattern x2
+		CMachinePattern *ppat = pew->pPattern;
+		
+		ppat->actions.BeginAction(pew, "Inflate pattern");
+		{
+			MACHINE_LOCK;
+			// Resize the pattern * delta
+			pCB->SetPatternLength(ppat->pPattern, ppat->numBeats * delta * BUZZ_TICKS_PER_BEAT);
+
+			for (int col = 0; col < (int)ppat->columns.size(); col++)
+			{
+				CColumn *pc = ppat->columns[col].get();
+
+				MapIntToValue colbuf;
+				MapIntToValue::const_iterator ei;
+
+				// First, copy the data of the column to colbuf
+				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;						
+					colbuf[y] = data;					
+				}
+
+				// Clear the column
+				pc->Clear();
+
+				// Now move the data from y to delta*y
+				for (ei = colbuf.begin(); ei != colbuf.end(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;
+
+					// Move value to row : y * delta
+					pc->SetValue(delta*y, data);					
+				}
+			}
+		}
+
+		pCB->SetModifiedFlag();
+		ColumnsChanged();
+		pew->UpdateCanvasSize();
+		pew->Invalidate();
+	}
+	else if (delta < 0) {
+		// Collapse pattern / delta
+		delta = -delta;
+		CMachinePattern *ppat = pew->pPattern;
+		
+		ppat->actions.BeginAction(pew, "Inflate pattern");
+		{
+			MACHINE_LOCK;
+			// Expand rows per beats
+			ppat->SetRowsPerBeat(ppat->rowsPerBeat * delta);
+
+			for (int col = 0; col < (int)ppat->columns.size(); col++)
+			{
+				CColumn *pc = ppat->columns[col].get();
+
+				MapIntToValue colbuf;
+				MapIntToValue::const_iterator ei;
+
+				// First, copy the data of the column to colbuf
+				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;						
+					colbuf[y] = data;					
+				}
+
+				// Clear the column
+				pc->Clear();
+
+				// Now move the data from y to y/delta
+				for (ei = colbuf.begin(); ei != colbuf.end(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;
+
+					// Move value to row : y / delta
+					pc->SetValue(y/delta, data);					
+				}
+			}
+
+			// Resize the pattern / delta
+			pCB->SetPatternLength(ppat->pPattern, ppat->numBeats / delta * BUZZ_TICKS_PER_BEAT);
+
+		}
+
+		pCB->SetModifiedFlag();
+		ColumnsChanged();
+		pew->UpdateCanvasSize();
+		pew->Invalidate();
+	}
+
 }
 
 void CPatEd::OnDraw(CDC *pDC)
@@ -984,7 +1087,7 @@ void CPatEd::MoveCursorDelta(int dx, int dy)
 
 void CPatEd::PatternChanged()
 {
-//	KillSelection();
+//	KillSelection(); BWC : Keep selection persistent
 	MoveCursor(cursor);
 	Invalidate();
 	UpdateStatusBar();
@@ -1406,8 +1509,10 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		switch(nChar)
 		{
 		case 'I': ImportOld(); break;
-		case 'X': ExportPattern(); break;
-		case 'P': ImportPattern(); break;
+		case 'X': ExportPattern(); break; //BWC
+		case 'P': ImportPattern(); break; //BWC
+		case VK_SUBTRACT : InflatePattern(-2); break; //BWC 
+		case VK_ADD : InflatePattern(2); break; // BWC
 		}
 	}
 	else if (ctrldown)
@@ -1429,9 +1534,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_PRIOR: Home(); break; //BWC
 		case VK_NEXT: End(); break; //BWC
 		case VK_HOME: HomeTop(); break; //BWC
-		case VK_END: EndBottom(); break; //BWC
-			
-			
+		case VK_END: EndBottom(); break; //BWC			
 		}
 
 		if (nChar >= '0' && nChar <= '9')

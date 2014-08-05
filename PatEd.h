@@ -41,6 +41,7 @@ public:
 
 	void ExportPattern(); //BWC
 	void ImportPattern(); //BWC
+	void InflatePattern(int delta); //BWC 
 
 	bool CanCut();
 	bool CanCopy();

@@ -49,7 +49,13 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_BN_CLICKED(IDC_CLEAR_BUTTON, CEditorWnd::OnBnClickedClearOff) //BWC
 	ON_BN_CLICKED(IDC_IMPORT_BUTTON, CEditorWnd::OnBnClickedImport) //BWC
 	ON_BN_CLICKED(IDC_EXPORT_BUTTON, CEditorWnd::OnBnClickedExport) //BWC
+	
+	ON_BN_CLICKED(IDC_SHRINK_BUTTON, CEditorWnd::OnBnClickedShrink) //BWC
+	ON_BN_CLICKED(IDC_EXPAND_BUTTON, CEditorWnd::OnBnClickedExpand) //BWC
+	
+	
 	ON_BN_CLICKED(IDC_HELP_CHECK, OnBnClickedHelp) //BWC
+
 
 	ON_CBN_SELENDOK(IDC_BAR_COMBO, OnBarComboSelect)
 END_MESSAGE_MAP()
@@ -443,6 +449,25 @@ void CEditorWnd::OnBnClickedExport()
 	pe.ExportPattern();
 }
 
+void CEditorWnd::OnBnClickedShrink()
+{	
+	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
+	int inflateComboIndex = cb->GetCurSel();
+	if (inflateComboIndex>=0) {
+		inflateComboIndex = inflateComboIndex+2;
+		pe.InflatePattern(-inflateComboIndex);
+	}
+}
+	
+void CEditorWnd::OnBnClickedExpand()
+{	
+	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
+	int inflateComboIndex = cb->GetCurSel();
+	if (inflateComboIndex>=0) {
+		inflateComboIndex = inflateComboIndex+2;
+		pe.InflatePattern(inflateComboIndex);
+	}
+}
 	
 
 void CEditorWnd::InitBarCombo()
@@ -459,6 +484,17 @@ void CEditorWnd::InitBarCombo()
 	cb->AddString("8");	
 
 	cb->SetCurSel(BarComboIndex);
+
+	CComboBox *cb2 = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
+	cb2->AddString("2");
+	cb2->AddString("3");
+	cb2->AddString("4");
+	cb2->AddString("5");
+	cb2->AddString("6");
+	cb2->AddString("7");
+	cb2->AddString("8");
+
+	cb2->SetCurSel(0);
 }
 
 void CEditorWnd::OnBarComboSelect()
@@ -490,8 +526,6 @@ void CEditorWnd::OnBnClickedHelp()
 		helptext.SetFont(&font);
 		helptext.SetReadOnly(TRUE);
 		helptext.SetTargetDevice(NULL, 1);
-		
-
 		
 		char txt[255];
 		char path_buffer[_MAX_PATH];

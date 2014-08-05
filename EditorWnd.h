@@ -104,6 +104,8 @@ public:
 	afx_msg void OnBnClickedClearOff();
 	afx_msg void OnBnClickedImport();
 	afx_msg void OnBnClickedExport();
+	afx_msg void OnBnClickedShrink();
+	afx_msg void OnBnClickedExpand();
 	
 	afx_msg void OnBnClickedHelp();
 	afx_msg void OnBarComboSelect();

@@ -607,7 +607,6 @@ public:
 		for (MapIntToInt::const_iterator i = in.begin(); i != in.end(); i++)
 			if ((*i).first + firstrow < patlength)
 				SetValueSpecial((*i).first + firstrow, (*i).second);
-
 	}
 	
 		

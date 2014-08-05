@@ -23,13 +23,16 @@
 #define IDC_CLEAR_BUTTON				2022
 #define IDC_IMPORT_BUTTON				2023
 #define IDC_EXPORT_BUTTON				2024
+#define IDC_SHRINK_BUTTON				2025
+#define IDC_INFLATE_COMBO				2026
+#define IDC_EXPAND_BUTTON				2027
 #define ID_BUTTON32773                  32773
 #define ID_COLUMNS_BUTTON               32773
 #define ID_BUTTON32774                  32774
 #define ID_SELECT_FONT                  32774
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        2015
