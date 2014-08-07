@@ -897,6 +897,23 @@ int CPatEd::GetColumnWidth(int column)
 	return (ppat->columns[column]->GetWidth()) * pew->fontSize.cx;
 }
 
+int CPatEd::GetFirstColumnofTrack(int column)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	return ppat->GetFirstColumnOfTrackByColumn(column);
+}
+
+int CPatEd::GetTrackWidth(int column)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	int fc = ppat->GetFirstColumnOfTrackByColumn(column);
+	int cc = ppat->GetGroupColumnCount(column);
+	int w = 0;
+	for (int i = 0; i < cc; i++)
+		w += GetColumnWidth(fc + i);
+	return w;
+}
+
 int CPatEd::GetColumnX(int column)
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -1815,9 +1832,16 @@ void CPatEd::UpdateStatusBar()
 	{
 		char const *desc = pc->DescribeValue(value, pCB);
 
-		s = txt;
-		if (value != pc->GetNoValue() && desc != NULL && strlen(desc) > 0)
-			s += (CString)" (" + desc + ")";
+		// s = txt;
+		if (value != pc->GetNoValue()) {
+			if (pc->GetParamType()!=pt_note)
+				s.Format("%s | %d", txt, value);
+			else 
+				s.Format("%s", txt);
+
+			if (desc != NULL && strlen(desc) > 0)
+				s += (CString)" (" + desc + ")";
+		}
 	}
 	else
 	{
@@ -1950,6 +1974,23 @@ void CPatEd::SelectTrack()
 	selStart.y = 0;
 
 	selEnd.x = selStart.x + ppat->GetGroupColumnCount(cursor.column) - 1;
+	selEnd.y = ppat->GetRowCount() - 1;
+
+	selection = true;
+	persistentSelection = false;
+	Invalidate();
+}
+
+void CPatEd::SelectTrackByNo(int col)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	selStart.x = ppat->GetFirstColumnOfTrackByColumn(col);
+	selStart.y = 0;
+
+	selEnd.x = selStart.x + ppat->GetGroupColumnCount(col) - 1;
 	selEnd.y = ppat->GetRowCount() - 1;
 
 	selection = true;

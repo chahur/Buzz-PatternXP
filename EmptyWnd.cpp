@@ -37,7 +37,7 @@ void CEmptyWnd::OnPaint()
 // Create Vertical font
 	LOGFONT lf;
 	memset(&lf, 0, sizeof(LOGFONT)); // clear out structure.
-	lf.lfHeight = 120;
+	lf.lfHeight = 70;
 	lf.lfCharSet = SYMBOL_CHARSET;
 	strcpy(lf.lfFaceName,_T("Wingdings 3"));
 	CFont myWingFont;
@@ -46,23 +46,36 @@ void CEmptyWnd::OnPaint()
 	CRect cr;
 	GetClientRect(&cr);
 	dc.FillSolidRect(&cr, bgcolor);
-	// dc.Draw3dRect(cr, RGB(255, 0, 0), RGB(0, 255, 0));
-	InflateRect(cr, -2, -2);
-	dc.DrawEdge(cr, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+	dc.SetBkMode(TRANSPARENT);
 
 	CString s;
+	
+	// Show / hide Tracks toolbar button
+	CRect crtb;
+	GetClientRect(&crtb);
+	InflateRect(crtb, -2, 0);
+	crtb.bottom = 13;
+	dc.DrawEdge(crtb, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+		
+	if (pew->ShowTrackToolbar) {s = 0x72;}
+	else {s = 0x73;}
+	
+	CObject *pOldFont = dc.SelectObject(&myWingFont);
+	dc.DrawText(s, &crtb, DT_BOTTOM|DT_SINGLELINE|DT_CENTER);
+	
+	// Show / hide Params text button
+	InflateRect(cr, -2, 0);
+	cr.top = cr.top + 13;
+	dc.DrawEdge(cr, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+
 	if (pew->ShowParamText) {
 		s = 0x72;
 		cr.bottom = cr.bottom-6;
 	}
 	else {
 		s = 0x73;
-		cr.bottom = cr.bottom-2;
 	}
-	
-	
-	CObject *pOldFont = dc.SelectObject(&myWingFont);
-	
+		
 	dc.DrawText(s, &cr, DT_BOTTOM|DT_SINGLELINE|DT_CENTER);
 	
 	dc.SelectObject(pOldFont);
@@ -75,7 +88,12 @@ void CEmptyWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 void CEmptyWnd::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	pew->ShowParamText = !pew->ShowParamText;
+	if (point.y <14) {
+		pew->ShowTrackToolbar = !pew->ShowTrackToolbar;
+	}
+	else {
+		pew->ShowParamText = !pew->ShowParamText;	
+	}
 	pew->ShowParamTextChanged();
 
 	CScrollWnd::OnLButtonDown(nFlags, point);

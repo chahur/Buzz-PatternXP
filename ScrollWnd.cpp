@@ -42,8 +42,8 @@ END_MESSAGE_MAP()
 void CScrollWnd::SetCanvasSize(CSize s)
 {
 	canvasSize = s;
-	ScrollTo(CPoint(0, 0));
-}
+//	ScrollTo(CPoint(0, 0));
+	ScrollTo(scrollPos);}
 
 
 

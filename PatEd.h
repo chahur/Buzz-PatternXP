@@ -48,24 +48,29 @@ public:
 	bool CanPaste();
 
 	int GetColumnAtX(int x);
+	int GetColumnX(int column);
 	
 	void InvalidateInTimer() { invalidateInTimer = true; }
 
 	int GetColumnWidth(int column);
-
+	int GetFirstColumnofTrack(int column);
+	int GetTrackWidth(int column);
+	
+	void SelectTrackByNo(int col); //BWC
 private:
 	void TextToFieldImport(char *txt, CColumn *pc, int irow);
 	void DrawColumn(CDC *pDC, int col, int x, COLORREF textcolor, CRect const &clipbox);
 	void DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue);
 	void DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor);
 	void DrawCursor(CDC *pDC);
-	int GetColumnX(int column);
+	
 	CRect GetCursorRect(CCursorPos const &p);
 	void MoveCursor(CCursorPos newpos, bool killsel = true);
 	void MoveCursorDelta(int dx, int dy);
 	void Tab();
 	void ShiftTab();
 	int GetDigitAtX(int x);
+	
 	int GetRowY(int y);
 	void UpdateStatusBar();
 	void InvalidateField(int row, int column);
@@ -90,6 +95,7 @@ private:
 	void CursorSelect(int dx, int dy);
 	void SelectAll(); //BWC
 	void SelectTrack(); //BWC
+	
 	bool InSelection(int row, int column);
 	void Randomize();
 	void Interpolate(bool expintp);

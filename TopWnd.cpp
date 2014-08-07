@@ -93,8 +93,38 @@ void CTopWnd::OnDraw(CDC *pDC)
 
 				pDC->DrawText(s, &r, DT_CENTER);
 				InflateRect(r,1,1);
-				if (pew->ShowParamText) r.bottom = r.bottom + 72;
 				pDC->DrawEdge(r, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+
+				pDC->SetTextColor(textcolor);
+				pDC->SetBkMode(TRANSPARENT);
+
+				if (pew->ShowTrackToolbar) {
+					int rl = r.left;
+					int rr = r.right;
+					char tbc[5] = "CXPM";
+					r.top = r.bottom + 1;
+					r.bottom = r.bottom + 16;
+					int tbbw = r.Width() / 4;
+					r.right = r.left + tbbw;
+					for (int i=0; i<4; i++){
+						pDC->DrawEdge(r, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+						if ((i>1) && (!pew->pe.CanPaste()))
+							pDC->SetTextColor(Blend(textcolor, bgcolor, 0.5f));
+						else
+							pDC->SetTextColor(textcolor);
+						pDC->DrawText(tbc[i], &r, DT_CENTER);
+						r.left = r.left + tbbw;
+						r.right = r.right + tbbw;
+					}
+					r.left = rl;
+					r.right = rr;
+				}
+
+				if (pew->ShowParamText) {
+					r.top = r.bottom + 1;
+					r.bottom = r.bottom + 72;
+					pDC->DrawEdge(r, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
+				}
 
 			}
 			else
@@ -145,8 +175,12 @@ void CTopWnd::OnDraw(CDC *pDC)
 			r.right = x + pew->pe.GetColumnWidth(col);
 			r.top = 2*pew->fontSize.cy + 4;
 			r.bottom = r.top + 77;
+			if (pew->ShowTrackToolbar) r.bottom = r.bottom + 16; 
 			
-			pDC->SetTextColor(textcolor);
+			if (pew->pPattern->IsTrackMuted(pc))
+				pDC->SetTextColor(Blend(textcolor, bgcolor, 0.5f));
+			else 
+				pDC->SetTextColor(textcolor);
 
 			// Use vertical font
 			CFont* pOldFont = pDC->SelectObject(&myVerticalFont);
@@ -184,10 +218,14 @@ void CTopWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 		pew->pCB->ShowMachineWindow(pew->pPattern->columns[col]->GetMachine(), true);
 	}
-	else
+	else if (pew->ShowTrackToolbar) 
 	{
-		MuteTrack(point);
+		if (point.y < 2*pew->fontSize.cy) MuteTrack(point);
+		else if (point.y > 16 +2*pew->fontSize.cy) MuteTrack(point);
+		else TrackToolbarButton(point);
 	}
+	else
+		MuteTrack(point);
 
 	CScrollWnd::OnLButtonDblClk(nFlags, point);
 }
@@ -198,11 +236,77 @@ void CTopWnd::OnLButtonDown(UINT nFlags, CPoint point)
 	if (point.y < pew->fontSize.cy)
 		return;
 
+	if (pew->ShowTrackToolbar) 
+	{
+	/*	char debugtxt[256];
+		sprintf(debugtxt,"CTopWnd::OnLButtonDown y:%d", point.y);
+		pew->pCB->WriteLine(debugtxt); */
+
+		if (point.y < 2*pew->fontSize.cy) MuteTrack(point);
+		else if (point.y > 16 +2*pew->fontSize.cy) MuteTrack(point);
+		else TrackToolbarButton(point);
+	}
+	else
 	MuteTrack(point);
 
 	CScrollWnd::OnLButtonDown(nFlags, point);
 }
 
+void CTopWnd::TrackToolbarButton(CPoint point)
+{
+	int col = pew->pe.GetColumnAtX(point.x);
+	if (col < 0)
+		return;
+
+	CColumn *pc = pew->pPattern->columns[col].get();
+
+	if (pc->IsTrackParam()) {
+		int fc = pew->pe.GetFirstColumnofTrack(col);
+		int cl = pew->pe.GetColumnX(fc);
+		int btw = pew->pe.GetTrackWidth(col) / 4;
+		
+/*		char debugtxt[256];
+		sprintf(debugtxt,"CTopWnd::TrackToolbarButton y:%d, cl:%d, btw:%d", point.y, cl, btw);
+		pew->pCB->WriteLine(debugtxt);
+	*/	
+		if (point.x < cl+btw) {
+			// button copy
+			pew->pe.SelectTrackByNo(col);
+			pew->pe.OnEditCopy();
+		}
+		else if (point.x < cl+2*btw) {
+			// button cut
+			pew->pe.SelectTrackByNo(col);
+			pew->pe.OnEditCut();
+		}
+		else if (point.x < cl+3*btw) {
+			// button paste
+			int scol = pew->pe.cursor.column;
+			int srow = pew->pe.cursor.row;
+			pew->pe.cursor.column = fc;
+			pew->pe.cursor.row = 0;
+			pew->pe.OnEditPaste();
+			pew->pe.cursor.column = scol;
+			pew->pe.cursor.row = srow;
+		}
+		else if (point.x < cl+4*btw) {
+			// button merge
+			int scol = pew->pe.cursor.column;
+			int srow = pew->pe.cursor.row;
+			pew->pe.cursor.column = fc;
+			pew->pe.cursor.row = 0;
+			pew->pe.OnEditPasteSpecial();
+			pew->pe.cursor.column = scol;
+			pew->pe.cursor.row = srow;
+		}	
+	}
+	
+	Invalidate();
+	pew->pe.Invalidate();
+
+}
+
+	
 void CTopWnd::MuteTrack(CPoint point)
 {
 	int col = pew->pe.GetColumnAtX(point.x);

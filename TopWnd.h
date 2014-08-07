@@ -20,6 +20,8 @@ public:
 
 private:
 	void MuteTrack(CPoint point);
+	void TrackToolbarButton(CPoint point);
+
 
 protected:
 	DECLARE_MESSAGE_MAP()

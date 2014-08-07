@@ -74,6 +74,7 @@ public:
 	int BarComboIndex;
 
 	bool ShowParamText;
+	bool ShowTrackToolbar;
 
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

@@ -108,7 +108,7 @@ void CEditorWnd::UpdateCanvasSize()
 	pe.SetCanvasSize(CSize(width, height));
 	leftwnd.SetCanvasSize(CSize(5, height));
 	topwnd.SetCanvasSize(CSize(width, 2));
-
+	
 }
 
 
@@ -186,6 +186,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	pe.linkHorz = &topwnd;
 
 	ShowParamText =	pCB->GetProfileInt("ShowParamText", true);
+	ShowTrackToolbar = pCB->GetProfileInt("ShowTrackToolbar", true);
 
 	FontChanged();
 
@@ -206,7 +207,6 @@ void CEditorWnd::UpdateWindowSizes()
 	CRect cr;
 //	GetClientRect(&cr);
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0, reposQuery, cr);
-
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 
 	int cx = cr.Width();
@@ -237,6 +237,7 @@ void CEditorWnd::FontChanged()
 	rowNumWndWidth = fontSize.cx * 5 + 4;
 	topWndHeight = 2 * fontSize.cy + 4; 
 	if (ShowParamText) topWndHeight = topWndHeight + 72; //BWC
+	if (ShowTrackToolbar) topWndHeight = topWndHeight + 16; //BWC
 
 	pe.SetLineSize(fontSize);
 	leftwnd.SetLineSize(fontSize);
@@ -250,6 +251,7 @@ void CEditorWnd::ShowParamTextChanged()
 {
 	FontChanged();
 	pCB->WriteProfileInt("ShowParamText", ShowParamText);
+	pCB->WriteProfileInt("ShowTrackToolbar", ShowTrackToolbar);	
 }
 
 
