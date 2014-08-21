@@ -6,7 +6,9 @@
 #include "RowNumWnd.h"
 #include "TopWnd.h"
 // #include "FuBar.h"
-// #include "ToolBar2.h"
+#include "ToolBar2.h"
+#include "afxext.h"
+#include <afxpriv.h>
 #include "ColumnDialog.h"
 #include "ActionStack.h"
 
@@ -33,15 +35,19 @@ public:
 
 	int GetEditorPatternPosition();
 	void ShowParamTextChanged();
+	void OnUpdateClipboard();
+	void OnUpdateSelection();
 
-	
-
-private:	
+private:
+	bool UpdatingToolbar;
 	void UpdateWindowSizes();
 	void FontChanged();
+	void ToolbarChanged();
+
 
 	void InitBarCombo();
-
+	void DoShowHelp();
+	void UpdateButtons();
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -59,6 +65,7 @@ public:
 	CRichEditCtrl helptext;
 	int helpwidth;
 	bool helpvisible;
+	bool toolbarvisible;
 
 	CMachinePattern *pPattern;
 	CFont font;
@@ -67,17 +74,20 @@ public:
 	int topWndHeight;
 
 //	CFuBar reBar;
-//	CToolBar2 toolBar;
+	CToolBar2 toolBar;
 	CDialogBar dlgBar;
 
 	bool MidiEditMode;
 	int BarComboIndex;
+	int DeltaHumanize;
 
 	bool ShowParamText;
 	bool ShowTrackToolbar;
 
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnColumns();
@@ -93,6 +103,7 @@ public:
 	afx_msg void OnEditPaste();
 	afx_msg void OnEditPasteSpecial();
 	afx_msg void OnClearNoteOff();
+	
 
 protected:
 //	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
@@ -101,15 +112,36 @@ public:
 	afx_msg void OnBnClickedColumnsButton();
 	afx_msg void OnBnClickedFontButton();
 	afx_msg void OnBnClickedMidiEdit();
+	afx_msg void OnCheckedMidiEdit();
+	
 	afx_msg void OnBnClickedMisc();
 	afx_msg void OnBnClickedClearOff();
+	afx_msg void OnBnClickedAddOff();
+	afx_msg void OnBnClickedUpOff();
+	afx_msg void OnBnClickedDownOff();
+	
 	afx_msg void OnBnClickedImport();
 	afx_msg void OnBnClickedExport();
 	afx_msg void OnBnClickedShrink();
 	afx_msg void OnBnClickedExpand();
+	afx_msg void OnButtonShrink();
+	afx_msg void OnButtonExpand();
+	afx_msg void OnButtonHumanize();
+	afx_msg void OnChangeHumanize(); 
+	afx_msg void OnChangeHumanizeEdit(); 
+	
+
+	
 	
 	afx_msg void OnBnClickedHelp();
+	afx_msg void OnCheckedHelp();
 	afx_msg void OnBarComboSelect();
+	afx_msg void OnComboBarSelect();
+
+	afx_msg void OnCheckedToolbar();
+	afx_msg void OnBnClickedToolbar();
+	
+
 };
 
 

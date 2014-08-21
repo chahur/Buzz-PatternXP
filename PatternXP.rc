@@ -106,17 +106,44 @@ END
 // Toolbar
 //
 
-IDR_TOOLBAR TOOLBAR  16, 15
+IDR_TOOLBAR TOOLBAR  16, 16
 BEGIN
-    BUTTON      ID_EDIT_CUT
-    BUTTON      ID_EDIT_COPY
-    BUTTON      ID_EDIT_PASTE
+	SEPARATOR
+    BUTTON      32773
+    BUTTON      32774
     SEPARATOR
-    BUTTON      ID_EDIT_UNDO
-    BUTTON      ID_EDIT_REDO
+    BUTTON      32775
     SEPARATOR
-    BUTTON      ID_COLUMNS_BUTTON
-    BUTTON      ID_SELECT_FONT
+	BUTTON      32791
+    BUTTON      32776
+    SEPARATOR
+    BUTTON      32777
+    BUTTON      32778
+    BUTTON      32779
+    BUTTON      32780
+    SEPARATOR
+    BUTTON      32781
+    BUTTON      32782
+    BUTTON      32783
+    BUTTON      32784
+    SEPARATOR
+    BUTTON      32785
+    BUTTON      32786
+    SEPARATOR
+    BUTTON      32787
+    BUTTON      32788
+    BUTTON      32789
+    SEPARATOR
+	BUTTON      32793
+	BUTTON      32794
+	SEPARATOR
+	BUTTON      32792
+	SEPARATOR
+	SEPARATOR
+	SEPARATOR
+	SEPARATOR
+    BUTTON      32790
+    SEPARATOR
 END
 
 
@@ -125,7 +152,7 @@ END
 // Bitmap
 //
 
-IDR_TOOLBAR             BITMAP                  "toolbar1.bmp"
+IDR_TOOLBAR             BITMAP                  "toolbarPXP.bmp"
 IDB_TREE_IMAGES         BITMAP                  "treeimages.bmp"
 IDB_TOOLBAR24           BITMAP                  "toolbar24.bmp"
 
@@ -155,10 +182,9 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog
+// Dialog 
 //
 
 IDD_COLUMN_DIALOG DIALOGEX 0, 0, 179, 272
@@ -178,23 +204,33 @@ BEGIN
     LTEXT           "Rows per beat:",IDC_STATIC,7,51,50,8
 END
 
-IDD_DIALOGBAR DIALOGEX 0, 0, 330, 19
+IDD_DIALOGBAR DIALOGEX 0, 0, 740, 19 
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-	PUSHBUTTON      "Columns...",IDC_COLUMNS_BUTTON,6,2,45,14
-	COMBOBOX        2010, 173, 2, 57, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "Merge", 2011, 250, 2, 36, 14
-    PUSHBUTTON      "Clear off", 2022, 292, 2, 36, 14
-    PUSHBUTTON      "Import", 2023, 338, 2, 36, 14
-    PUSHBUTTON      "Export", 2024, 376, 2, 36, 14
-	PUSHBUTTON      "Shrink", 2025, 430, 2, 36, 14
-	COMBOBOX        2026, 466, 2, 20, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-	PUSHBUTTON      "Expand", 2027, 486, 2, 36, 14
-    AUTOCHECKBOX    "Help", 2012, 600, 4, 31, 8
-    LTEXT           "Bar", 0, 159, 4, 12, 8, SS_LEFT, WS_EX_LEFT
-    CONTROL         "MIDI Edit",IDC_MIDI_EDIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,102,4,45,10
-    PUSHBUTTON      "Font...",IDC_FONT_BUTTON,57,2,37,14
+    PUSHBUTTON      "Columns...", 2009, 3, 2, 45, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Copy", 2015, 210, 1, 21, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Cut", 2014, 231, 1, 16, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Paste", 2013, 247, 1, 23, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Add off", 2028, 340, 1, 32, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Up", 2029, 371, 1, 14, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Down", 2030, 385, 1, 24, 14, 0, WS_EX_LEFT
+    COMBOBOX        2010, 153, 2, 48, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "Merge", 2011, 270, 1, 25, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Clear off", 2022, 304, 1, 36, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Import", 2023, 418, 1, 31, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Export", 2024, 449, 1, 29, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Shrink", 2025, 485, 1, 36, 14, 0, WS_EX_LEFT
+    COMBOBOX        2026, 521, 2, 20, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "Expand", 2027, 541, 1, 36, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Humanize", 2032, 581, 1, 36, 14, 0, WS_EX_LEFT
+    EDITTEXT        2033, 618, 3, 17, 12, ES_AUTOHSCROLL | ES_NUMBER, WS_EX_LEFT
+    AUTOCHECKBOX    "Use toolbar", 2031, 651, 4, 48, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Help", 2012, 702, 4, 31, 8, 0, WS_EX_LEFT
+    LTEXT           "Bar", 0, 139, 5, 12, 8, SS_LEFT, WS_EX_LEFT
+    AUTOCHECKBOX    "MIDI Edit", 2007, 91, 4, 45, 10, 0, WS_EX_LEFT
+    PUSHBUTTON      "Font...", 2008, 51, 2, 37, 14, 0, WS_EX_LEFT
+
 END
 
 
@@ -280,6 +316,20 @@ STRINGTABLE
 BEGIN
     ID_COLUMNS_BUTTON       "Select Columns"
     ID_SELECT_FONT          "Select Font"
+    32777                   "Copy"
+    32778                   "Cut"
+    32779                   "Paste"
+    32780                   "Merge"
+    32781                   "Clear ""off"""
+    32782                   "Add ""off"""
+    32783                   "Shift ""off"" up"
+    32784                   "Shift ""off"" down"
+    32785                   "Import pattern"
+    32786                   "Export pattern"
+    32787                   "Shrink pattern"
+    32789                   "Expand pattern"
+	32793					"Humanize (0..99)"
+
 END
 
 STRINGTABLE

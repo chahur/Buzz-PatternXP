@@ -37,11 +37,16 @@ public:
 	void OnEditPaste();
 	void OnEditPasteSpecial(); //BWC
 	void OnClearNoteOff(); //BWC
+	void OnAddNoteOff(); //BWC
+	void OnUpNoteOff(); //BWC
+	void OnDownNoteOff(); //BWC
+	
 	int BeatsInMeasureBar(); //BWC
 
 	void ExportPattern(); //BWC
 	void ImportPattern(); //BWC
 	void InflatePattern(int delta); //BWC 
+	void Humanize(int delta);
 
 	bool CanCut();
 	bool CanCopy();
@@ -98,6 +103,7 @@ private:
 	
 	bool InSelection(int row, int column);
 	void Randomize();
+
 	void Interpolate(bool expintp);
 	void ShiftValues(int delta);
 	void WriteState();

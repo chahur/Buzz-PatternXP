@@ -50,16 +50,23 @@ CMachineInfo const MacInfo =
 	MT_GENERATOR,							// type
 	MI_VERSION,
 	MIF_PATTERN_EDITOR | MIF_PE_NO_CLIENT_EDGE | MIF_NO_OUTPUT | MIF_CONTROL_MACHINE,						// flags
-	0,											// min tracks
-	0,								// max tracks
+	0,										// min tracks
+	0,										// max tracks
 	1,										// numGlobalParameters
 	0,										// numTrackParameters
 	pParameters,
 	0, 
 	NULL,
-	"Jeskola Pattern XP",
-	"Pattern XP",								// short name
+	#ifdef PXPMOD
+	"Jeskola Pattern XP mod",
+	"Pattern XP mod",						// short name
 	"Oskari Tammelin", 						// author
+	#else
+	"Jeskola Pattern XP",
+	"Pattern XP",							// short name
+	"Oskari Tammelin", 						// author
+	#endif
+	
 	NULL
 };
 
@@ -406,6 +413,10 @@ void miex::PlayPattern(CPattern *p, CSequence *s, int offset)
 	int sc = pmi->pCB->GetSequenceColumn(s);
 	MapIntToPlayingPattern npp;
 
+/*	char debugtxt[256];
+	sprintf(debugtxt,"miex::PlayPattern offset %d", offset);
+	pmi->pCB->WriteLine(debugtxt);
+*/
 	for (MapIntToPlayingPattern::iterator i = pmi->playingPatterns.begin(); i != pmi->playingPatterns.end(); i++)
 	{
 		int c = pmi->pCB->GetSequenceColumn((*i).second->pseq);

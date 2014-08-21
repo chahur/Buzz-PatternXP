@@ -104,6 +104,7 @@ void CTopWnd::OnDraw(CDC *pDC)
 					char tbc[5] = "CXPM";
 					r.top = r.bottom + 1;
 					r.bottom = r.bottom + 16;
+					pDC->FillSolidRect(&r, bgcolor);
 					int tbbw = r.Width() / 4;
 					r.right = r.left + tbbw;
 					for (int i=0; i<4; i++){

@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by PatternXP.rc
 //
+
 #define IDD_DIALOGBAR                   103
 #define IDC_NP_NAME                     1011
 #define IDC_NP_LENGTH                   1058
@@ -20,16 +21,52 @@
 #define IDC_BAR_COMBO					2010
 #define IDC_MISC_BUTTON					2011
 #define IDC_HELP_CHECK					2012
+#define IDC_PASTE_BUTTON				2013
+#define IDC_CUT_BUTTON					2014
+#define IDC_COPY_BUTTON					2015
 #define IDC_CLEAR_BUTTON				2022
 #define IDC_IMPORT_BUTTON				2023
 #define IDC_EXPORT_BUTTON				2024
 #define IDC_SHRINK_BUTTON				2025
 #define IDC_INFLATE_COMBO				2026
 #define IDC_EXPAND_BUTTON				2027
-#define ID_BUTTON32773                  32773
+#define IDC_ADDOFF_BUTTON				2028
+#define IDC_UPOFF_BUTTON				2029
+#define IDC_DOWNOFF_BUTTON				2030
+#define IDC_TOOLBAR_BUTTON				2031
+#define IDC_HUMANIZE_BUTTON				2032
+#define IDC_HUMANIZE_EDIT				2033
+
 #define ID_COLUMNS_BUTTON               32773
-#define ID_BUTTON32774                  32774
 #define ID_SELECT_FONT                  32774
+#define ID_CHECK_MIDI_BT                32775
+#define ID_CHECK_MIDI                   33775
+#define ID_COMBO_BAR_LABEL_BT           32791
+#define ID_COMBO_BAR_LABEL              33791 
+#define ID_COMBO_BAR_BT                 32776
+#define ID_COMBO_BAR                    33776
+#define ID_BT_COPY                      32777
+#define ID_BT_CUT                       32778
+#define ID_BT_PASTE                     32779
+#define ID_BT_MERGE                     32780
+#define ID_BT_CLEAROFF                  32781
+#define ID_BT_ADDOFF                    32782
+#define ID_BT_UPOFF                     32783
+#define ID_BT_DOWNOFF                   32784
+#define ID_BT_IMPORT                    32785
+#define ID_BT_EXPORT                    32786
+#define ID_BT_SHRINK                    32787
+#define ID_COMBO_SHRINK_BT              32788
+#define ID_COMBO_SHRINK                 33788
+#define ID_BT_EXPAND                    32789
+#define ID_CHECK_HELP_BT                32790
+#define ID_CHECK_HELP                   33790
+#define ID_CHECK_TOOLBAR_BT             32792
+#define ID_CHECK_TOOLBAR                33792 
+#define ID_BT_HUMANIZE		            32793
+#define ID_HUMANIZE_DELTA_BT            32794
+#define ID_HUMANIZE_DELTA				33794
+
 
 // Next default values for new objects
 //
