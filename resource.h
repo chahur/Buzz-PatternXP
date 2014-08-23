@@ -36,6 +36,7 @@
 #define IDC_TOOLBAR_BUTTON				2031
 #define IDC_HUMANIZE_BUTTON				2032
 #define IDC_HUMANIZE_EDIT				2033
+#define IDC_HUMANIZE_EMPTY				2034
 
 #define ID_COLUMNS_BUTTON               32773
 #define ID_SELECT_FONT                  32774
@@ -66,6 +67,8 @@
 #define ID_BT_HUMANIZE		            32793
 #define ID_HUMANIZE_DELTA_BT            32794
 #define ID_HUMANIZE_DELTA				33794
+#define ID_CHECK_HUMANIZE_EMPTY_BT      32795
+#define ID_CHECK_HUMANIZE_EMPTY			33795
 
 
 // Next default values for new objects

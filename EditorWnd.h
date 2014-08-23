@@ -44,10 +44,29 @@ private:
 	void FontChanged();
 	void ToolbarChanged();
 
-
-	void InitBarCombo();
+	void InitToolbarData();
 	void DoShowHelp();
 	void UpdateButtons();
+
+	bool GetCheckBoxToolbar();
+	void SetCheckBoxToolbar(bool AValue);
+
+	bool GetCheckBoxHelp();
+	void SetCheckBoxHelp(bool AValue);
+
+	bool GetCheckBoxMidiEdit();
+	void SetCheckBoxMidiEdit(bool AValue);
+
+	int  GetEditBoxDelta();	
+	void SetEditBoxDelta(int AValue);
+
+	int  GetComboBoxInflate();
+
+	int  GetComboBoxBar();
+
+	bool GetCheckBoxHumanizeEmpty();
+	void SetCheckBoxHumanizeEmpty(bool AValue);
+
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -80,6 +99,7 @@ public:
 	bool MidiEditMode;
 	int BarComboIndex;
 	int DeltaHumanize;
+	bool HumanizeEmpty;
 
 	bool ShowParamText;
 	bool ShowTrackToolbar;
@@ -111,7 +131,6 @@ public:
 //	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedColumnsButton();
 	afx_msg void OnBnClickedFontButton();
-	afx_msg void OnBnClickedMidiEdit();
 	afx_msg void OnCheckedMidiEdit();
 	
 	afx_msg void OnBnClickedMisc();
@@ -122,25 +141,17 @@ public:
 	
 	afx_msg void OnBnClickedImport();
 	afx_msg void OnBnClickedExport();
-	afx_msg void OnBnClickedShrink();
-	afx_msg void OnBnClickedExpand();
 	afx_msg void OnButtonShrink();
 	afx_msg void OnButtonExpand();
 	afx_msg void OnButtonHumanize();
 	afx_msg void OnChangeHumanize(); 
-	afx_msg void OnChangeHumanizeEdit(); 
+	afx_msg void OnCheckedHumanizeEmpty();
 	
-
-	
-	
-	afx_msg void OnBnClickedHelp();
 	afx_msg void OnCheckedHelp();
-	afx_msg void OnBarComboSelect();
 	afx_msg void OnComboBarSelect();
 
+
 	afx_msg void OnCheckedToolbar();
-	afx_msg void OnBnClickedToolbar();
-	
 
 };
 

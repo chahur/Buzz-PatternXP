@@ -46,9 +46,9 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE_SPECIAL, OnUpdateClipboard) //BWC
 	ON_BN_CLICKED(IDC_COLUMNS_BUTTON, CEditorWnd::OnBnClickedColumnsButton) //BWC!!!
 	ON_BN_CLICKED(IDC_FONT_BUTTON, CEditorWnd::OnBnClickedFontButton) //BWC!!!
-	ON_BN_CLICKED(IDC_MIDI_EDIT, CEditorWnd::OnBnClickedMidiEdit) //BWC!!!
-
-	ON_BN_CLICKED(ID_CHECK_MIDI, OnCheckedMidiEdit) //BWC!!!
+	
+	ON_BN_CLICKED(IDC_MIDI_EDIT, OnCheckedMidiEdit) //BWC!!!
+	ON_BN_CLICKED(ID_CHECK_MIDI, OnCheckedMidiEdit) //BWC
 
 	ON_BN_CLICKED(IDC_MISC_BUTTON, OnBnClickedMisc) //BWC
 	ON_BN_CLICKED(IDC_PASTE_BUTTON, OnEditPaste) //BWC
@@ -70,34 +70,37 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_COMMAND(ID_BT_UPOFF, OnBnClickedUpOff) //BWC
 	ON_COMMAND(ID_BT_DOWNOFF, OnBnClickedDownOff) //BWC
 
-	ON_BN_CLICKED(IDC_IMPORT_BUTTON, CEditorWnd::OnBnClickedImport) //BWC
-	ON_BN_CLICKED(IDC_EXPORT_BUTTON, CEditorWnd::OnBnClickedExport) //BWC
-	ON_COMMAND(ID_BT_IMPORT, CEditorWnd::OnBnClickedImport) //BWC
-	ON_COMMAND(ID_BT_EXPORT, CEditorWnd::OnBnClickedExport) //BWC
+	ON_BN_CLICKED(IDC_IMPORT_BUTTON, OnBnClickedImport) //BWC
+	ON_COMMAND(ID_BT_IMPORT, OnBnClickedImport) //BWC
+	ON_BN_CLICKED(IDC_EXPORT_BUTTON, OnBnClickedExport) //BWC
+	ON_COMMAND(ID_BT_EXPORT, OnBnClickedExport) //BWC
 	
-	ON_COMMAND(ID_BT_SHRINK, CEditorWnd::OnButtonShrink) //BWC
-	ON_COMMAND(ID_BT_EXPAND, CEditorWnd::OnButtonExpand) //BWC
-
-	ON_BN_CLICKED(IDC_SHRINK_BUTTON, CEditorWnd::OnBnClickedShrink) //BWC
-	ON_BN_CLICKED(IDC_EXPAND_BUTTON, CEditorWnd::OnBnClickedExpand) //BWC
+	ON_COMMAND(ID_BT_SHRINK, OnButtonShrink) //BWC
+	ON_BN_CLICKED(IDC_SHRINK_BUTTON, OnButtonShrink) //BWC
+	ON_COMMAND(ID_BT_EXPAND, OnButtonExpand) //BWC
+	ON_BN_CLICKED(IDC_EXPAND_BUTTON, OnButtonExpand) //BWC
 	
-	ON_BN_CLICKED(IDC_HELP_CHECK, OnBnClickedHelp) //BWC
+	ON_BN_CLICKED(IDC_HELP_CHECK, OnCheckedHelp) //BWC
 	ON_BN_CLICKED(ID_CHECK_HELP, OnCheckedHelp) //BWC
 
 	ON_BN_CLICKED(ID_CHECK_TOOLBAR, OnCheckedToolbar) //BWC
-	ON_BN_CLICKED(IDC_TOOLBAR_BUTTON, OnBnClickedToolbar)
+	ON_BN_CLICKED(IDC_TOOLBAR_BUTTON, OnCheckedToolbar)
 		
 	ON_COMMAND(ID_BT_HUMANIZE, OnButtonHumanize) //BWC
 	ON_EN_CHANGE(ID_HUMANIZE_DELTA, OnChangeHumanize)
-	ON_EN_CHANGE(IDC_HUMANIZE_EDIT, OnChangeHumanizeEdit)
+	ON_EN_CHANGE(IDC_HUMANIZE_EDIT, OnChangeHumanize)
 	ON_BN_CLICKED(IDC_HUMANIZE_BUTTON, OnButtonHumanize)
-	
 
-	ON_CBN_SELENDOK(IDC_BAR_COMBO, OnBarComboSelect)
+	ON_BN_CLICKED(ID_CHECK_HUMANIZE_EMPTY, OnCheckedHumanizeEmpty) //BWC
+	ON_BN_CLICKED(IDC_HUMANIZE_EMPTY, OnCheckedHumanizeEmpty) //BWC
+	
+	
+	ON_CBN_SELENDOK(IDC_BAR_COMBO, OnComboBarSelect)
 	ON_CBN_SELENDOK(ID_COMBO_BAR, OnComboBarSelect)
 
 END_MESSAGE_MAP()
 
+/* Windows hook to receive the ToolTips messages */
 static LRESULT CALLBACK PreTranslateGetMsgProc (int nCode, WPARAM wParam, LPARAM lParam)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState()); 
@@ -201,7 +204,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.CreateEx(this, 0, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
 	toolBar.LoadToolBar(IDR_TOOLBAR); 
 	
-	// Set transparent color = RGB(255,0,255)
+	// Set transparent color Magenta : RGB(255,0,255)
 	CImageList il;
 	CreateImageList(il, MAKEINTRESOURCE(IDR_TOOLBAR), 16, 4, RGB(255,0,255));
 	toolBar.SendMessage(TB_SETIMAGELIST, 0, (LPARAM)il.m_hImageList);
@@ -262,6 +265,16 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.editHumanize.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 	toolBar.editHumanize.SetMargins(2, 2);
 
+	// Insert "Humanize empty" check box
+	index = toolBar.CommandToIndex(ID_CHECK_HUMANIZE_EMPTY_BT);
+    toolBar.SetButtonInfo(index, ID_CHECK_HUMANIZE_EMPTY_BT, TBBS_SEPARATOR, 72);
+    toolBar.GetItemRect(index, &rect);
+	rect.left= rect.left+2;
+	rect.top++;
+	toolBar.checkHumanizeEmpty.Create("and empty", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_HUMANIZE_EMPTY);
+	toolBar.checkHumanizeEmpty.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+ 
+	
 	// Insert "Use toolbar" check box
 	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
     toolBar.SetButtonInfo(index, ID_CHECK_TOOLBAR_BT, TBBS_SEPARATOR, 72);
@@ -278,20 +291,6 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.checkHelp.Create("Help", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_HELP);
 	toolBar.checkHelp.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
    
-
-//	reBar.Create(this, 0);
-//	toolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
-
-	/*
-	toolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
-	toolBar.LoadToolBar(IDR_TOOLBAR);
-
-	CImageList il;
-	CreateImageList(il, MAKEINTRESOURCE(IDB_TOOLBAR24), 16, 4, RGB(255,0,255));
-	toolBar.SendMessage(TB_SETIMAGELIST, 0, (LPARAM)il.m_hImageList);
-	il.Detach();
-*/
-
 	// CDialogBar : Buttons bar
 	dlgBar.Create(this, IDD_DIALOGBAR, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, AFX_IDW_TOOLBAR);
 	
@@ -332,18 +331,22 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	pe.linkVert = &leftwnd;
 	pe.linkHorz = &topwnd;
 
-	ShowParamText =	pCB->GetProfileInt("ShowParamText", true);
-	ShowTrackToolbar = pCB->GetProfileInt("ShowTrackToolbar", true);
-	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true);
+	ShowParamText =	pCB->GetProfileInt("ShowParamText", true)!=0;
+	ShowTrackToolbar = pCB->GetProfileInt("ShowTrackToolbar", true)!=0;
+	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true)!=0;
 	DeltaHumanize = pCB->GetProfileInt("DeltaHumanize", 10);
+	HumanizeEmpty = pCB->GetProfileInt("HumanizeEmpty", true)!=0;
+	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
 
 	ToolbarChanged();
 
 	FontChanged();
 
-	InitBarCombo();
+	InitToolbarData();
 	
 	UpdateButtons();
+	
+	DoShowHelp();
 
 	return 0;
 }
@@ -353,51 +356,208 @@ void CEditorWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 	CWnd::OnShowWindow(bShow, nStatus);
 
 	// If the configuration of the toolbar have been changed in another instance of patternXP, init it now.
-	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true);
+	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
+	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true)!=0;
+
 	ToolbarChanged();
+
+	DoShowHelp();
 }
+
+/* ---- Checkbox "Toolbar" -----*/
+bool CEditorWnd::GetCheckBoxToolbar()
+{
+	if (toolbarvisible)  
+		return toolBar.checkToolbar.GetCheck() == BST_CHECKED;
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
+		return pc->GetCheck() == BST_CHECKED;
+	}
+}
+
+void CEditorWnd::SetCheckBoxToolbar(bool AValue)
+{
+	int BST_VAL;
+	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+
+	if (toolbarvisible)  
+		toolBar.checkToolbar.SetCheck(BST_VAL);
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
+		pc->SetCheck(BST_VAL);
+	}
+}
+
+/* ---- Checkbox "Help" -----*/
+bool CEditorWnd::GetCheckBoxHelp()
+{
+	if (toolbarvisible)  
+		return toolBar.checkHelp.GetCheck() == BST_CHECKED;
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_HELP_CHECK);
+		return pc->GetCheck() == BST_CHECKED;
+	}
+}
+
+void CEditorWnd::SetCheckBoxHelp(bool AValue)
+{
+	int BST_VAL;
+	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+
+	if (toolbarvisible)  
+		toolBar.checkHelp.SetCheck(BST_VAL);
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_HELP_CHECK);
+		pc->SetCheck(BST_VAL);
+	}
+}
+
+/* ---- Checkbox "MidiEdit" -----*/
+bool CEditorWnd::GetCheckBoxMidiEdit()
+{
+	if (toolbarvisible)  
+		return toolBar.checkMidi.GetCheck() == BST_CHECKED;
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_MIDI_EDIT);
+		return pc->GetCheck() == BST_CHECKED;
+	}
+}
+
+void CEditorWnd::SetCheckBoxMidiEdit(bool AValue)
+{
+	int BST_VAL;
+	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+
+	if (toolbarvisible)  
+		toolBar.checkMidi.SetCheck(BST_VAL);
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_MIDI_EDIT);
+		pc->SetCheck(BST_VAL);
+	}
+}
+
+/* ---- EditBox "Delta" humanize-----*/
+int CEditorWnd::GetEditBoxDelta()
+{
+	CString sdelta;
+		
+	if (toolbarvisible)  
+		toolBar.editHumanize.GetWindowText(sdelta);
+	else {
+		CEdit *ce = (CEdit *)dlgBar.GetDlgItem(IDC_HUMANIZE_EDIT);
+		ce->GetWindowText(sdelta);
+	}
+
+	int x = atoi(sdelta);
+	if ((x>=0) && (x<=100))
+		return x;
+	else
+		return -1; /* incorrect value */
+}
+
+void CEditorWnd::SetEditBoxDelta(int AValue)
+{
+	CString sdelta;
+	sdelta.Format(_T("%d"), AValue);
+
+	if (toolbarvisible)  
+		toolBar.editHumanize.SetWindowText(sdelta);
+	else {
+		CEdit *ce = (CEdit *)dlgBar.GetDlgItem(IDC_HUMANIZE_EDIT);
+		ce->SetWindowText(sdelta);
+	}
+}
+
+/*---- Combo box "Inflate" factor ----*/
+int CEditorWnd::GetComboBoxInflate()
+{	
+	int inflateComboIndex;
+	if (toolbarvisible)  
+		inflateComboIndex = toolBar.comboShrink.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
+		inflateComboIndex = cb->GetCurSel();
+	}
+	
+	if (inflateComboIndex>=0)
+		return inflateComboIndex+2;
+	else
+		return -1; /* Incorrect value */
+}
+
+/*---- Combo box "Measure Bar" ----*/
+int CEditorWnd::GetComboBoxBar()
+{
+	if (toolbarvisible)  
+		return toolBar.comboBar.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_BAR_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
+/* ---- Checkbox "Humanize empty" -----*/
+bool CEditorWnd::GetCheckBoxHumanizeEmpty()
+{
+	if (toolbarvisible)  
+		return toolBar.checkHumanizeEmpty.GetCheck() == BST_CHECKED;
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_HUMANIZE_EMPTY);
+		return pc->GetCheck() == BST_CHECKED;
+	}
+}
+
+void CEditorWnd::SetCheckBoxHumanizeEmpty(bool AValue)
+{
+	int BST_VAL;
+	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+
+	if (toolbarvisible)  
+		toolBar.checkHumanizeEmpty.SetCheck(BST_VAL);
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_HUMANIZE_EMPTY);
+		pc->SetCheck(BST_VAL);
+	}
+}
+
+
 
 void CEditorWnd::ToolbarChanged()
 {
+	/* Disable controls action */
 	UpdatingToolbar = true;
 
 /*	char debugtxt[256];
 	sprintf(debugtxt,"CEditorWnd::ToolbarChanged - toolbar visible %d", toolbarvisible);
 	pCB->WriteLine(debugtxt);
 */
-	CString sdelta;
-	sdelta.Format(_T("%d"), DeltaHumanize);
 
 	if (toolbarvisible) 
 	{
 		toolBar.ShowWindow(SW_SHOWNORMAL);
 		dlgBar.ShowWindow(SW_HIDE);
-		toolBar.checkToolbar.SetCheck(BST_CHECKED);
-		if (MidiEditMode) toolBar.checkMidi.SetCheck(BST_CHECKED);
-		if (helpvisible) toolBar.checkHelp.SetCheck(BST_CHECKED);
-		toolBar.editHumanize.SetWindowText(sdelta);
+		SetCheckBoxToolbar(true);
 	}
 	else
 	{
 		dlgBar.ShowWindow(SW_SHOWNORMAL);
 		toolBar.ShowWindow(SW_HIDE);
-
-		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
-	    pc->SetCheck(BST_UNCHECKED);
-		pc = (CButton *)dlgBar.GetDlgItem(IDC_MIDI_EDIT);
-	    if (MidiEditMode) pc->SetCheck(BST_CHECKED);
-		pc = (CButton *)dlgBar.GetDlgItem(IDC_HELP_CHECK);
-		if (helpvisible) pc->SetCheck(BST_CHECKED);
-		CEdit *ce = (CEdit *)dlgBar.GetDlgItem(IDC_HUMANIZE_EDIT);
-		ce->SetWindowText(sdelta);
+		SetCheckBoxToolbar(false);
 	}
+
+	SetCheckBoxHelp(helpvisible);
+	SetEditBoxDelta(DeltaHumanize);
+	SetCheckBoxMidiEdit(MidiEditMode);
+	SetCheckBoxHumanizeEmpty(HumanizeEmpty);
+
 	Invalidate(true);
 	UpdateCanvasSize();
 	UpdateWindowSizes();
+
+	/* Enable controls action */	
 	UpdatingToolbar = false;
 
 	pCB->WriteProfileInt("ToolbarVisible", toolbarvisible);	
-
 }
 
 void CEditorWnd::OnSize(UINT nType, int cx, int cy)
@@ -466,7 +626,6 @@ void CEditorWnd::OnSetFocus(CWnd* pOldWnd)
 
 	pe.SetFocus();
 }
-
 
 void CEditorWnd::OnSelectFont()
 {
@@ -696,18 +855,10 @@ void CEditorWnd::OnBnClickedFontButton()
 	OnSelectFont();
 }
 
-void CEditorWnd::OnBnClickedMidiEdit()
-{
-	if (UpdatingToolbar) return;
-
-	CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_MIDI_EDIT);
-	MidiEditMode = pc->GetCheck() == BST_CHECKED;
-}
-
 void CEditorWnd::OnCheckedMidiEdit()
 {
 	if (UpdatingToolbar) return;
-	MidiEditMode = toolBar.checkMidi.GetCheck() == BST_CHECKED;
+	MidiEditMode = GetCheckBoxMidiEdit();
 }
 
 
@@ -730,93 +881,44 @@ void CEditorWnd::OnBnClickedExport()
 {	
 	pe.ExportPattern();
 }
-
-void CEditorWnd::OnBnClickedShrink()
-{	
-	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
-	int inflateComboIndex = cb->GetCurSel();
-	if (inflateComboIndex>=0) {
-		inflateComboIndex = inflateComboIndex+2;
-		pe.InflatePattern(-inflateComboIndex);
-	}
-
-}
-	
-void CEditorWnd::OnBnClickedExpand()
-{	
-	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INFLATE_COMBO);
-	int inflateComboIndex = cb->GetCurSel();
-	if (inflateComboIndex>=0) {
-		inflateComboIndex = inflateComboIndex+2;
-		pe.InflatePattern(inflateComboIndex);
-	}
-}
 	
 void CEditorWnd::OnButtonShrink()
 {	
-	int inflateComboIndex = toolBar.comboShrink.GetCurSel();
-	if (inflateComboIndex>=0) {
-		inflateComboIndex = inflateComboIndex+2;
-		pe.InflatePattern(-inflateComboIndex);
-	}
+	int inflateFactor = GetComboBoxInflate();
+	if (inflateFactor>=0)
+		pe.InflatePattern(-inflateFactor);
 }
 	
 void CEditorWnd::OnButtonExpand()
 {	
-	int inflateComboIndex = toolBar.comboShrink.GetCurSel();
-	if (inflateComboIndex>=0) {
-		inflateComboIndex = inflateComboIndex+2;
-		pe.InflatePattern(inflateComboIndex);
-	}
+	int inflateFactor = GetComboBoxInflate();
+	if (inflateFactor>=0)
+		pe.InflatePattern(inflateFactor);
 }
 
 void CEditorWnd::OnChangeHumanize() 
 {
 	if (UpdatingToolbar) return;
 
-	CString sdelta;
-	toolBar.editHumanize.GetWindowText(sdelta);
-	int x = atoi(sdelta);
-	if ((x>=0)&&(x<=100)) {
-		DeltaHumanize= x;
-		pCB->WriteProfileInt("DeltaHumanize", DeltaHumanize);
+	int x=GetEditBoxDelta();
+	if (x<0) {	
+		// incorrect value in edit box, reset last value
+		SetEditBoxDelta(DeltaHumanize);
 	}
 	else
-	{	// incorrect value in edit box, reset last value
-		sdelta.Format(_T("%d"), DeltaHumanize);
-		toolBar.editHumanize.SetWindowText(sdelta);
-	}
-
-}
-
-void CEditorWnd::OnChangeHumanizeEdit() 
-{
-	if (UpdatingToolbar) return;
-
-	CEdit *ce = (CEdit *)dlgBar.GetDlgItem(IDC_HUMANIZE_EDIT);
-	CString sdelta;
-	ce->GetWindowText(sdelta);
-	int x = atoi(sdelta);
-	if ((x>=0)&&(x<=100)) {
-		DeltaHumanize= x;
+	{
+		DeltaHumanize=x;
 		pCB->WriteProfileInt("DeltaHumanize", DeltaHumanize);
 	}
-	else
-	{	// incorrect value in edit box, reset last value
-		sdelta.Format(_T("%d"), DeltaHumanize);
-		ce->SetWindowText(sdelta);
-	}
-
 }
-
 
 void CEditorWnd::OnButtonHumanize()
 {	
-	pe.Humanize(DeltaHumanize);
+	pe.Humanize(DeltaHumanize, HumanizeEmpty);
 }
 	
 
-void CEditorWnd::InitBarCombo()
+void CEditorWnd::InitToolbarData()
 {
 	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_BAR_COMBO);
 	cb->AddString("Auto");
@@ -864,27 +966,35 @@ void CEditorWnd::InitBarCombo()
 
 	toolBar.comboShrink.SetCurSel(0);
 
-	CString sdelta;
-	sdelta.Format(_T("%d"), DeltaHumanize);
-	toolBar.editHumanize.SetWindowText(sdelta);
-	CEdit *ce = (CEdit *)dlgBar.GetDlgItem(IDC_HUMANIZE_EDIT);
-	ce->SetWindowText(sdelta);
-
 }
 
 void CEditorWnd::OnComboBarSelect()
 {
-	BarComboIndex = toolBar.comboBar.GetCurSel();
+	BarComboIndex = GetComboBoxBar();
 	pCB->SetModifiedFlag();
 	Invalidate();
 }
 
-void CEditorWnd::OnBarComboSelect()
+void CEditorWnd::OnCheckedToolbar()
 {
-	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_BAR_COMBO);
-	BarComboIndex = cb->GetCurSel();
-	pCB->SetModifiedFlag();
-	Invalidate();
+	if (UpdatingToolbar) return;
+	toolbarvisible = GetCheckBoxToolbar();
+	ToolbarChanged();
+}
+
+void CEditorWnd::OnCheckedHumanizeEmpty()
+{
+	if (UpdatingToolbar) return;
+	HumanizeEmpty = GetCheckBoxHumanizeEmpty();
+	pCB->WriteProfileInt("HumanizeEmpty", HumanizeEmpty);
+}
+
+void CEditorWnd::OnCheckedHelp()
+{
+	if (UpdatingToolbar) return;
+	helpvisible = GetCheckBoxHelp();
+	pCB->WriteProfileInt("helpvisible", helpvisible);
+	DoShowHelp();
 }
 
 static DWORD CALLBACK MyStreamInCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
@@ -896,44 +1006,14 @@ static DWORD CALLBACK MyStreamInCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb,
    return 0;
 }
 
-void CEditorWnd::OnCheckedToolbar()
-{
-	if (UpdatingToolbar) return;
-	toolbarvisible = toolBar.checkToolbar.GetCheck() == BST_CHECKED;
-	ToolbarChanged();
-}
-
-void CEditorWnd::OnBnClickedToolbar()
-{
-	if (UpdatingToolbar) return;
-	CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
-	toolbarvisible = pc->GetCheck() == BST_CHECKED;
-	ToolbarChanged();
-}
-
-
-void CEditorWnd::OnCheckedHelp()
-{
-	if (UpdatingToolbar) return;
-	helpvisible = toolBar.checkHelp.GetCheck() == BST_CHECKED;
-	DoShowHelp();
-}
-
-void CEditorWnd::OnBnClickedHelp()
-{
-	if (UpdatingToolbar) return;
-	CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_HELP_CHECK);
-	helpvisible = pc->GetCheck() == BST_CHECKED;
-	DoShowHelp();
-}
-
 void CEditorWnd::DoShowHelp()
 {
 	UpdateCanvasSize();
 	UpdateWindowSizes();
 	Invalidate();
 	
-	if (helpvisible) {
+	if (helpvisible) 
+	{
 		helptext.SetFont(&font);
 		helptext.SetReadOnly(TRUE);
 		helptext.SetTargetDevice(NULL, 1);

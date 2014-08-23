@@ -25,6 +25,7 @@ public:
 	CButton checkHelp;
 	CButton checkToolbar;
 	CEdit editHumanize;
+	CButton checkHumanizeEmpty;
 	CMICallbacks *pCB;
 	afx_msg LRESULT CToolBar2::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg BOOL OnToolTipNotify(UINT id, NMHDR *pNMHDR,LRESULT *pResult);
