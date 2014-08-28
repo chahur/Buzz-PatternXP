@@ -1,0 +1,37 @@
+;Basic guitar chords
+;Order is root E, A, D
+;
+Maj1;7CGJO
+Maj2;7CGJ
+Maj3;47CG
+Maj4;7CG
+Maj5;47CGO
+Maj6;47CJO
+min1;7CFJO
+min2;7CFJ
+min3;7CF
+7dom1;7AGJO
+7dom2;7CGMO
+7dom3;7AGMO
+7dom4;47CGM
+7dom5;4ACG
+7dom6;7AGJ
+7dom7;7AG
+sus4_1;7CHJO
+sus4_2;7CHJ
+sus4_3;7CH
+add9_1;47EG
+add9_2;47EJ
+add9_3;7EG
+dim1;69F
+dim2;9FI
+M7_1;47BG
+M7_2;7BG
+M7_3;7BGJ
+M7_4;BGJ
+M7_5;47B
+m7_1;7AFJO
+m7_2;7AFJ
+m7_3;7AF
+m7/5b;6AF
+open;5AFJO

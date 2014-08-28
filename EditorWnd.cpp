@@ -3,6 +3,10 @@
 #include "EditorWnd.h"
 #include "PatEd.h"
 #include "ImageList.h"
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <io.h>
 
 HHOOK g_hHook = 0;
 
@@ -93,10 +97,18 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 
 	ON_BN_CLICKED(ID_CHECK_HUMANIZE_EMPTY, OnCheckedHumanizeEmpty) //BWC
 	ON_BN_CLICKED(IDC_HUMANIZE_EMPTY, OnCheckedHumanizeEmpty) //BWC
-	
-	
+		
 	ON_CBN_SELENDOK(IDC_BAR_COMBO, OnComboBarSelect)
 	ON_CBN_SELENDOK(ID_COMBO_BAR, OnComboBarSelect)
+
+	ON_COMMAND(ID_BT_INSERT_CHORD, OnButtonInsertChord)
+	ON_BN_CLICKED(IDC_INSERT_CHORD, OnButtonInsertChord)
+	ON_COMMAND(ID_BT_CHORD_FILE, OnButtonSelectChordFile)
+	ON_BN_CLICKED(IDC_CHORD_FILE_BUTTON, OnButtonSelectChordFile) 
+	
+	ON_BN_CLICKED(ID_CHECK_CHORD_ONCE, OnCheckedChordOnce) 
+	ON_BN_CLICKED(IDC_CHECK_CHORD_ONCE, OnCheckedChordOnce) 
+	
 
 END_MESSAGE_MAP()
 
@@ -274,6 +286,23 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.checkHumanizeEmpty.Create("and empty", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_HUMANIZE_EMPTY);
 	toolBar.checkHumanizeEmpty.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
  
+	// Insert Chords Combo
+	index = toolBar.CommandToIndex(ID_COMBO_CHORD_BT);
+    toolBar.SetButtonInfo(index, ID_COMBO_CHORD_BT, TBBS_SEPARATOR, 64); 
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 1;  
+    rect.bottom = rect.top + 80;
+	toolBar.comboChords.Create(CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_TABSTOP | WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_CHORD);
+	toolBar.comboChords.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+
+	// Insert "Insert chord once" check box
+	index = toolBar.CommandToIndex(ID_CHECK_CHORD_ONCE_BT);
+    toolBar.SetButtonInfo(index, ID_CHECK_CHORD_ONCE_BT, TBBS_SEPARATOR, 48);
+    toolBar.GetItemRect(index, &rect);
+	rect.top++;
+	toolBar.checkChordsOnce.Create("Once", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_CHORD_ONCE);
+	toolBar.checkChordsOnce.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+	
 	
 	// Insert "Use toolbar" check box
 	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
@@ -337,6 +366,10 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DeltaHumanize = pCB->GetProfileInt("DeltaHumanize", 10);
 	HumanizeEmpty = pCB->GetProfileInt("HumanizeEmpty", true)!=0;
 	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
+	InsertChordOnce = pCB->GetProfileInt("InsertChordOnce", false)!=0;
+	
+	ChordPathName[0]=0;
+	pCB->GetProfileString("ChordPathName", ChordPathName, "");
 
 	ToolbarChanged();
 
@@ -520,6 +553,39 @@ void CEditorWnd::SetCheckBoxHumanizeEmpty(bool AValue)
 	}
 }
 
+// Combobox Chords
+int CEditorWnd::GetComboBoxChords()
+{
+	if (toolbarvisible)  
+		return toolBar.comboChords.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_CHORD_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
+bool CEditorWnd::GetCheckBoxChordOnce()
+{
+	if (toolbarvisible)  
+		return toolBar.checkChordsOnce.GetCheck() == BST_CHECKED;
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_CHECK_CHORD_ONCE);
+		return pc->GetCheck() == BST_CHECKED;
+	}
+}
+
+void CEditorWnd::SetCheckBoxChordOnce(bool AValue)
+{
+	int BST_VAL;
+	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+
+	if (toolbarvisible)  
+		toolBar.checkChordsOnce.SetCheck(BST_VAL);
+	else {
+		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_CHECK_CHORD_ONCE);
+		pc->SetCheck(BST_VAL);
+	}
+}
 
 
 void CEditorWnd::ToolbarChanged()
@@ -549,6 +615,7 @@ void CEditorWnd::ToolbarChanged()
 	SetEditBoxDelta(DeltaHumanize);
 	SetCheckBoxMidiEdit(MidiEditMode);
 	SetCheckBoxHumanizeEmpty(HumanizeEmpty);
+	SetCheckBoxChordOnce(InsertChordOnce);
 
 	Invalidate(true);
 	UpdateCanvasSize();
@@ -793,6 +860,11 @@ void CEditorWnd::OnUpdateSelection()
 	UpdateButtons();
 }
 
+void CEditorWnd::OnUpdatePosition() 
+{ 
+	UpdateButtons();
+}
+
 BOOL EnableToolbarButtonByIndex(CToolBar *pToolbar, const int iIndex, const BOOL bEnabled)
 {
 	UINT nNewStyle;
@@ -833,6 +905,7 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_UPOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_DOWNOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_HUMANIZE, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord());
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); }
@@ -966,6 +1039,129 @@ void CEditorWnd::InitToolbarData()
 
 	toolBar.comboShrink.SetCurSel(0);
 
+    InitChords();
+}
+
+void CEditorWnd::InitChords()
+{
+	// Load chords filename
+	char pathName[255];
+	if (ChordPathName[0]==0)
+		GeneratorFileName(pathName, "Basic1.chords");
+	else
+	{
+		strcpy(pathName, ChordPathName);
+		// Check if the file exists
+		if (_access (pathName, 0) != 0) 
+			// File doesn't exists (0 if exists)
+			// Get default chord file
+			GeneratorFileName(pathName, "Basic1.chords");
+	}
+	
+	string impChord;
+	char txt[25];
+	int itxt=0;
+	int iChord=0;
+	bool getval;
+
+	int cbindex = GetComboBoxChords();
+
+	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_CHORD_COMBO);
+
+	// First, empty the combo
+	cb->ResetContent();
+	toolBar.comboChords.ResetContent();
+
+	ifstream expfile (pathName, ios::in);  
+	if (expfile)  
+    {
+		 while (getline(expfile, impChord))  
+        {
+			// Skip comment lines (starting with ;)
+			if (((int)impChord.length()>0) && (impChord[0] !=';'))
+			{
+				txt[0]=0;
+				itxt=0;
+				getval=false;
+				for (int i=0; i < (int)impChord.length(); i++)
+				{
+					if (impChord[i] ==';') 
+					{
+						txt[itxt]=0;
+						itxt=0;
+						// First field : name of the chord
+						// Add it in the combo box.
+						toolBar.comboChords.AddString(txt);
+						cb->AddString(txt);
+						getval=true;
+					}
+					else 
+					{
+						// Read only valid data
+						if ((!getval) || 
+							((impChord[i]>='0')&&(impChord[i]<='9')) ||
+							((impChord[i]>='A')&&(impChord[i]<='Z')) ||
+							((impChord[i]>='a')&&(impChord[i]<='z'))
+							){
+							txt[itxt]= impChord[i];
+							itxt++;
+						}
+					}
+				}
+			
+				txt[itxt]=0; 
+				itxt=0;
+				// Second field : interval of the notes
+				// Keep it in the array of chords
+				strcpy(Chords[iChord], txt);
+				iChord++;
+			}
+		}
+	}
+
+	if (cbindex < 0) cbindex = 0;
+	if (cbindex >= iChord) cbindex = 0;
+	toolBar.comboChords.SetCurSel(cbindex);
+	cb->SetCurSel(cbindex);
+}
+
+void CEditorWnd::OnButtonSelectChordFile()
+{
+	// Get filename
+	TCHAR szFilters[]= _T("Chords file (*.chords)|*.chords|All Files (*.*)|*.*||");
+
+	char chordsName[255];
+	if (ChordPathName[0]==0)
+		GeneratorFileName(chordsName, "Basic1.chords");
+	else
+	{
+		strcpy(chordsName, ChordPathName);
+		// Check if the file exists
+		if (_access (chordsName, 0) != 0) 
+			// File doesn't exists (0 if exists)
+			// Get default chord file
+			GeneratorFileName(chordsName, "Basic1.chords");
+	}
+
+	CFileDialog dlgFile(TRUE, _T("chords"), _T("*.chords"), OFN_HIDEREADONLY, szFilters);
+	dlgFile.m_ofn.lpstrTitle = "Select chords file";
+	dlgFile.m_ofn.lpstrFile = chordsName;
+		
+	if (dlgFile.DoModal() != IDOK)
+		return;
+	
+	CString pathName = dlgFile.GetPathName();
+	sprintf(ChordPathName, "%s", pathName);
+	pCB->WriteProfileString("ChordPathName", ChordPathName);
+
+	InitChords();
+}
+
+void CEditorWnd::OnCheckedChordOnce()
+{
+	if (UpdatingToolbar) return;
+	InsertChordOnce = GetCheckBoxChordOnce();
+	pCB->WriteProfileInt("InsertChordOnce", InsertChordOnce);
 }
 
 void CEditorWnd::OnComboBarSelect()
@@ -1006,6 +1202,23 @@ static DWORD CALLBACK MyStreamInCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb,
    return 0;
 }
 
+
+void CEditorWnd::GeneratorFileName(LPSTR FullFilename, LPSTR AFilename)
+{
+	char path_buffer[_MAX_PATH];
+	char drive[_MAX_DRIVE];
+	char dir[_MAX_DIR];
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	GetModuleFileName(NULL, path_buffer, sizeof(path_buffer)); 
+	_splitpath_s( path_buffer, drive, _MAX_DRIVE, dir, _MAX_DIR, fname,
+                    _MAX_FNAME, ext, _MAX_EXT );
+	if (AFilename[0]==0) 
+		sprintf(FullFilename,"%s%sGear\\Generators\\PatternXP", drive, dir);
+	else
+		sprintf(FullFilename,"%s%sGear\\Generators\\PatternXP\\%s", drive, dir, AFilename);
+}
+
 void CEditorWnd::DoShowHelp()
 {
 	UpdateCanvasSize();
@@ -1019,15 +1232,7 @@ void CEditorWnd::DoShowHelp()
 		helptext.SetTargetDevice(NULL, 1);
 		
 		char txt[255];
-		char path_buffer[_MAX_PATH];
-		char drive[_MAX_DRIVE];
-		char dir[_MAX_DIR];
-		char fname[_MAX_FNAME];
-		char ext[_MAX_EXT];
-		GetModuleFileName(NULL, path_buffer, sizeof(path_buffer)); 		// Load file "Jeskola Pattern XP.txt"
-		_splitpath_s( path_buffer, drive, _MAX_DRIVE, dir, _MAX_DIR, fname,
-                       _MAX_FNAME, ext, _MAX_EXT );
-		sprintf(txt,"%s%s\\Gear\\Generators\\Jeskola Pattern XP.txt", drive, dir);
+		GeneratorFileName(txt, "Jeskola Pattern XP.txt");
 
 		CFile cFile(TEXT(txt), CFile::modeRead);
 		EDITSTREAM es;
@@ -1037,6 +1242,11 @@ void CEditorWnd::DoShowHelp()
 		helptext.StreamIn(SF_TEXT, es); 
 	}
 	
+}
+
+void CEditorWnd::OnButtonInsertChord()
+{
+	pe.InsertChord();
 }
 
 int CEditorWnd::GetEditorPatternPosition()

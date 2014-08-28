@@ -138,6 +138,11 @@ BEGIN
 	BUTTON      32794
 	BUTTON      32795
 	SEPARATOR
+	BUTTON      32796
+	BUTTON      32797
+	BUTTON      32798
+	BUTTON      32799
+	SEPARATOR
 	BUTTON      32792
 	SEPARATOR
 	SEPARATOR
@@ -227,8 +232,14 @@ BEGIN
     PUSHBUTTON      "Humanize", 2032, 581, 1, 36, 14, 0, WS_EX_LEFT
     EDITTEXT        2033, 618, 3, 17, 12, ES_AUTOHSCROLL | ES_NUMBER, WS_EX_LEFT
     AUTOCHECKBOX    "and empty", 2034, 637, 4, 48, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Use toolbar", 2031, 700, 4, 48, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Help", 2012, 751, 4, 31, 8, 0, WS_EX_LEFT
+    
+	PUSHBUTTON      "Chord", 2035, 690, 1, 30, 14, 0, WS_EX_LEFT
+	COMBOBOX        2036, 720, 2, 38, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+	PUSHBUTTON      "...", 2038, 759, 1, 15, 14, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Once", 2037, 775, 4, 40, 8, 0, WS_EX_LEFT
+
+	AUTOCHECKBOX    "Use toolbar", 2031, 835, 4, 48, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Help", 2012, 886, 4, 31, 8, 0, WS_EX_LEFT
     LTEXT           "Bar", 0, 139, 5, 12, 8, SS_LEFT, WS_EX_LEFT
     AUTOCHECKBOX    "MIDI Edit", 2007, 91, 4, 45, 10, 0, WS_EX_LEFT
     PUSHBUTTON      "Font...", 2008, 51, 2, 37, 14, 0, WS_EX_LEFT
@@ -331,6 +342,9 @@ BEGIN
     32787                   "Shrink pattern"
     32789                   "Expand pattern"
 	32793					"Humanize (0..99)"
+	32796					"Insert chord"
+	32798					"Select chords file"
+	33799					"Insert chord notes only one time"
 
 END
 

@@ -37,6 +37,8 @@ public:
 	void ShowParamTextChanged();
 	void OnUpdateClipboard();
 	void OnUpdateSelection();
+	void OnUpdatePosition(); 
+
 
 private:
 	bool UpdatingToolbar;
@@ -47,6 +49,9 @@ private:
 	void InitToolbarData();
 	void DoShowHelp();
 	void UpdateButtons();
+	void InitChords();
+	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
+
 
 	bool GetCheckBoxToolbar();
 	void SetCheckBoxToolbar(bool AValue);
@@ -66,6 +71,12 @@ private:
 
 	bool GetCheckBoxHumanizeEmpty();
 	void SetCheckBoxHumanizeEmpty(bool AValue);
+
+	int	 GetComboBoxChords();
+	bool GetCheckBoxChordOnce();
+	void SetCheckBoxChordOnce(bool AValue);
+
+
 
 
 protected:
@@ -92,6 +103,8 @@ public:
 	int rowNumWndWidth;
 	int topWndHeight;
 
+	char Chords[100][20];
+
 //	CFuBar reBar;
 	CToolBar2 toolBar;
 	CDialogBar dlgBar;
@@ -100,7 +113,9 @@ public:
 	int BarComboIndex;
 	int DeltaHumanize;
 	bool HumanizeEmpty;
-
+	int ChordsComboIndex() {return GetComboBoxChords();};
+	char ChordPathName[255];
+	bool InsertChordOnce;
 	bool ShowParamText;
 	bool ShowTrackToolbar;
 
@@ -150,8 +165,12 @@ public:
 	afx_msg void OnCheckedHelp();
 	afx_msg void OnComboBarSelect();
 
-
 	afx_msg void OnCheckedToolbar();
+
+	afx_msg void OnButtonInsertChord();
+	afx_msg void OnButtonSelectChordFile();
+	afx_msg void OnCheckedChordOnce();
+
 
 };
 

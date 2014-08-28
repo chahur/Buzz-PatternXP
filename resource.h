@@ -37,6 +37,11 @@
 #define IDC_HUMANIZE_BUTTON				2032
 #define IDC_HUMANIZE_EDIT				2033
 #define IDC_HUMANIZE_EMPTY				2034
+#define IDC_INSERT_CHORD				2035
+#define IDC_CHORD_COMBO					2036
+#define IDC_CHECK_CHORD_ONCE			2037
+#define IDC_CHORD_FILE_BUTTON			2038
+
 
 #define ID_COLUMNS_BUTTON               32773
 #define ID_SELECT_FONT                  32774
@@ -69,6 +74,12 @@
 #define ID_HUMANIZE_DELTA				33794
 #define ID_CHECK_HUMANIZE_EMPTY_BT      32795
 #define ID_CHECK_HUMANIZE_EMPTY			33795
+#define ID_BT_INSERT_CHORD				32796
+#define ID_COMBO_CHORD_BT               32797
+#define ID_COMBO_CHORD                  33797
+#define ID_BT_CHORD_FILE                32798
+#define ID_CHECK_CHORD_ONCE_BT          32799
+#define ID_CHECK_CHORD_ONCE		        33799
 
 
 // Next default values for new objects

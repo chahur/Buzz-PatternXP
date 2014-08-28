@@ -48,9 +48,13 @@ public:
 	void InflatePattern(int delta); //BWC 
 	void Humanize(int delta, bool hEmpty);
 
+	void InsertChord();
+
 	bool CanCut();
 	bool CanCopy();
 	bool CanPaste();
+	bool CanInsertChord();
+
 
 	int GetColumnAtX(int x);
 	int GetColumnX(int column);

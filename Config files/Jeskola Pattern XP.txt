@@ -1,0 +1,51 @@
+[ctrl]
+R: Randomize
+I: Linear Interpolate
+T: Write State
+M: Mute Track
+B: Old Select(true)
+E: Old Select(false)
+U: Kill Selection
+W: Rotate
+G: Toggle Graphical Mode
+F: Clear Note Off
+J: Shift down Note Off
+A: Select All
+H: Insert chord
+PrevPage: First row
+NextPage : Last row
+Home : First col, first row
+End : Last col, last row
+0..9: cursorStep = n
+
+[ctrl + shift]
+R: Humanize
+I: Exponential Interpolate
+W: Rotate Reverse
+V: Merge
+T: Select track
+F: Add Note Off
+J: Shift up Note Off
+
+[shift]
+SUBTRACT: ShiftValues(-1)
+ADD: ShiftValues(1)
+DIVIDE: ShiftValues(-12)
+MULTIPLY: ShiftValues(12)
+
+[ctrl + alt]
+I: Import Old
+X: Export pattern as 'csv'
+P: Import pattern from 'csv'
+SUBTRACT: shrink pattern / 2
+ADD: expand pattern * 2
+
+PERIOD: Clear
+INSERT: Insert
+DELETE: Delete
+PrevPage: Prev measure
+NextPage : Next measure
+HOME : do as built-in editor
+1: Note off
+4: PlayRow (1 track)
+8: PlayRow (all tracks)
