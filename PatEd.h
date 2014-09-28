@@ -50,6 +50,8 @@ public:
 
 	void InsertChord();
 
+	void Interpolate(bool expintp);
+
 	bool CanCut();
 	bool CanCopy();
 	bool CanPaste();
@@ -79,6 +81,8 @@ private:
 	void Tab();
 	void ShiftTab();
 	int GetDigitAtX(int x);
+//	double Interpolate(double a, double v1, double v2, bool expintp, int InterpolateParam);
+
 	
 	int GetRowY(int y);
 	void UpdateStatusBar();
@@ -108,7 +112,6 @@ private:
 	bool InSelection(int row, int column);
 	void Randomize();
 
-	void Interpolate(bool expintp);
 	void ShiftValues(int delta);
 	void WriteState();
 	void MuteTrack();

@@ -76,7 +76,7 @@ private:
 	bool GetCheckBoxChordOnce();
 	void SetCheckBoxChordOnce(bool AValue);
 
-
+	int GetComboBoxInterpolate();
 
 
 protected:
@@ -103,7 +103,7 @@ public:
 	int rowNumWndWidth;
 	int topWndHeight;
 
-	char Chords[100][20];
+	char Chords[200][20];
 
 //	CFuBar reBar;
 	CToolBar2 toolBar;
@@ -114,11 +114,12 @@ public:
 	int DeltaHumanize;
 	bool HumanizeEmpty;
 	int ChordsComboIndex() {return GetComboBoxChords();};
+	int InterpolateComboIndex() {return GetComboBoxInterpolate();};
 	char ChordPathName[255];
 	bool InsertChordOnce;
 	bool ShowParamText;
 	bool ShowTrackToolbar;
-
+	int LINEAR_INTERPOLATE_PARAM;
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
@@ -170,6 +171,9 @@ public:
 	afx_msg void OnButtonInsertChord();
 	afx_msg void OnButtonSelectChordFile();
 	afx_msg void OnCheckedChordOnce();
+	afx_msg void OnButtonInterpolate();
+	afx_msg void OnComboInterpolateSelect();
+	
 
 
 };

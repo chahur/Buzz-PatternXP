@@ -41,7 +41,8 @@
 #define IDC_CHORD_COMBO					2036
 #define IDC_CHECK_CHORD_ONCE			2037
 #define IDC_CHORD_FILE_BUTTON			2038
-
+#define IDC_INTERPOLATE_BUTTON			2039
+#define IDC_INTERPOLATE_COMBO			2040
 
 #define ID_COLUMNS_BUTTON               32773
 #define ID_SELECT_FONT                  32774
@@ -80,6 +81,10 @@
 #define ID_BT_CHORD_FILE                32798
 #define ID_CHECK_CHORD_ONCE_BT          32799
 #define ID_CHECK_CHORD_ONCE		        33799
+#define ID_BT_INTERPOLATE               32800
+#define ID_INTERPOLATE_PARAM_BT         32801
+#define ID_INTERPOLATE_PARAM            33801
+
 
 
 // Next default values for new objects

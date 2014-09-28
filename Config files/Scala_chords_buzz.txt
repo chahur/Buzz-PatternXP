@@ -1,0 +1,163 @@
+﻿! 12 tone chords:
+<SCALA_SCALE_DEF 2^(1/12)>
+<SCALA_NOTATION E12>
+!
+1-1  Semitone Trichord   12
+1-1-2-3-1  All-interval Hexachord   12478
+1-1-3-1-3  Schönberg Anagram Hexachord   12569
+1-1-4-2  Bardos Chord   1268
+1-2  Phrygian Trichord   13
+1-2-2  Dorian Tetrachord   135
+1-2-2-1-2  Locrian Hexachord   13568
+1-2-4  All-interval Tetrachord 2   137
+1-3  Major-Minor Trichord I      14
+1-3-1  Chromatic Mezotetrachord     145
+1-3-2  All-interval Tetrachord 1        147
+1-4-3  Major Seventh 3rd inversion   148
+2-1  Minor Trichord      23
+2-1-2  Minor Tetrachord, Phrygian Tetrachord     235
+2-1-2-2  Minor Pentachord      2357     
+2-1-2-2-2  Minor Hexachord      23579
+2-2  Whole-Tone Trichord       24
+2-2-1  Major Tetrachord, Lydian Tetrachord     245
+2-2-1-2  Major Pentachord     2457
+2-2-1-2-2  Major Hexachord       24579
+2-2-2  Secundal Tetrachord      246
+2-2-3  Added Second "2" "add2", Mu Major     247
+2-2-3-2  Added Second & Sixth "6/2"    2479
+2-3        Second-Fourth Chord "4/2"      25
+2-3-2  Second-Fourth-Fifth Chord "sus2,4", "5/4/2"       257
+2-3-3  Half-diminished Seventh 3rd inversion        258
+2-3-4  Second-Fourth-Sixth Chord "6/4/2", Minor Seventh 3rd inversion      259
+2-4  Double Diminished, Augmented Sixth 2nd inversion        26
+2-4-3  Double Diminished Seventh, Dominant Seventh 3rd inversion      269
+2-5  Suspended Second "sus2", Second-Fifth Chord "5/2"      27
+2-5-2  Sixth Suspended Second "6sus2"    279
+2-5-3  Dominant Seventh Suspended Second "7sus2"    27A
+2-5-4  Major Seventh Suspended Second "maj7sus2"    27B
+3-1  Major-Minor Trichord II        34
+3-1-3  Major-Minor Tetrachord, Bimodal Chord       347
+3-1-4  Augmented-Major Tetrachord       349
+3-2        Minor Quartal Triad       35
+3-2-3  Third-Fourth Chord "4/3", Minor Seventh 2nd inversion     358
+3-2-4  Dominant Seventh 2nd inversion         359
+3-3  Diminished "mb5", Minor Trine       36 
+3-3-2  Dominant Seventh 1st inversion    368
+3-3-3  Diminished Seventh "dim"      369
+3-3-3-3  Strawinsky's Sacre-chord    369C
+3-3-3-3-2-3-3-3  Alpha Chord        363CEHKN
+3-3-4  Half-diminished Seventh "m7b5", Eulenspiegel Chord       36A
+3-3-5  Diminished-Major Seventh "mmaj7b5"     36B
+3-4  Minor Triad "m"      37
+3-4-1  Major Seventh 1st inversion        378
+3-4-2  Minor Sixth "m6"          379
+3-4-2-5  Minor Sixth Added Ninth "m6/9"         379E
+3-4-3  Minor Seventh "m7"       37A
+3-4-3-4  Minor Ninth "m9"        37AE
+3-4-3-4-3  Minor Eleventh "m11"       37AEH    
+3-4-3-4-3-4  Minor Thirteenth "m13"       37AEHL
+3-4-4  Minor-Major Seventh "mmaj7"      37B 
+3-4-4-3  Minor-Major Ninth "mmaj9"    37BE
+3-4-4-3-7  Minor-Major Thirteenth "mmaj13"    37BEL
+3-4-7  Minor Added Ninth "madd9"      37E
+3-5  Neapolitan Sixth, Major Triad 1st inversion     38
+3-5-3  Major Seventh Augmented Fifth "maj7#5"    38B
+3-6  Minor Trine 1st inversion    39
+3-6-3  Sixths Chord      39C
+3-7  Minor Quintal Triad     3A
+4-1-2  Added Fourth "add4"     457
+4-1-4  Major Seventh 2nd inversion   459
+4-2  Hard-diminished "b5"   46
+4-2-2-5 Enigmatic Pentachord    468D
+4-2-2-7 Augmented-Diminished Ninth    468F
+4-2-3  Half-diminished Seventh 2nd inversion   469
+4-2-4  Hard-diminished Seventh "7b5", French Sixth     46A
+4-2-4-3  Hard-diminished Minor Ninth "b9b5"    46AD
+4-2-4-3-8  Hard-diminished Minor Ninth Added Thirteenth "13b9b5"   46ADL
+4-2-4-4  Hard-diminished Ninth "9b5"        46AE
+4-2-4-5  Hard-diminished Seventh & Augmented Ninth "#9b5"     46AF
+4-2-8  Hard-diminished Added Ninth "b5add9"     46E
+4-3  Major Triad "maj"      47
+4-3-2  Sixte Ajoutée "6", Minor Seventh 1st inversion    479
+4-3-2-5  Added Sixth & Ninth "6/9"       479E
+4-3-2-5-4  Added Sixth & Ninth & Augmented Eleventh "6/9#11"      479EI
+4-3-3  Dominant Seventh "7", German Sixth      47A
+4-3-3-3  Dominant Ninth Minor "7b9"         47AD
+4-3-3-3-4  Dominant Ninth Minor Added Eleventh "11b9"   47ADH  
+4-3-3-3-5-3  Augmented Thirteenth Minor Ninth "13b9#11"     47ADIL
+4-3-3-3-8  Dominant Ninth Minor Added Thirteenth "13b9"      47ADL
+4-3-3-4  Dominant Ninth "9"      47AE
+4-3-3-4-3  Dominant Eleventh "11"          47AEH
+4-3-3-4-3-4  Dominant Thirteenth "13"     47AEHK
+4-3-3-4-4  Dominant Ninth Augmented Eleventh "9#11"     47AEI
+4-3-3-4-4-3  Augmented Thirteenth "13#11", "7#11", Lydian Dominant      47AEIL
+4-3-3-4-4-3-4  Augmented Fifteenth "#15"     47AEILP
+4-3-3-5  Dominant Augmented Ninth "7#9", Altered Dominant     47AF
+4-3-3-7  Dominant Seventh Added Eleventh "7/11"       47AH
+4-3-3-7-4  "11/7/6"                                47AHL
+4-3-3-11 Dominant Seventh Added Thirteenth "7/13"        47AL
+4-3-4  Major Seventh "maj7" "*"          47B
+4-3-4-3  Major Ninth "maj9"                47BE
+4-3-4-3-3  Major Eleventh "maj11"     47BEH
+4-3-4-3-3-4  Major Thirteenth "maj13"    47BEHL
+4-3-4-3-4  Lydian "*#11"         47BEI
+4-3-4-7  Lydian "*#11"     47BI
+4-3-7  Added Ninth "add9"     47E
+4-4  Augmented "aug" "#5", Major Trine    48
+4-4-2  Augmented Dominant Seventh "7+", "7#5"      48A
+4-4-2-3  Augmented Dominant Seventh Minor Ninth "7#5b9"     48AD
+4-4-2-4  Augmented Dominant Ninth "9#5"       48AE
+4-4-2-5  Augmented Dominant Seventh Augmented Ninth "7#5#9"     48AF
+4-4-3  Augmented Major Seventh "maj7#5"    48B
+4-4-4  Major Augmented Tetrad      48C
+4-4-6  Augmented Added Ninth "#5add9"    48E
+4-5  Minor Triad 1st inversion       49
+4-5-2  Sixth-Seventh Chord "7/6"      49B
+4-5-5  Sixth-Ninth Chord "9/6"    49E
+4-6  Augmented Sixth "aug6", Italian Sixth      4A
+4-7  Major Quintal Triad             4B
+4-7-3  Seventh-Ninth Chord "9/7"      4BE
+5-1  Viennese Trichord          56
+5-1-1  Dream Chord         567
+5-2  Suspended Fourth "sus4"       57    
+5-2-2  Sixth Suspended Fourth "6sus4"       579
+5-2-3  Dominant Seventh Suspended Fourth "7sus4"     57A
+5-2-3-4  Dominant Ninth Suspended Fourth "9sus4"       57AE
+5-2-3-4-7  Thirteenth Suspended Fourth "13sus4"      57AEL
+5-2-4  Major Seventh Suspended Fourth "maj7sus4"     57B
+5-2-7  Fourth-Ninth Chord "9/4" "sus4add9"          57E
+5-3  Minor Triad 2nd inversion       58
+5-4  Fourth-Sixth Chord, Major Triad 2nd inversion, "6/4"    59
+5-5  Quartal Triad            5A                  
+5-5-5  Quartal Tetrad      5AF
+E A D.1 G.1 B.1  =5-5-5-4 So What Chord     5AFJ
+5-6  Fourth-Seventh Chord "7/4"     5B
+6-2  Augmented Sixth 1st inversion     68
+6-3  Minor Trine 2nd inversion       69
+F B D#.1 G#.1  = 6-4-5         Tristan Chord    6AF
+C F# Bb E.1 A.1 D.2  =Scriabin's Mystic Chord, Prometheus Chord   6-4-6-5-5   6AGLQ
+E B Db.1 F.1 Ab.1  =Elektra Chord  7-2-4-3 79DG
+7-3  Minor Quintal Triad     7A  
+7-4  Major Quintal Triad     7B
+7-7  Quintal Triad               7E 
+7-7-7-7  Fifths Chord         7ELS 
+7-7-10  Quintal Tetrad        7EO
+C G# B E.1 A.1  =Farben Chord        8-3-5-5    8BGL
+E.-1 D G C.1  =Steely Dan Chord       AFK
+12-7-5-4-3  Overtone         CJOSV
+3-4-5-7-12  Undertone        37CJV
+C E F# G A# C#.1  =Petrushka Chord       4-2-1-3-3    467AD
+E.-2 G.-2 B.-2 G.-1 G E.1 G.1 B.1  =Psalms Chord
+C Bb E.1 D.2 G#.3 F#.3 =Whole-Tone Chord
+!
+! Messiaen's chords:
+!
+B.-1 E Gb G Bb Eb.1 F.1 A.1  =orangé      578BGIM
+Bb.-1 Eb F G B C.1 Gb.1 Ab.1  =rouge      579DEKM
+A.-1 D F G Ab Eb.1 Gb.1 Bb.1  =gris et or         58ABILP
+C#.-1 C G# D.1  =vert pâle et argent         BJP
+D.-1 E C#.1 A.1 =bleu=        14-9-8           ENV
+G A C.1 D.1 F.1 B.1 E.2  =Accord sur dominante 2-3-2-3-6-5    257AGL
+C E G Bb D.1 F#.1 G#.1 B.1  =Accord de la résonance            47AEIKN
+Db G C.1 F#.1 B.1 F.2  =Accord en quartes  6-5-6-5-6              6BHM
+!

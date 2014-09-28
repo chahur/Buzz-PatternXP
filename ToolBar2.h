@@ -28,6 +28,7 @@ public:
 	CButton checkHumanizeEmpty;
 	CComboBox comboChords;
 	CButton checkChordsOnce;
+	CComboBox comboInterpolate;
 	CMICallbacks *pCB;
 	afx_msg LRESULT CToolBar2::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg BOOL OnToolTipNotify(UINT id, NMHDR *pNMHDR,LRESULT *pResult);

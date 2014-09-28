@@ -108,6 +108,11 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	
 	ON_BN_CLICKED(ID_CHECK_CHORD_ONCE, OnCheckedChordOnce) 
 	ON_BN_CLICKED(IDC_CHECK_CHORD_ONCE, OnCheckedChordOnce) 
+
+	ON_COMMAND(ID_BT_INTERPOLATE, OnButtonInterpolate)
+	ON_BN_CLICKED(IDC_INTERPOLATE_BUTTON, OnButtonInterpolate) 
+	ON_CBN_SELENDOK(ID_INTERPOLATE_PARAM, OnComboInterpolateSelect)
+	ON_CBN_SELENDOK(IDC_INTERPOLATE_COMBO, OnComboInterpolateSelect)
 	
 
 END_MESSAGE_MAP()
@@ -292,7 +297,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.GetItemRect(index, &rect);
 	rect.top = 1;  
     rect.bottom = rect.top + 80;
-	toolBar.comboChords.Create(CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_TABSTOP | WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_CHORD);
+	toolBar.comboChords.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_CHORD);
 	toolBar.comboChords.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 
 	// Insert "Insert chord once" check box
@@ -303,7 +308,16 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.checkChordsOnce.Create("Once", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_CHORD_ONCE);
 	toolBar.checkChordsOnce.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 	
-	
+	// Insert interpolate Combo
+	index = toolBar.CommandToIndex(ID_INTERPOLATE_PARAM_BT);
+    toolBar.SetButtonInfo(index, ID_INTERPOLATE_PARAM_BT, TBBS_SEPARATOR, 64); 
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 1;  
+    rect.bottom = rect.top + 80;
+	toolBar.comboInterpolate.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_INTERPOLATE_PARAM);
+	toolBar.comboInterpolate.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+
+
 	// Insert "Use toolbar" check box
 	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
     toolBar.SetButtonInfo(index, ID_CHECK_TOOLBAR_BT, TBBS_SEPARATOR, 72);
@@ -586,6 +600,18 @@ void CEditorWnd::SetCheckBoxChordOnce(bool AValue)
 		pc->SetCheck(BST_VAL);
 	}
 }
+
+
+int CEditorWnd::GetComboBoxInterpolate()
+{
+	if (toolbarvisible)  
+		return toolBar.comboInterpolate.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_INTERPOLATE_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
 
 
 void CEditorWnd::ToolbarChanged()
@@ -906,6 +932,7 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_DOWNOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_HUMANIZE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_INTERPOLATE, pe.CanCopy());
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); }
@@ -1040,6 +1067,43 @@ void CEditorWnd::InitToolbarData()
 	toolBar.comboShrink.SetCurSel(0);
 
     InitChords();
+
+	toolBar.comboInterpolate.AddString("Up-max");
+	toolBar.comboInterpolate.AddString("Up-5"); 
+	toolBar.comboInterpolate.AddString("Up-4");
+	toolBar.comboInterpolate.AddString("Up-3");
+	toolBar.comboInterpolate.AddString("Up-2");
+	toolBar.comboInterpolate.AddString("Up-1");
+	toolBar.comboInterpolate.AddString("Linear");
+	toolBar.comboInterpolate.AddString("Down-1");
+	toolBar.comboInterpolate.AddString("Down-2");
+	toolBar.comboInterpolate.AddString("Down-3");
+	toolBar.comboInterpolate.AddString("Down-4");
+	toolBar.comboInterpolate.AddString("Down-5");
+	toolBar.comboInterpolate.AddString("Down-max");
+
+	
+	CComboBox *cb3 = (CComboBox *)dlgBar.GetDlgItem(IDC_INTERPOLATE_COMBO);
+	cb3->AddString("4th root");
+	cb3->AddString("Up-5");
+	cb3->AddString("Up-4");
+	cb3->AddString("Up-3");
+	cb3->AddString("Up-2");
+	cb3->AddString("Up-1");
+	cb3->AddString("Linear");
+	cb3->AddString("Down-1");
+	cb3->AddString("Down-2");
+	cb3->AddString("Down-3");
+	cb3->AddString("Down-4");
+	cb3->AddString("Down-5");
+	cb3->AddString("4th power");
+
+	LINEAR_INTERPOLATE_PARAM = 6;
+	int indexInterpolate = pCB->GetProfileInt("IndexInterpolate", LINEAR_INTERPOLATE_PARAM);
+
+	toolBar.comboInterpolate.SetCurSel(indexInterpolate);
+	cb3->SetCurSel(indexInterpolate);
+
 }
 
 void CEditorWnd::InitChords()
@@ -1248,6 +1312,17 @@ void CEditorWnd::OnButtonInsertChord()
 {
 	pe.InsertChord();
 }
+
+void CEditorWnd::OnButtonInterpolate()
+{
+	pe.Interpolate(false);
+}
+
+void CEditorWnd::OnComboInterpolateSelect()
+{
+	pCB->WriteProfileInt("IndexInterpolate", GetComboBoxInterpolate());
+}
+
 
 int CEditorWnd::GetEditorPatternPosition()
 {
