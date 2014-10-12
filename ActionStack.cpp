@@ -18,7 +18,7 @@ public:
 
 	virtual void Write(void *pbuf, int const numbytes)
 	{
-		int oldsize = pdata->size();
+		int oldsize = (int)pdata->size();
 		pdata->resize(oldsize + numbytes);
 		memcpy(&(*pdata)[oldsize], pbuf, numbytes);		// try to avoid: &pdata[oldsize]
 	}
@@ -81,6 +81,7 @@ void CActionStack::SaveState(CEditorWnd *pew, CState &s)
 	pew->pPattern->Write(&mdo);
 	s.patternLength = pew->pCB->GetPatternLength(pew->pPattern->pPattern);
 	s.cursorpos = pew->pe.cursor;
+	s.scrollpos = pew->pe.GetScrollPos();
 }
 
 void CActionStack::RestoreState(CEditorWnd *pew)
@@ -99,6 +100,7 @@ void CActionStack::RestoreState(CEditorWnd *pew)
 		pew->pPattern->Init(pew->pCB, ps->patternLength);
 		pew->pe.cursor = ps->cursorpos;
 		pew->pCB->SetPatternLength(pew->pPattern->pPattern, ps->patternLength);
+		pew->pe.ScrollTo(ps->scrollpos);
 
 	}
 }

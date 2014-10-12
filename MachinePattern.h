@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "../../buzz/MachineInterface.h"
 #include "ActionStack.h"
 #include "RecQueue.h"
@@ -169,7 +170,7 @@ public:
 		trackOffset = to;
 		effectCount = 0;
 		effectDataCount = 0;
-		modulators = shared_ptr<CModulators>(new CModulators());
+		modulators = make_shared<CModulators>();
 	}
 
 	void AddModulator(int param, int mod)
@@ -198,7 +199,7 @@ public:
 
 struct ActiveMidiNote
 {
-	enum State { note_on_pending, playing, note_off_pending, recording };
+	enum State { note_on_pending, playing, note_off_pending, recording, pw_or_cc };
 
 	State state;
 	int note;
@@ -206,6 +207,8 @@ struct ActiveMidiNote
 	int previousNote;
 	int delaytime;
 	int cuttime;
+	int pw;
+	int cc;
 	int rowInBeat;
 	int RPB;
 };
@@ -377,6 +380,15 @@ public:
 			return GetNoValue();
 		else
 			return (*i).second;
+	}
+
+	int GetValueClamp(int row, int mini, int maxi) const
+	{
+		MapIntToValue::const_iterator i = events.find(row);
+		if (i == events.end())
+			return GetNoValue();
+		else
+			return min(max((*i).second, mini), maxi);
 	}
 
 	void SetValue(int row, int value)
@@ -640,6 +652,7 @@ public:
 	}
 
 	MapIntToValue::const_iterator EventsBegin() const { return events.begin(); }
+	MapIntToValue::const_iterator EventsBeginAt(int offset) const { return events.lower_bound(offset); }
 	MapIntToValue::const_iterator EventsEnd() const { return events.end(); }
 
 	bool MatchMachine(CMachine *pmac) const { return pMachine == pmac; }
@@ -673,30 +686,32 @@ public:
 	bool IsInternal() const { return paramIndex < 0; }
 	bool IsMidi() const { return paramIndex <= FirstMidiTrackParameter; }
 	bool IsMidiNote() const { return paramIndex == MidiNote; }
+	bool IsMidiPW() const { return paramIndex == MidiPitchWheel; }
+	bool IsMidiCC() const { return paramIndex == MidiCC; }
 
 public:
-	int GetDigitCount()
+	int GetDigitCount() const
 	{
 		switch(GetParamType())
 		{
 		case pt_note: return 3;
 		case pt_switch: return 1;
-		case pt_byte: return 2;
+		case pt_byte: return IsAscii() ? 1 : 2;
 		case pt_word: return 4;
 		case pt_internal: return 2;
 		default: ASSERT(false); return 0;
 		}
 	}
 
-	int GetWidth()
+	int GetWidth() const
 	{
 		if (graphical)
 			return 10;
 		else
-			return GetDigitCount() + 1;
+			return GetDigitCount() + (IsTiedToNext() ? 0 : 1);
 	}
 	
-	bool IsNormalValue(int value)
+	bool IsNormalValue(int value) const
 	{
 		if (GetParamType() == pt_internal)
 			return false;
@@ -719,6 +734,8 @@ public:
 
 		SetValue(row, pcb->GetParameterState(pMachine, (paramGroup + 1), paramTrack, GetIndexInGroup()));
 	}
+
+	int GetIndex() const { return paramIndex; }
 
 	int GetIndexInGroup() const
 	{
@@ -784,8 +801,9 @@ public:
 					
 				if (modulators)
 				{
-					if (GetParamType() == pt_note)
-						value = EncodeNote(modulators->DiatonicTransposition(DecodeNote(value)));
+					if (GetParamType() == pt_note && IsNormalValue(value))
+						value = EncodeNote(min(max(modulators->DiatonicTransposition(DecodeNote(value)), 0), 9 * 12 + 11));
+
 				}
 
 				pcb->ControlChange(pMachine, (paramGroup + 1) | 16, paramTrack + trackoffset, GetIndexInGroup(), GetModulatedValue(value, mod));
@@ -813,9 +831,11 @@ public:
 					{
 						ActiveMidiNote n;
 						n.note = DecodeNote((*i).second);
+						if (modulators) n.note = min(max(modulators->DiatonicTransposition(n.note), 0), 9 * 12 + 11);
 						n.velocity = DefaultMidiVelocity;
 						n.delaytime = 0;
 						n.cuttime = 0x7fffffff;
+						n.pw = n.cc = -1;
 						n.state = ActiveMidiNote::note_on_pending;
 						n.rowInBeat = gdata.currentRowInBeat;
 						n.RPB = gdata.currentRPB;
@@ -839,12 +859,46 @@ public:
 							(*n).second.velocity = (*i).second;
 					}
 				}
+				else if (ip == MidiPitchWheel)
+				{
+					auto n = gdata.activeMidiNotes.find(MacIntPair(pMachine, paramTrack));
+					if (n == gdata.activeMidiNotes.end())
+					{
+						gdata.activeMidiNotes[MacIntPair(pMachine, paramTrack)] = ActiveMidiNote();
+						n = gdata.activeMidiNotes.find(MacIntPair(pMachine, paramTrack));
+						(*n).second.state = ActiveMidiNote::pw_or_cc;
+						(*n).second.cc = -1;
+						(*n).second.delaytime = 0;
+						(*n).second.cuttime = 0x7fffffff;
+					}
+
+					(*n).second.rowInBeat = gdata.currentRowInBeat;
+					(*n).second.RPB = gdata.currentRPB;
+					(*n).second.pw = (*i).second;
+				}
+				else if (ip == MidiCC)
+				{
+					auto n = gdata.activeMidiNotes.find(MacIntPair(pMachine, paramTrack));
+					if (n == gdata.activeMidiNotes.end())
+					{
+						gdata.activeMidiNotes[MacIntPair(pMachine, paramTrack)] = ActiveMidiNote();
+						n = gdata.activeMidiNotes.find(MacIntPair(pMachine, paramTrack));
+						(*n).second.state = ActiveMidiNote::pw_or_cc;
+						(*n).second.pw = -1;
+						(*n).second.delaytime = 0;
+						(*n).second.cuttime = 0x7fffffff;
+					}
+
+					(*n).second.rowInBeat = gdata.currentRowInBeat;
+					(*n).second.RPB = gdata.currentRPB;
+					(*n).second.cc = (*i).second;
+				}
 				else if (ip == MidiNoteDelay)
 				{
 					auto n = gdata.activeMidiNotes.find(MacIntPair(pMachine, paramTrack));
 					if (n != gdata.activeMidiNotes.end())
 					{
-						if ((*n).second.state == ActiveMidiNote::note_on_pending)
+						if ((*n).second.state == ActiveMidiNote::note_on_pending || (*n).second.pw >= 0 || (*n).second.cc >= 0)
 							(*n).second.delaytime = (*i).second;
 						else if ((*n).second.state == ActiveMidiNote::note_off_pending)
 							(*n).second.cuttime = (*i).second;
@@ -865,7 +919,7 @@ public:
 			{
 				if (ip == SPGlobalTrigger || ip == SPTrackTrigger)
 				{
-					(*sptv)[tid] = shared_ptr<CSubPatternControl>(new CSubPatternControl((*i).second, paramTrack));
+					(*sptv)[tid] = make_shared<CSubPatternControl>((*i).second, paramTrack);
 				}
 				else
 				{
@@ -930,17 +984,42 @@ public:
 		return (pParam->Flags & MPF_WAVE) != 0; 
 	}
 
+	bool IsTiedToNext() const 
+	{ 
+		assert(pParam != NULL); 
+		return (pParam->Flags & MPF_TIE_TO_NEXT) != 0; 
+	}
+
+	bool IsAscii() const 
+	{ 
+		assert(pParam != NULL); 
+		return (pParam->Flags & MPF_ASCII) != 0; 
+	}
+
+	char const *GetName() const 
+	{
+		assert(pParam != NULL); 
+		return pParam->Name;
+	}
+
+	bool NameEqualsIgnoreCase(char const *str) const 
+	{
+		assert(pParam != NULL); 
+		return ::_stricmp(pParam->Name, str) == 0;
+	}
+
+	bool NameStartsWithIgnoreCase(char const *str) const 
+	{
+		assert(pParam != NULL); 
+		return ::_strnicmp(pParam->Name, str, strlen(str)) == 0;
+	}
+
 	char const *GetDescription() const 
 	{
 		assert(pParam != NULL); 
 		return pParam->Description; 
 	}
 
-	char const *GetShortDescription() const 
-	{
-		assert(pParam != NULL); 
-		return pParam->Name; 
-	}
 
 	char const *DescribeValue(int value, CMICallbacks *pcb)	
 	{ 
@@ -967,6 +1046,19 @@ public:
 			MapIntToInt::const_iterator rmi = remap.find(pr);
 			if (rmi != remap.end())
 				(*i).second = (*rmi).second;
+		}
+
+	}
+
+	void UpdateWaveReferences(byte const *remap)
+	{
+		if (!IsWaveParameter()) return;
+
+		for (MapIntToValue::iterator i = events.begin(); i != events.end(); i++)
+		{
+			int wr = (*i).second;
+			if (wr >= WAVE_MIN && wr <= WAVE_MAX && remap[wr] >= WAVE_MIN && remap[wr] <= WAVE_MAX)
+				(*i).second = remap[wr];
 		}
 
 	}
@@ -1030,7 +1122,7 @@ public:
 			numBeats = BuzzTicksToBeats(numrows);
 
 		for (ColumnVector::iterator i = pold->columns.begin(); i != pold->columns.end(); i++)
-			columns.push_back(shared_ptr<CColumn>(new CColumn((*i).get(), copydata)));
+			columns.push_back(make_shared<CColumn>((*i).get(), copydata));
 	}
 
 	void Init(CMICallbacks *pcb, int numrows, bool loadedpattern = false)
@@ -1078,9 +1170,9 @@ public:
 
 		for (int i = 0; i < count; i++)
 		{
-			CColumn *pc = new CColumn();
+			auto pc = make_shared<CColumn>();
 			pc->Read(pi, ver);
-			columns.push_back(shared_ptr<CColumn>(pc));
+			columns.push_back(pc);
 		}
 	}
 
@@ -1228,12 +1320,12 @@ public:
 
 		for (int i = 0; i < cpt; i++)
 		{
-			shared_ptr<CColumn> pc = shared_ptr<CColumn>(new CColumn(columns[lastcoli+i].get(), false, true));
+			shared_ptr<CColumn> pc = make_shared<CColumn>(columns[lastcoli+i].get(), false, true);
 			columns.insert(columns.begin() + lastcoli + cpt + i, pc);
 		}
 
-//		int nmt = pcb->GetNumTracks(pmac);
-//		if (nmt < tc + 1)
+		int nmt = pcb->GetNumTracks(pmac);
+		if (nmt < tc + 1)
 			pcb->SetNumTracks(pmac, tc + 1);
 
 	}
@@ -1267,6 +1359,15 @@ public:
 		return shared_ptr<CColumn>();
 	}
 
+	shared_ptr<CColumn> GetColumn(function<bool (shared_ptr<CColumn> const &)> match) const
+	{
+		for (auto i = columns.begin(); i != columns.end(); i++)
+			if (match(*i))
+				return (*i);
+
+		return shared_ptr<CColumn>();
+	}
+
 	void GetColumns(ColumnVector &cv, MacIntPair const &mpp)
 	{
 		for (ColumnVector::iterator i = columns.begin(); i != columns.end(); i++)
@@ -1289,10 +1390,10 @@ public:
 
 	shared_ptr<CColumn> CreateColumn(MacIntPair const &mpp, int track, CMICallbacks *pcb)
 	{
-		return shared_ptr<CColumn>(new CColumn(pcb, mpp, track));
+		return make_shared<CColumn>(pcb, mpp, track);
 	}
 
-	void EnableColumns(MacParamPairVector const &_ec, CMICallbacks *pcb, int mintracks = 1)
+	void EnableColumns(MacParamPairVector const &_ec, CMICallbacks *pCB, int mintracks = 1, int rpb = -1)
 	{
 		ColumnVector cv;
 
@@ -1301,7 +1402,7 @@ public:
 
 		for (MacParamPairVector::const_iterator i = _ec.begin(); i != _ec.end(); i++)
 		{
-			if (IsGlobalParameter(*i, pcb))
+			if (IsGlobalParameter(*i, pCB))
 				ecg.push_back(*i);
 			else
 				ect.push_back(*i);
@@ -1310,16 +1411,16 @@ public:
 		for (MacParamPairVector::const_iterator i = ecg.begin(); i != ecg.end(); i++)
 		{
 			shared_ptr<CColumn> c = GetColumn(*i, 0);
-			if (!c) c = CreateColumn(*i, 0, pcb);
+			if (!c) c = CreateColumn(*i, 0, pCB);
 			cv.push_back(c);
 		}
-
 
 		for (MacParamPairVector::const_iterator i = ect.begin(); i != ect.end(); i++)
 		{
 			vector<ColumnVector> tv;
 
 			int maxtracks = mintracks;
+			maxtracks = max(maxtracks, GetTrackCount((*i).first));
 
 			MacParamPairVector::const_iterator j = i;
 			do
@@ -1337,14 +1438,19 @@ public:
 					if (tv[c].size() > 0)
 						cv.push_back(tv[c][t]);
 					else
-						cv.push_back(shared_ptr<CColumn>(CreateColumn(MacIntPair(*(i + c)), t, pcb)));
+						cv.push_back(shared_ptr<CColumn>(CreateColumn(MacIntPair(*(i + c)), t, pCB)));
 				}
 			}
 
 			i = i + tv.size() - 1;
 		}
 
+		MACHINE_LOCK;
 		columns = cv;
+
+		if (rpb > 0)
+			SetRowsPerBeat(rpb);
+
 	}
 
 	void PlayRow(CMICallbacks *pcb, int row, bool immediate, MapTrackIDToSPControl *sptv, int trackoffset, shared_ptr<CModulators> mod, CGlobalData &gdata)
@@ -1453,6 +1559,15 @@ public:
 			(*i)->UpdatePatternReferences(remap);
 	}
 
+	void UpdateWaveReferences(byte const *remap)
+	{
+		for (ColumnVector::iterator i = columns.begin(); i != columns.end(); i++)
+			(*i)->UpdateWaveReferences(remap);
+
+		for (ColumnVector::iterator i = deletedColumns.begin(); i != deletedColumns.end(); i++)
+			(*i)->UpdateWaveReferences(remap);
+	}
+
 	int AllocateMidiTrack(CMachine *pmac, int row, int delay, MapMacAndTrackToActiveMidiNote &notes, int tc)
 	{
 		for (int t = 0; t < tc; t++)
@@ -1464,6 +1579,11 @@ public:
 
 			if (i == notes.end())
 			{
+				auto pwcol = GetColumn(MacIntPair(pmac, MidiPitchWheel), t).get();
+				if (pwcol != NULL && pwcol->HasValue(row)) continue;
+				auto cccol = GetColumn(MacIntPair(pmac, MidiCC), t).get();
+				if (cccol != NULL && cccol->HasValue(row)) continue;
+
 				auto notecol = GetColumn(MacIntPair(pmac, MidiNote), t).get();
 				if (notecol != NULL)
 				{
@@ -1582,6 +1702,79 @@ public:
 
 	}
 
+	int AllocateMidiCCTrack(CMachine *pmac, int row, int delay, MapMacAndTrackToActiveMidiNote &notes, int tc)
+	{
+		for (int t = 0; t < tc; t++)
+		{
+			MapMacAndTrackToActiveMidiNote::iterator i;
+			
+			for (i = notes.begin(); i != notes.end(); i++)
+				if ((*i).first.second == t) break;
+
+			if (i == notes.end())
+			{
+				auto notecol = GetColumn(MacIntPair(pmac, MidiNote), t).get();
+				auto pwcol = GetColumn(MacIntPair(pmac, MidiPitchWheel), t).get();
+				auto cccol = GetColumn(MacIntPair(pmac, MidiCC), t).get();
+				auto delaycol = GetColumn(MacIntPair(pmac, MidiNoteDelay), t).get();
+				auto cutcol = GetColumn(MacIntPair(pmac, MidiNoteCut), t).get();
+
+				bool gotstuff = notecol != NULL && notecol->HasValue(row);
+				gotstuff |= pwcol != NULL && pwcol->HasValue(row);
+				gotstuff |= cccol != NULL && cccol->HasValue(row);
+				gotstuff |= cutcol != NULL && cutcol->HasValue(row);
+
+				if (!gotstuff) return t;
+			}
+		}
+
+		return tc > 0 ? 0 : -1;
+	}
+
+	void RecordMidiCCs(int row, CRecQueue::Event const &e, CGlobalData &gdata)
+	{
+		int tc = GetTrackCount(e.pmac);
+		if (tc < 1) return;
+
+		if (e.param == 255)
+		{
+			if (!HasMidiPWColumn()) return;
+		}
+		else if (e.param >= 0 && e.param <= 127)
+		{
+			if (!HasMidiCCColumn()) return;
+		}
+		else
+		{
+			return;
+		}
+
+
+		auto range = GetRowSubtickRange(row % gdata.currentRPB, gdata.currentRPB, gdata.subticksPerTick);
+		int delay = min(max((gdata.currentSubtick - range.first) * 96 / (range.second - range.first), 0), 95);
+
+		int rectrack = AllocateMidiCCTrack(e.pmac, row, delay, gdata.recordingMidiNotes, tc);
+		if (rectrack < 0) return;
+
+		if (e.param == 255)
+		{
+			auto pwcol = GetColumn(MacIntPair(e.pmac, MidiPitchWheel), rectrack).get();
+			if (pwcol == NULL) return;
+			pwcol->SetValue(row, e.value);
+		}
+		else
+		{
+			auto cccol = GetColumn(MacIntPair(e.pmac, MidiCC), rectrack).get();
+			if (cccol == NULL) return;
+			cccol->SetValue(row, (e.param << 8) | e.value);
+		}
+
+		auto delaycol = GetColumn(MacIntPair(e.pmac, MidiNoteDelay), rectrack).get();
+		if (delaycol != NULL && delay != 0) delaycol->SetValue(row, delay);
+
+
+	}
+
 
 	void Record(int row, CRecQueue &rq, CGlobalData &gdata)
 	{
@@ -1594,13 +1787,19 @@ public:
 		for (int ei = 0; ei < (int)ev.size(); ei++)
 		{
 			CRecQueue::Event const &e = ev[ei];
-			if (e.group < 0 && e.value > 0)	RecordMidiNoteOns(row, e, gdata);
+			if (e.group == -1 && e.value > 0)	RecordMidiNoteOns(row, e, gdata);
 		}
 
 		for (int ei = 0; ei < (int)ev.size(); ei++)
 		{
 			CRecQueue::Event const &e = ev[ei];
-			if (e.group < 0 && e.value == 0) RecordMidiNoteOffs(row, e, gdata);
+			if (e.group == -1 && e.value == 0) RecordMidiNoteOffs(row, e, gdata);
+		}
+
+		for (int ei = 0; ei < (int)ev.size(); ei++)
+		{
+			CRecQueue::Event const &e = ev[ei];
+			if (e.group == -2) RecordMidiCCs(row, e, gdata);
 		}
 
 
@@ -1637,9 +1836,32 @@ public:
 		return false;
 	}
 
+	bool HasMidiPWColumn() const
+	{
+		for (auto i = columns.begin(); i != columns.end(); i++)
+			if ((*i)->IsMidiPW())
+				return true;
+
+		return false;
+	}
+
+	bool HasMidiCCColumn() const
+	{
+		for (auto i = columns.begin(); i != columns.end(); i++)
+			if ((*i)->IsMidiCC())
+				return true;
+
+		return false;
+	}
+
+	int ScaleToMidiTime(int row, int delay, int range) const
+	{
+		return (range * row + delay) * 960 * BUZZ_TICKS_PER_BEAT / (range * rowsPerBeat);
+	}
+
 	bool ExportMidiEvents(CMachineDataOutput *pout, CMachine *pmac) const
 	{
-		if (!HasMidiNoteColumn()) return false;
+		// if (!HasMidiNoteColumn()) return false;
 		int tc = GetTrackCount(pmac);
 		if (tc < 1) return false;
 
@@ -1653,9 +1875,41 @@ public:
 		{
 			notes[i] = -1;
 			notecol[i] = GetColumn(MacIntPair(pmac, MidiNote), i).get();
+			if (notecol[i] == NULL)
+			{
+				notecol[i] = GetColumn([=] (shared_ptr<CColumn> const &c)
+				{ 
+					return c->GetParamType() == pt_note && c->IsTrackParam() && c->GetTrack() == i && c->NameEqualsIgnoreCase("note"); 
+				}).get();
+				if (notecol[i] == NULL) return false;
+			}
+
 			velcol[i] = GetColumn(MacIntPair(pmac, MidiVelocity), i).get();
+			if (velcol[i] == NULL)
+			{
+				velcol[i] = GetColumn([=] (shared_ptr<CColumn> const &c)
+				{ 
+					return c->GetParamType() == pt_byte && c->IsTrackParam() && c->GetTrack() == i && (c->NameEqualsIgnoreCase("note velocity") || c->NameEqualsIgnoreCase("velocity")); 
+				}).get();
+			}
+
 			delaycol[i] = GetColumn(MacIntPair(pmac, MidiNoteDelay), i).get();
+			if (delaycol[i] == NULL)
+			{
+				delaycol[i] = GetColumn([=] (shared_ptr<CColumn> const &c)
+				{ 
+					return c->GetParamType() == pt_byte && c->IsTrackParam() && c->GetTrack() == i && c->NameEqualsIgnoreCase("note delay"); 
+				}).get();
+			}
+
 			cutcol[i] = GetColumn(MacIntPair(pmac, MidiNoteCut), i).get();
+			if (cutcol[i] == NULL)
+			{
+				cutcol[i] = GetColumn([=] (shared_ptr<CColumn> const &c)
+				{ 
+					return c->GetParamType() == pt_byte && c->IsTrackParam() && c->GetTrack() == i && c->NameEqualsIgnoreCase("note cut"); 
+				}).get();
+			}
 		}
 
 		vector<pair<int, int>> events;
@@ -1664,13 +1918,16 @@ public:
 		{
 			for (int t = 0; t < tc; t++)
 			{
+				int const delayrange = (delaycol[t] != NULL) ? (delaycol[t]->GetMaxValue() + 1) : 96;
+				int const cutrange = (cutcol[t] != NULL) ? (cutcol[t]->GetMaxValue() + 1) : 96;
+
 				int note = -1;
 				int velocity = DefaultMidiVelocity;
 				int delay = 0;
-				int cut = 96;
+				int cut = cutrange;
 
 				if (notecol[t] != NULL && notecol[t]->HasValue(row)) note = notecol[t]->GetValue(row);
-				if (velcol[t] != NULL && velcol[t]->HasValue(row)) velocity = velcol[t]->GetValue(row);
+				if (velcol[t] != NULL && velcol[t]->HasValue(row)) velocity =  velcol[t]->GetValueClamp(row, 1, 127);
 				if (delaycol[t] != NULL && delaycol[t]->HasValue(row)) delay = delaycol[t]->GetValue(row);
 				if (cutcol[t] != NULL && cutcol[t]->HasValue(row)) cut = cutcol[t]->GetValue(row);
 
@@ -1682,23 +1939,23 @@ public:
 					{
 						// old note off
 						events.push_back(pair<int, int>(
-							(96 * row + delay) * 10 * BUZZ_TICKS_PER_BEAT / rowsPerBeat,
+							ScaleToMidiTime(row, delay, delayrange),
 							EncodeMidiNoteOff(0, DecodeNote(notes[t]))));
 						notes[t] = -1;
 					}
 
 					// new note on
 					events.push_back(pair<int, int>(
-						(96 * row + delay) * 10 * BUZZ_TICKS_PER_BEAT / rowsPerBeat,
+						ScaleToMidiTime(row, delay, delayrange),
 						EncodeMidiNoteOn(0, DecodeNote(note), velocity)));
 					
 					notes[t] = note;
 
-					if (cut < 96)
+					if (cut < cutrange)
 					{
 						// new note cut
 						events.push_back(pair<int, int>(
-							(96 * row + cut) * 10 * BUZZ_TICKS_PER_BEAT / rowsPerBeat,
+							ScaleToMidiTime(row, cut, cutrange),
 							EncodeMidiNoteOff(0, DecodeNote(note))));
 						notes[t] = -1;
 					}
@@ -1706,7 +1963,7 @@ public:
 				else if (note >= 0 && note == NOTE_OFF && notes[t] >= 0)
 				{
 					events.push_back(pair<int, int>(
-						(96 * row + min(delay, cut)) * 10 * BUZZ_TICKS_PER_BEAT / rowsPerBeat,
+						ScaleToMidiTime(row, min(delay, cut), delayrange),
 						EncodeMidiNoteOff(0, DecodeNote(notes[t]))));
 					notes[t] = -1;
 				}
@@ -2000,7 +2257,7 @@ private:
 			int tofs = this->trackOffset + (*i).second->trackOffset;
 			if (spi >= 0 && spi < (int)gdata.patternList.size())
 			{
-				shared_ptr<CPlayingPattern> p = shared_ptr<CPlayingPattern>(new CPlayingPattern(gdata.patternList[spi], NULL, -1, tofs, (*i).second->modulators)); 
+				auto p = make_shared<CPlayingPattern>(gdata.patternList[spi], nullptr, -1, tofs, (*i).second->modulators); 
 
 				for (int ei = 0; ei < min((*i).second->effectCount, (*i).second->effectDataCount); ei++)
 					p->ProcessEffect((*i).second->effects[ei], (*i).second->effectData[ei]);

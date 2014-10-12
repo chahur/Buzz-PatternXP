@@ -1,0 +1,50 @@
+;Olivier Messiaen'Colors
+;source:
+;Traité de rythme,
+;de couleur&d'ornithologie_vol.7
+ART1;257AIN
+ART2;358AGL
+ART3;259DIJ
+ART4;479EKP
+ARC1a;24B7DH
+ARC1b;28DINR
+ARC2a;2BKRV
+ARC2b;28IPT
+;-----
+AT_0;57B8GIM
+AT-2;58BAILP
+AT-1;579DEKM
+AT_0i1;68DFJQS
+AT_0i2;6BDHMQS
+AT_0i3;5ADGLNR
+AT_0i4;4AFLQWY
+AT_0i5;6DJLQWY
+AT_0i6;BDIKTVX
+;------
+;mode2_Bertha_4notesChords
+;3Transpositions
+;C Db Eb E F# G A Bb
+1/3/5/7;49A
+2/4/6/8;59B
+;
+;mode3_6n
+;C D Eb E F# G Ab Bb B
+1/4/7;36AEG
+2/5/8;259DG
+3/6/9;359DG
+;
+;mode4_4n
+;C Db D F F# G Ab B
+1/5;6BE
+2/3/6/7;6BG
+4/8;69E
+;
+;mode6_8n
+;C D E F F#G# A# B
+1/5;5AEINSW 1/5
+2/6;49EIMRW  2/6
+3/7;48DIMQV 3/7
+4/8;59DINRV 4/8
+
+
+

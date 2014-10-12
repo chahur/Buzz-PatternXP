@@ -99,6 +99,7 @@ public:
 	virtual void LostMidiFocus();
 	virtual bool ExportMidiEvents(CPattern *p, CMachineDataOutput *pout);
 	virtual bool ImportMidiEvents(CPattern *p, CMachineDataInput *pin);
+	virtual void UpdateWaveReferences(CPattern *p, byte const *remap);
 
 
 public:
@@ -413,10 +414,6 @@ void miex::PlayPattern(CPattern *p, CSequence *s, int offset)
 	int sc = pmi->pCB->GetSequenceColumn(s);
 	MapIntToPlayingPattern npp;
 
-/*	char debugtxt[256];
-	sprintf(debugtxt,"miex::PlayPattern offset %d", offset);
-	pmi->pCB->WriteLine(debugtxt);
-*/
 	for (MapIntToPlayingPattern::iterator i = pmi->playingPatterns.begin(); i != pmi->playingPatterns.end(); i++)
 	{
 		int c = pmi->pCB->GetSequenceColumn((*i).second->pseq);
@@ -472,6 +469,10 @@ bool miex::ImportPattern(CPattern *p)
 	return true;
 }
 
+void miex::UpdateWaveReferences(CPattern *p, byte const *remap)
+{
+	pmi->patterns[p]->UpdateWaveReferences(remap);
+}
 
 bool miex::EnableCommandUI(int id)
 {
@@ -529,9 +530,14 @@ void miex::MidiControlChange(int const ctrl, int const channel, int const value)
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	CMachine *pmac = pmi->GetMidiTargetMachine();
-
 	if (pmac != NULL)
 	{
+		if (pmi->pCB->GetStateFlags() & SF_RECORDING)
+		{
+			pmi->recQueue.Push(CRecQueue::Event(pmac, -2, channel, ctrl, value));
+			pmi->patEd->pe.InvalidateInTimer();
+		}
+
 		pmi->pCB->SendMidiControlChange(pmac, ctrl, channel, value);
 	}
 }
@@ -720,11 +726,28 @@ void mi::DoMidiPlayback()
 			(*i).second.state = ActiveMidiNote::playing;
 		}
 		
+		if ((*i).second.pw >= 0 && cst >= dtime)
+		{
+			pCB->SendMidiControlChange((*i).first.first, 255, 0, (*i).second.pw);
+			(*i).second.pw = -1;
+		}
+
+		if ((*i).second.cc >= 0 && cst >= dtime)
+		{
+			pCB->SendMidiControlChange((*i).first.first, ((*i).second.cc >> 8) & 0x7f, 0, (*i).second.cc & 0x7f);
+			(*i).second.cc = -1;
+		}
+		
 		if (cst >= ctime)
 		{
 			pCB->SendMidiNote((*i).first.first, 0, (*i).second.note, 0);
 			globalData.activeMidiNotes.erase(i);
 		}
+		else if ((*i).second.state == ActiveMidiNote::pw_or_cc && (*i).second.pw < 0 && (*i).second.cc < 0)
+		{
+			globalData.activeMidiNotes.erase(i);
+		}
+
 	}
 }
 

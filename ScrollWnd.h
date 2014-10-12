@@ -48,6 +48,7 @@ public:
 	CScrollWnd *linkHorz;
 
 	void MakeVisible(int x, int y);
+	void ScrollTo(CPoint pos);
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -55,7 +56,6 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 private:
-	void ScrollTo(CPoint pos);
 	void ScrollDelta(CPoint dpos);
 
 private:

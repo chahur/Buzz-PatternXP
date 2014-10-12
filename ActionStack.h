@@ -11,6 +11,7 @@ public:
 	ByteVector state;
 	int patternLength;
 	CCursorPos cursorpos;
+	CPoint scrollpos;
 };
 
 typedef vector<shared_ptr<CState>> StateVector;

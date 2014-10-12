@@ -1,6 +1,4 @@
-;4 sounds guitar brazilian chords (basic)
-;for bass, always take the fifth under on the second and fourth beat (bossa/samba)
-;
+;Brazilian guitar chords
 ;
 M7;BGJ
 M7;7BG
@@ -44,3 +42,31 @@ m/M7/9;FNQ
 7/13/9b;GLP
 dim13b;9FK
 7/11#;AGI
+;Guitar Chords
+;from "Aqui o!" 
+;Toninho Horta
+Add9;7EGJO
+7M/6/3bass;8FHJO
+7M/#11;BGIN
+6/9;CGLQV
+7/9no3;AEJ
+7/b9;ADG
+7/9/13;49AE
+7/9/13;AEGL
+7/4/9;ACEH
+7/4/b9;ADCH
+7/4/9/13;59AE
+7/9/#11/13;AEIL
+7/7bass;9EI
+7/#5/#9;48AF
+7/b9/#11;4ADI
+m7/9;AEF
+m7/9;AEFJ
+m7/9;AEFM
+m7/9/#5;AEFK
+m7/11;AFH
+m7/11;5AFJ
+m7M/9;3BE
+bossa samba
+;root beat1&3
+;fifth below beat2&4 

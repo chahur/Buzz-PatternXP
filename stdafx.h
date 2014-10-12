@@ -12,6 +12,16 @@
 
 #include "targetver.h"
 #define USE_MFC6_WITH_ATL7
+#define NOMINMAX
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // some CString constructors will be explicit
 
 #include <afxwin.h>         // MFC core and standard components
@@ -56,6 +66,8 @@
 #include <tuple>
 
 #include "../../buzz/xmemdc.h"
+
+//#define MI_DEBUG_LOCKS
 #include "../../buzz/MachineInterface.h"
 
 

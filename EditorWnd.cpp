@@ -809,9 +809,7 @@ void CEditorWnd::OnColumns()
 
 	pPattern->actions.BeginAction(this, "Change Properties");
 	{
-		MACHINE_LOCK;
-		pPattern->EnableColumns(dlg.enabledColumns, pCB);
-		pPattern->SetRowsPerBeat(dlg.m_RPBValue);
+		pPattern->EnableColumns(dlg.enabledColumns, pCB, 1, dlg.m_RPBValue);
 	}
 
 	pCB->SetPatternName(pPattern->pPattern, dlg.m_NameValue);
@@ -1191,9 +1189,9 @@ void CEditorWnd::InitChords()
 
 void CEditorWnd::OnButtonSelectChordFile()
 {
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+	
 	// Get filename
-	TCHAR szFilters[]= _T("Chords file (*.chords)|*.chords|All Files (*.*)|*.*||");
-
 	char chordsName[255];
 	if (ChordPathName[0]==0)
 		GeneratorFileName(chordsName, "Basic1.chords");
@@ -1207,15 +1205,9 @@ void CEditorWnd::OnButtonSelectChordFile()
 			GeneratorFileName(chordsName, "Basic1.chords");
 	}
 
-	CFileDialog dlgFile(TRUE, _T("chords"), _T("*.chords"), OFN_HIDEREADONLY, szFilters);
-	dlgFile.m_ofn.lpstrTitle = "Select chords file";
-	dlgFile.m_ofn.lpstrFile = chordsName;
-		
-	if (dlgFile.DoModal() != IDOK)
+	if (!pe.DialogFileName("chords", "Chords", "Select chords file", chordsName, ChordPathName))
 		return;
-	
-	CString pathName = dlgFile.GetPathName();
-	sprintf(ChordPathName, "%s", pathName);
+
 	pCB->WriteProfileString("ChordPathName", ChordPathName);
 
 	InitChords();

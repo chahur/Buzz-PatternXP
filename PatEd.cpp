@@ -44,6 +44,7 @@ CPatEd::~CPatEd()
 
 BEGIN_MESSAGE_MAP(CPatEd, CScrollWnd)
 	ON_WM_KEYDOWN()
+	ON_WM_CHAR()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
@@ -63,7 +64,7 @@ void CPatEd::SetPattern(CMachinePattern *p)
 static char const NoteToText[] = "C-C#D-D#E-F-F#G-G#A-A#B-";
 static char const NibbleToHexText[] = "0123456789ABCDEF";
 
-static void FieldToText(char *txt, CMPType type, bool hasval, void *fdata)
+static void FieldToText(char *txt, CMPType type, bool ascii, bool hasval, void *fdata)
 {
 	switch(type)
 	{
@@ -99,17 +100,29 @@ static void FieldToText(char *txt, CMPType type, bool hasval, void *fdata)
 	case pt_byte:
 		{
 			byte b = *(byte *)fdata;
-			if (!hasval)
+			if (ascii)
 			{
-				txt[0] = '.';
-				txt[1] = '.';
+				if (!hasval)
+					txt[0] = '.';
+				else
+					txt[0] = b;
+
+				txt[1] = 0;
 			}
 			else
 			{
-				txt[0] = NibbleToHexText[b >> 4];
-				txt[1] = NibbleToHexText[b & 15];
+				if (!hasval)
+				{
+					txt[0] = '.';
+					txt[1] = '.';
+				}
+				else
+				{
+					txt[0] = NibbleToHexText[b >> 4];
+					txt[1] = NibbleToHexText[b & 15];
+				}
+				txt[2] = 0;
 			}
-			txt[2] = 0;
 		}
 		break;
 	case pt_word:
@@ -152,6 +165,49 @@ static void FieldToText(char *txt, CMPType type, bool hasval, void *fdata)
 		break;
 
 	}
+}
+
+static CString FieldToLongText(CMPType type, bool hasval, int v)
+{
+	CString s;
+
+	switch(type)
+	{
+	case pt_note:
+		{
+			if (!hasval)
+			{
+			}
+			else if (v == NOTE_OFF)
+			{
+				s = "note off";
+			}
+			else
+			{
+				int octave = v >> 4;
+				int note = (v & 15) -1;
+
+				s = NoteToText[note*2+0];
+				s += NoteToText[note*2+1];
+				s += (char)(octave + '0');
+			}
+		}
+		break;
+	default:
+		if (v != -1)
+		{
+			if (v > 255)
+				s.Format("%04X (%d)", v, v);
+			else
+				s.Format("%02X (%d)", v, v);
+		}
+
+		break;
+
+
+	}
+
+	return s;
 }
 
 static void FieldToTextExport(char *txt, CMPType type, bool hasval, void *fdata)
@@ -265,8 +321,8 @@ int HexToInt(char c)
 	int res = 0;
 	
 	if ((c>='0') && (c<='9')) res = (c -'0');
-	else if ((c>='A') && (c<='F')) res = (10 + c -'A');
-	else if ((c>='a') && (c<='f')) res = (10 + c -'a');
+	else if ((c>='A') && (c<='Z')) res = (10 + c -'A');
+	else if ((c>='a') && (c<='z')) res = (10 + c -'a');
 	
 	return res;
 }
@@ -361,18 +417,37 @@ CColumn *CPatEd::GetCursorColumn()
 }
 
 
-void CPatEd::ExportPattern()
+bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName)
 {
-	// Get filename
-	TCHAR szFilters[]= _T("Pattern file (*.csv)|*.csv|All Files (*.*)|*.*||");
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-	CFileDialog dlgFile(TRUE, _T("csv"), _T("*.csv"), OFN_HIDEREADONLY, szFilters);
-	dlgFile.m_ofn.lpstrTitle = "Export pattern";
+	char szFilters[255];
+	char ssuf[20];
+    sprintf(szFilters, "%s (*.%s)|*.%s|All Files (*.*)|*.*||", FileLibelle, Suffix, Suffix);
+    sprintf(ssuf, "*.%s", Suffix);
+	CFileDialog dlgFile(TRUE, Suffix, ssuf, OFN_HIDEREADONLY, szFilters);
+	
+	dlgFile.m_ofn.lpstrTitle = FileTitle;
+	dlgFile.m_ofn.lpstrFile = InitFilename;
 
 	if (dlgFile.DoModal() != IDOK)
-		return;
+		return false;
+
+	sprintf(pathName, "%s", dlgFile.GetPathName());
+	return true;
 	
-	CString pathName = dlgFile.GetPathName();
+}
+
+void CPatEd::ExportPattern()
+{
+	char exportpathName[255];
+	char pathName[255];
+	pCB->GetProfileString("ExportPathName", exportpathName, "");
+
+	if (!DialogFileName("csv", "Pattern file", "Export pattern", exportpathName, pathName))
+		return;
+
+	pCB->WriteProfileString("ExportPathName", pathName);
 	
 	CMachinePattern *ppat = pew->pPattern;
 	int const firstrow = 0;
@@ -387,9 +462,9 @@ void CPatEd::ExportPattern()
 		{
 			CColumn *pc = ppat->columns[col].get();
 			if (col>0)
-			  expfile << ";" << pc->GetShortDescription();
+			  expfile << ";" << pc->GetName();
 			else
-			  expfile << pc->GetShortDescription();
+			  expfile << pc->GetName();
 		}
 		expfile << endl;
 
@@ -430,81 +505,84 @@ void CPatEd::ExportPattern()
 
 void CPatEd::ImportPattern()
 {
-	// Get filename
-	TCHAR szFilters[]= _T("Pattern file (*.csv)|*.csv|All Files (*.*)|*.*||");
+	char exportpathName[255];
+	char pathName[255];
+	pCB->GetProfileString("ExportPathName", exportpathName, "");
 
-	CFileDialog dlgFile(TRUE, _T("csv"), _T("*.csv"), OFN_HIDEREADONLY, szFilters);
-	dlgFile.m_ofn.lpstrTitle = "Import pattern";
-	if (dlgFile.DoModal() != IDOK)
+	if (!DialogFileName("csv", "Pattern file", "Import pattern", exportpathName, pathName))
 		return;
-	
-	CString pathName = dlgFile.GetPathName();
-	
+
+	pCB->WriteProfileString("ExportPathName", pathName);
+
 	CMachinePattern *ppat = pew->pPattern;
+	ppat->actions.BeginAction(pew, "Import pattern");
+	{
+		MACHINE_LOCK;
 	
-	int const lastrow = pew->pPattern->GetRowCount();
-	int const lastcol = (int)ppat->columns.size();
+		int const lastrow = pew->pPattern->GetRowCount();
+		int const lastcol = (int)ppat->columns.size();
 
-	ifstream expfile (pathName, ios::in);  
-	if (expfile)  
-    {
-		string impRow;
-		char txt[6];
-		int itxt=0;
-		int icol=0;
-		int irow=0;
+		ifstream expfile (pathName, ios::in);  
+		if (expfile)  
+		{
+			string impRow;
+			char txt[6];
+			int itxt=0;
+			int icol=0;
+			int irow=0;
 		
-		// 1rst line is column header : just read it
-		getline(expfile, impRow);
+			// 1rst line is column header : just read it
+			getline(expfile, impRow);
 
-        while (getline(expfile, impRow))  
-        {	// Import the pattern in a csv format
-			// Extract each field, separator : ";"
+			while (getline(expfile, impRow))  
+			{	// Import the pattern in a csv format
+				// Extract each field, separator : ";"
 	
-			itxt=0;
-			icol=0;
+				itxt=0;
+				icol=0;
 
-			for (int i=0; i < (int)impRow.length(); i++)
-			{
-				if (impRow[i] ==';') 
+				for (int i=0; i < (int)impRow.length(); i++)
 				{
-					txt[itxt]=0;
-					itxt=0;
-					// Import the field
-					if (icol<lastcol)
+					if (impRow[i] ==';') 
 					{
-						CColumn *pc = ppat->columns[icol].get();
-						TextToFieldImport(txt, pc, irow);
+						txt[itxt]=0;
+						itxt=0;
+						// Import the field
+						if (icol<lastcol)
+						{
+							CColumn *pc = ppat->columns[icol].get();
+							TextToFieldImport(txt, pc, irow);
+						}
+						icol++;
 					}
-					icol++;
-				}
-				else {
-					if (impRow[i]!=' ')
-					{
-						txt[itxt]= impRow[i];
-						itxt++;
+					else {
+						if (impRow[i]!=' ')
+						{
+							txt[itxt]= impRow[i];
+							itxt++;
+						}
 					}
+
+
+				}
+				txt[itxt]=0; 
+				itxt=0;
+				// Import the last field
+				if (icol<lastcol){
+					CColumn *pc = ppat->columns[icol].get();
+					TextToFieldImport(txt, pc, irow);
 				}
 
-
+				// Get next row
+				irow++;
+				if (irow > lastrow) 
+					break;
 			}
-            txt[itxt]=0; 
-			itxt=0;
-			// Import the last field
-			if (icol<lastcol){
-				CColumn *pc = ppat->columns[icol].get();
-				TextToFieldImport(txt, pc, irow);
-			}
-
-			// Get next row
-			irow++;
-			if (irow > lastrow) 
-				break;
-        }
 		
-		expfile.close();  
-    }
-	
+			expfile.close();  
+    
+		}
+	}
 	pCB->SetModifiedFlag();
 	Invalidate();
 }
@@ -784,7 +862,16 @@ int CPatEd::BeatsInMeasureBar()
 COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col, bool muted)
 {
 	COLORREF color;
-	// BWC pew.BarComboIndex
+
+	int bar = 4;
+	
+	if (ppat->numBeats % 13 == 0) bar = 13;
+	else if (ppat->numBeats % 11 == 0) bar = 11;
+	else if (ppat->numBeats % 9 == 0) bar = 9;
+	else if (ppat->numBeats % 7 == 0) bar = 7;
+	else if (ppat->numBeats % 5 == 0) bar = 5;
+	else if (ppat->numBeats % 3 == 0) bar = 3;
+
 	if (InSelection(row, col))
 	{
 		color = bgsel;
@@ -821,9 +908,9 @@ void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, 
 		hasvalue = true;
 
 	char txt[6];
-	FieldToText(txt, pc->GetParamType(), hasvalue, (void *)&data);
+	FieldToText(txt, pc->GetParamType(), pc->IsAscii(), hasvalue, (void *)&data);
 	
-	int len = strlen(txt);
+	int len = (int)strlen(txt);
 	if (pnc != NULL && pc->MatchGroupAndTrack(*pnc))
 	{
 		txt[len++] = ' ';
@@ -891,6 +978,133 @@ void CPatEd::DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x
 
 }
 
+
+bool CPatEd::CanInsertChord()
+{
+	if (pew->pPattern == NULL)
+		return false;
+
+	CMachinePattern *ppat = pew->pPattern;
+	CColumn *pc = ppat->columns[cursor.column].get();
+	if (pc->GetParamType() != pt_note)
+		return false;
+
+	// Is there a note here ?
+	int value = pc->GetValue(cursor.row);
+	return ((pc->HasValue(cursor.row)) && (value != pc->GetNoValue()));
+
+}
+
+void CPatEd::InsertChord()
+{
+	// Insert a chord on the current row if there is a note in the current col
+	// The notes of the chord ar inserted one by one in the tracks on the right.
+		
+	CMachinePattern *ppat = pew->pPattern;
+	CColumn *pc = ppat->columns[cursor.column].get();
+	
+	// Must be on a column note
+	// Is there a note here ?
+	int value = pc->GetValue(cursor.row);
+	if (CanInsertChord())
+	{
+		ppat->actions.BeginAction(pew, "Insert chord");
+		{
+			MACHINE_LOCK;
+			// Is there a selection to limit the generation of the chord ?
+			int LastCol=0;
+			if (selection){
+				CRect r= GetSelRect();
+				if (r.right > cursor.column)
+					LastCol = r.right;
+			}
+
+			// Keep the root note of the chord
+			int rootChord = value;
+			bool stopChord = false;
+			bool cleanTracks = false;
+			int iChord = 0;
+			int delta;
+			char c;
+			// Get current chord description
+			char SelectedChord[20];
+			strcpy(SelectedChord, pew->Chords[pew->ChordsComboIndex()]);
+
+			// Get next track, next note column
+			int icol = cursor.column+1;
+			while (!stopChord) 
+			{
+				while ((icol<(int)ppat->columns.size()) && (ppat->columns[icol]->GetParamType() != pt_note))
+					icol++;
+		
+				if (icol<(int)ppat->columns.size())
+				{ 
+					// Check column limit
+					if ((LastCol<=0) || (icol<=LastCol))
+					{
+						if (cleanTracks)
+						{
+							ppat->columns[icol]->ClearValue(cursor.row);
+							icol++;
+						}
+						else
+						{
+							// Note column found
+							c = SelectedChord[iChord]; 
+							if (c==0)
+							{	// Restart chord with base note, add 1 octave
+								if (pew->InsertChordOnce)
+									cleanTracks=true;
+								else {
+									value = EncodeNote(DecodeNote(rootChord) + 12);
+									rootChord = value;
+									iChord = 0;
+								}
+							}
+							else 
+							{	// Get next note of chord
+								delta = HexToInt(c);
+								value = EncodeNote(DecodeNote(rootChord) + delta);
+								iChord++;
+							}	
+							
+							if (cleanTracks)
+								ppat->columns[icol]->ClearValue(cursor.row);
+							else {
+								// Check if the note is valid
+								int octave = value >> 4;
+								int note = (value & 15) -1;
+								// Last note is B-9
+								if ((!stopChord) && (octave<10)) {
+									ppat->columns[icol]->SetValue(cursor.row, value);								
+								}
+								else 
+									cleanTracks = true;
+							}
+							icol++;
+						}
+					}
+					else 
+					// Chords generated in the selection, don't clean the tracks outside
+						stopChord = true;
+				}
+				else
+				{	// No more track : end of the chord generation
+					stopChord = true;
+				}
+
+			}
+
+			pCB->SetModifiedFlag();
+			ColumnsChanged();
+			pew->UpdateCanvasSize();
+			pew->Invalidate();
+		}
+	}
+	
+}
+
+
 int CPatEd::GetColumnWidth(int column)
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -940,7 +1154,7 @@ int CPatEd::GetColumnAtX(int x)
 	for (int col = 0; col < (int)ppat->columns.size(); col++)
 	{
 		colx += GetColumnWidth(col);
-		if (x < colx - pew->fontSize.cx)
+		if (x < colx - (ppat->columns[col]->IsTiedToNext() ? 0 : pew->fontSize.cx))
 			return col;
 
 	}
@@ -1015,6 +1229,7 @@ void CPatEd::MoveCursor(CCursorPos newpos, bool killsel)
 	InvalidateRect(CanvasToClient(ur));
 	MakeVisible(GetColumnX(cursor.column) / pew->fontSize.cx + cursor.digit, cursor.row);
 	UpdateStatusBar();
+	pew->OnUpdatePosition();
 }
 
 void CPatEd::InvalidateField(int row, int column)
@@ -1022,7 +1237,7 @@ void CPatEd::InvalidateField(int row, int column)
 	CMachinePattern *ppat = pew->pPattern;
 	CRect r;
 	r.left = GetColumnX(column);
-	r.right = r.left + GetColumnWidth(column) - pew->fontSize.cx;
+	r.right = r.left + GetColumnWidth(column); // - pew->fontSize.cx;
 	r.top = row * pew->fontSize.cy;
 	r.bottom = r.top + pew->fontSize.cy;
 	InvalidateRect(CanvasToClient(r));
@@ -1415,6 +1630,21 @@ void CPatEd::EditSwitch(int sw)
 	MoveCursorDelta(0, cursorStep);
 }
 
+void CPatEd::EditAscii(char val)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	CColumn *pc = ppat->columns[cursor.column].get();
+
+	ppat->actions.BeginAction(pew, "Edit ASCII");
+	{
+		MACHINE_LOCK;
+		pc->SetValue(cursor.row, val);
+	}
+
+	InvalidateField(cursor.row, cursor.column);
+	MoveCursorDelta(0, cursorStep);
+}
+
 void CPatEd::Clear()
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -1507,8 +1737,8 @@ void CPatEd::ToggleGraphicalMode()
 
 
 void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-
-{	CMachinePattern *ppat = pew->pPattern;
+{
+	CMachinePattern *ppat = pew->pPattern;
 	if (ppat == NULL || ppat->columns.size() == 0)
 		return;
 
@@ -1520,7 +1750,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
 	bool shiftdown = (GetKeyState(VK_SHIFT) & (1 << 15)) != 0;
 	bool altdown = (GetKeyState(VK_MENU) & (1 << 15)) != 0;
-
+    
 	if (ctrldown && altdown)
 	{
 		switch(nChar)
@@ -1536,7 +1766,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 		switch(nChar)
 		{
-		case 'R': Randomize(); break;
+		case 'R': if (shiftdown) Humanize(pew->DeltaHumanize, pew->HumanizeEmpty); else Randomize(); break;
 		case 'I': Interpolate(shiftdown); break;
 		case 'T': if (shiftdown) SelectTrack(); else WriteState(); break;
 		case 'M': MuteTrack(); break;
@@ -1546,12 +1776,14 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case 'W': Rotate(shiftdown); break;
 		case 'G': ToggleGraphicalMode(); break;
 		case 'V': if (shiftdown) OnEditPasteSpecial(); break; //BWC
-		case 'F': OnClearNoteOff(); break; //BWC
+		case 'F': if (shiftdown) OnAddNoteOff(); else OnClearNoteOff(); break; //BWC
+		case 'J': if (shiftdown) OnUpNoteOff(); else OnDownNoteOff(); break; //BWC
 		case 'A': SelectAll(); break; //BWC
 		case VK_PRIOR: Home(); break; //BWC
 		case VK_NEXT: End(); break; //BWC
 		case VK_HOME: HomeTop(); break; //BWC
-		case VK_END: EndBottom(); break; //BWC			
+		case VK_END: EndBottom(); break; //BWC
+		case 'H': InsertChord(); break;
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -1634,14 +1866,17 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		}
 		else if (pc->GetParamType() == pt_byte)
 		{
-			if (nChar >= '0' && nChar <= '9')
-				EditByte(nChar - '0');
-			else if (nChar == 'A') EditByte(0xA);
-			else if (nChar == 'B') EditByte(0xB);
-			else if (nChar == 'C') EditByte(0xC);
-			else if (nChar == 'D') EditByte(0xD);
-			else if (nChar == 'E') EditByte(0xE);
-			else if (nChar == 'F') EditByte(0xF);
+			if (!pc->IsAscii())
+			{
+				if (nChar >= '0' && nChar <= '9')
+					EditByte(nChar - '0');
+				else if (nChar == 'A') EditByte(0xA);
+				else if (nChar == 'B') EditByte(0xB);
+				else if (nChar == 'C') EditByte(0xC);
+				else if (nChar == 'D') EditByte(0xD);
+				else if (nChar == 'E') EditByte(0xE);
+				else if (nChar == 'F') EditByte(0xF);
+			}
 		}
 		else if (pc->GetParamType() == pt_word)
 		{
@@ -1667,6 +1902,44 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }
+
+void CPatEd::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CColumn *pc = ppat->columns[cursor.column].get();
+
+	if (pc->GetParamType() == pt_byte && pc->IsAscii())
+	{
+		if (nChar != '.')
+		{
+			char ch = (char)nChar;
+			bool valid = pCB->IsValidAsciiChar(pc->GetMachine(), pc->GetIndex(), ch);
+			
+			if (!valid && nChar >= 'a' && nChar <= 'z')
+			{
+				ch += 'A' - 'a';
+				valid = pCB->IsValidAsciiChar(pc->GetMachine(), pc->GetIndex(), ch);
+			}
+			else if (!valid && nChar >= 'A' && nChar <= 'Z')
+			{
+				ch += 'a' - 'A';
+				valid = pCB->IsValidAsciiChar(pc->GetMachine(), pc->GetIndex(), ch);
+			}
+
+			if (ch < pc->GetMinValue() || ch > pc->GetMaxValue())
+				valid = false;
+
+			if (valid)
+				EditAscii(ch);
+		}
+	}
+
+	CWnd::OnChar(nChar, nRepCnt, nFlags);
+}
+
 
 CCursorPos CPatEd::GetDigitAtPoint(CPoint p)
 {
@@ -1763,7 +2036,7 @@ void CPatEd::OnMouseMove(UINT nFlags, CPoint point)
 			selStart.y = mouseSelectStartPos.row;
 			selEnd.x = cp.column;
 			selEnd.y = cp.row;
-
+			pew->OnUpdateSelection();
 			// TODO: invalidate less
 			Invalidate();
 		}
@@ -1825,23 +2098,28 @@ void CPatEd::UpdateStatusBar()
 
 	int value = pc->GetValue(cursor.row);
 
-	char txt[6];
-	FieldToText(txt, pc->GetParamType(), pc->HasValue(cursor.row), (void *)&value);
+	// char txt[6];
+	// FieldToText(txt, pc->GetParamType(), pc->HasValue(cursor.row), (void *)&value);
 
 	if (value != pc->GetNoValue())
 	{
+		s = FieldToLongText(pc->GetParamType(), pc->HasValue(cursor.row), value);
+
 		char const *desc = pc->DescribeValue(value, pCB);
 
 		// s = txt;
-		if (value != pc->GetNoValue()) {
+		/* if (value != pc->GetNoValue()) {
 			if (pc->GetParamType()!=pt_note)
 				s.Format("%s | %d", txt, value);
 			else 
 				s.Format("%s", txt);
 
 			if (desc != NULL && strlen(desc) > 0)
-				s += (CString)" (" + desc + ")";
-		}
+				s += (CString)" (" + desc + ")"; 
+				
+		}*/
+		if (value != pc->GetNoValue() && desc != NULL && strlen(desc) > 0)
+			s += (CString)" " + desc;
 	}
 	else
 	{
@@ -1916,6 +2194,7 @@ void CPatEd::KillSelection()
 	if (selection)
 	{
 		selection = false;
+		pew->OnUpdateSelection();
 		Invalidate();
 	}
 }
@@ -1926,12 +2205,17 @@ void CPatEd::CursorSelect(int dx, int dy)
 	if (ppat == NULL || ppat->columns.size() == 0)
 		return;
 
+	CColumn *pc = ppat->columns[cursor.column].get();
+
 	if (!selection)
 	{
 		selStart.x = cursor.column;
 		selStart.y = cursor.row;
 		selection = true;
+		pew->OnUpdateSelection();
 	}
+
+	CCursorPos oldpos = cursor;
 
 	CCursorPos cp;
 	cp.column = min(max(0, cursor.column + dx), (int)ppat->columns.size() - 1);
@@ -1941,6 +2225,37 @@ void CPatEd::CursorSelect(int dx, int dy)
 
 	selEnd.x = cursor.column;
 	selEnd.y = cursor.row;
+
+	if (cursor == oldpos)
+	{
+		switch(selMode)
+		{
+		case column: selMode = track; break;
+		case track: if (pc->IsTrackParam()) selMode = group; else selMode = all; break;
+		case group: selMode = all; break;
+		case all: selMode = column; break;
+		}
+
+		switch(selMode)
+		{
+		case column:
+			selStart.x = selEnd.x = cursor.column;
+			break;
+		case track:
+			selStart.x = ppat->GetFirstColumnOfTrackByColumn(cursor.column);
+			selEnd.x = selStart.x + ppat->GetGroupColumnCount(cursor.column) - 1;
+			break;
+		case group:
+			selStart.x = ppat->GetFirstColumnOfTrackByColumn(cursor.column) - pc->GetTrack() * ppat->GetGroupColumnCount(cursor.column);
+			selEnd.x = selStart.x + ppat->GetGroupColumnCount(cursor.column) * ppat->GetTrackCount(pc->GetMachine()) - 1;
+			break;
+		case all:
+			selStart.x = 0;
+			selEnd.x = (int)ppat->columns.size() - 1;
+			break;
+		}
+
+	}
 
 	persistentSelection = false;
 	Invalidate();
@@ -1960,6 +2275,7 @@ void CPatEd::SelectAll()
 	selEnd.y = ppat->GetRowCount() - 1;
 
 	selection = true;
+	pew->OnUpdateSelection();
 	persistentSelection = false;
 	Invalidate();
 }
@@ -1977,6 +2293,7 @@ void CPatEd::SelectTrack()
 	selEnd.y = ppat->GetRowCount() - 1;
 
 	selection = true;
+	pew->OnUpdateSelection();
 	persistentSelection = false;
 	Invalidate();
 }
@@ -1994,6 +2311,7 @@ void CPatEd::SelectTrackByNo(int col)
 	selEnd.y = ppat->GetRowCount() - 1;
 
 	selection = true;
+	pew->OnUpdateSelection();
 	persistentSelection = false;
 	Invalidate();
 }
@@ -2067,6 +2385,7 @@ void CPatEd::OldSelect(bool start)
 	}
 
 	persistentSelection = true;
+	pew->OnUpdateSelection();
 	Invalidate();
 }
 
@@ -2112,6 +2431,7 @@ void CPatEd::OnEditCut()
 		}
 	}
 
+	pew->OnUpdateClipboard();
 	Invalidate();
 }
 
@@ -2135,7 +2455,8 @@ void CPatEd::OnEditCopy()
 		clipboard.push_back(MapIntToInt());
 		ppat->columns[col]->GetEventRange(clipboard.back(), r.top, r.bottom);
 	}
-
+	
+	pew->OnUpdateClipboard();
 }
 
 void CPatEd::OnEditPaste()
@@ -2213,6 +2534,172 @@ void CPatEd::OnEditPasteSpecial()
 	Invalidate();
 }
 
+void CPatEd::OnAddNoteOff()
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelOrCursorRect();
+
+	ppat->actions.BeginAction(pew, "Add note off");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++){
+			CColumn *pc = ppat->columns[col].get();
+			if (pc->GetParamType()==pt_note)
+				for (int row = r.top; row < r.bottom; row++)  // Last row is ignored (don't add after selection)
+				{
+					int val= pc->GetValue(row);
+					if ((val != pc->GetNoValue())&&(val != NOTE_OFF)) {
+						// Current row is a note
+						val= pc->GetValue(row+1);
+						if (val == pc->GetNoValue())
+							// Next row is empty, add a note off
+							pc->SetValue(row+1, NOTE_OFF);
+					}
+				}
+		}
+		
+	}
+
+	Invalidate();
+}
+
+void CPatEd::OnUpNoteOff()
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelOrCursorRect();
+
+	ppat->actions.BeginAction(pew, "Up note off");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++){
+			CColumn *pc = ppat->columns[col].get();
+			if (pc->GetParamType()==pt_note)
+			{  
+				int minDelta=INT_MAX;
+				int maxDelta=0;
+				int delta=-1;
+				// First, try to guess how far the note off are from the notes
+				for (int row = r.top; row <= r.bottom; row++)
+				{
+					int val= pc->GetValue(row);
+
+					if (val != pc->GetNoValue()){
+						if (val != NOTE_OFF){
+							delta=0;
+						}
+						else {
+							delta++;
+							if (delta<minDelta) minDelta=delta;
+							if (delta>maxDelta) maxDelta=delta;
+							delta=-1; // Nothing to do until a new note
+						}
+					}
+					else
+					{
+						if (delta>=0) delta++;
+					}
+				}
+
+				// Assume minDelta is the regular distance between note and note off
+				if (minDelta < r.bottom-r.top)
+				{	
+					int prevval = pc->GetNoValue();
+					for (int row = r.top; row <= r.bottom; row++)
+					{					
+						int val= pc->GetValue(row);
+
+						if (val != pc->GetNoValue()){
+							if (val == NOTE_OFF) {
+								// Current row is a note off
+								// Clear it
+								pc->ClearValue(row);
+								if (row > r.top) { // Don't write outside the selection
+									if (prevval == pc->GetNoValue()) {
+										// Prev row is empty, set the note off there
+										pc->SetValue(row-1, NOTE_OFF);
+									}
+								}
+							}
+							else
+							{	// It's a note, could be a hidden note off
+								if (row > r.top) 
+								{	// Don't write outside the selection
+									// Check if there is a note at minDelta distance
+									if (row-minDelta >0)
+									{
+										int deltaval = pc->GetValue(row-minDelta);
+										if ((deltaval != pc->GetNoValue()) && (deltaval != NOTE_OFF))
+										{
+											// A note at minDelta of the current note : can be a hidden note off
+											if (prevval == pc->GetNoValue()) {
+												// Prev row is empty, set the note off there
+												pc->SetValue(row-1, NOTE_OFF);
+											}
+										}
+									}
+								}
+							}
+
+						}
+						prevval = val;
+					}
+				}
+
+			}
+		}
+		
+	}
+
+	Invalidate();
+}
+
+void CPatEd::OnDownNoteOff()
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelOrCursorRect();
+
+	ppat->actions.BeginAction(pew, "Down note off");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++){
+			CColumn *pc = ppat->columns[col].get();
+			if (pc->GetParamType()==pt_note)
+				for (int row = r.top; row <= r.bottom; row++)
+				{
+					int val= pc->GetValue(row);
+					if ((val != pc->GetNoValue())&&(val == NOTE_OFF)) {
+						// Current row is a note off
+						// Clear it
+						pc->ClearValue(row);
+						if (row < r.bottom) { // Don't write outside the selection
+							val= pc->GetValue(row+1);
+							if (val == pc->GetNoValue()) {
+								// Next row is empty, set the note off there
+								pc->SetValue(row+1, NOTE_OFF);
+								row++; // Skip it now
+							}
+						}
+					}
+				}
+		}
+		
+	}
+
+	Invalidate();
+}
+
 void CPatEd::OnClearNoteOff()
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -2241,6 +2728,80 @@ inline double frand()
 	static long stat = GetTickCount();
 	stat = (stat * 1103515245 + 12345) & 0x7fffffff;
 	return (double)stat * (1.0 / 0x7fffffff);
+}
+
+void CPatEd::Humanize(int delta, bool hEmpty)
+// delta : from 0 to 100
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelOrCursorRect();
+
+	if (delta <0) delta = 0;
+	if (delta >100) delta = 100;
+
+	ppat->actions.BeginAction(pew, "Humanize");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++)
+		{
+			CColumn *pc = ppat->columns[col].get();
+			// Do nothing on notes or switch columns
+			CMPType curtype = pc->GetParamType();
+
+			if ((curtype!=pt_note) && (curtype!=pt_switch))
+			{
+				int curvalue=-1;
+				int minvalue= pc->GetMinValue();
+				int maxvalue= pc->GetMaxValue();
+				int hdelta = (delta * (maxvalue-minvalue)) /100;
+
+				// array to read the value of the row
+				MapIntToValue::const_iterator ei = pc->EventsBegin();
+				while(ei != pc->EventsEnd() && (*ei).first < r.top) ei++;
+				
+				for (int row = r.top; row <= r.bottom; row++)
+				{
+					
+					// Get current value of the row
+					int data = pc->GetNoValue();
+					bool hasvalue = false;
+
+					if (ei != pc->EventsEnd() && (*ei).first == row)
+					{
+						hasvalue = true;
+						data = (*ei).second;
+						ei++;
+					}
+					if (hasvalue) 
+						curvalue = data;
+					else
+					{
+						if (!hEmpty) curvalue = -1;
+					}
+
+					// if curvalue is not initialised, do nothing
+					if (curvalue >=0)
+					{
+						// Use curvalue to set the humanized value of the row
+						// use hdelta to have the min, max possible values around curvalue
+						int hmin= curvalue - (hdelta/2);
+						// randomly select a value between min and max
+						int hvalue = hmin + (rand() % hdelta); 
+						if (hvalue<minvalue) hvalue = minvalue;
+						if (hvalue>maxvalue) hvalue = maxvalue;
+						pc->SetValue(row, hvalue);
+					}
+				}
+			}
+		}
+
+	}
+
+	Invalidate();
 }
 
 void CPatEd::Randomize()
@@ -2273,15 +2834,53 @@ inline double ExpIntp(double const x, double const y, double const a)
 	return exp(lx + a * (ly - lx));
 }
 
-inline double Interpolate(double a, double v1, double v2, bool expintp)
+inline double RootIntp(double const a, int param, int ipMax)
 {
-	if (expintp && ((v1 > 0 && v2 > 0) || (v1 < 0 && v2 < 0)))
-	{
-		return (ExpIntp(v1, v2, a) - v1) / (v2 -v1);
+	double factor = 1.0/4.0;
+	if (param > 1) {
+		factor = (((1.0-(1.0/4.0)) / (ipMax+1)) * param) + (1.0/4.0);
+	}
+
+	return pow(a, factor);
+}
+
+inline double PowerIntp(double const a, int param, int ipMax)
+{
+	double factor = 4.0;
+	if (param > 1) {
+		factor = 4.0 - ((3.0*param) / (ipMax+1));
+	}
+
+	return pow(a, factor);
+}
+
+inline double Interpolate(double a, double v1, double v2, bool expintp, int InterpolateParam, int ipMax)
+{
+	if (expintp) {
+		if ((v1 > 0 && v2 > 0) || (v1 < 0 && v2 < 0))
+			return (ExpIntp(v1, v2, a) - v1) / (v2 -v1);
+		else 
+			return a;
 	}
 	else
 	{
-		return a;
+		if (InterpolateParam == 0)
+			return a;
+		else if (InterpolateParam < 0) 
+		{
+			if (v1<v2)
+				return (v2*RootIntp(a, -InterpolateParam, ipMax) - v1) / (v2 -v1);
+			else
+				return (v1*RootIntp(a, -InterpolateParam, ipMax) - v2) / (v1 -v2);
+		}
+		else // if (InterpolateParam > 0) 
+		{
+			if (v1<v2)
+				return (v2*PowerIntp(a, InterpolateParam, ipMax) - v1) / (v2 -v1);
+			else
+				return (v1*PowerIntp(a, InterpolateParam, ipMax) - v2) / (v1 -v2);
+		}
+			
 	}
 }
 
@@ -2293,6 +2892,16 @@ void CPatEd::Interpolate(bool expintp)
 
 	CRect r = GetSelRect();
 
+	int InterpolateParam;
+	if (expintp) 
+		InterpolateParam=0;
+	else
+	{
+		InterpolateParam = pew->InterpolateComboIndex();
+		if (InterpolateParam == pew->LINEAR_INTERPOLATE_PARAM) InterpolateParam = 0;
+		else if (InterpolateParam < pew->LINEAR_INTERPOLATE_PARAM) InterpolateParam = -InterpolateParam -1;
+		else if (InterpolateParam > pew->LINEAR_INTERPOLATE_PARAM) InterpolateParam = (2*pew->LINEAR_INTERPOLATE_PARAM - InterpolateParam) +1;
+	}
 	ppat->actions.BeginAction(pew, "Interpolate");
 	{
 		MACHINE_LOCK;
@@ -2305,16 +2914,10 @@ void CPatEd::Interpolate(bool expintp)
 			{
 				for (int row = r.top + 1; row < r.bottom; row++)
 				{
-/*
 					if (v1 < v2)
-						ppat->columns[col]->SetValueNormalized(row, (double)(row - r.top) / (r.bottom - r.top), v1, v2);
+						ppat->columns[col]->SetValueNormalized(row, ::Interpolate((double)(row - r.top) / (r.bottom - r.top), v1, v2, expintp, InterpolateParam, pew->LINEAR_INTERPOLATE_PARAM), v1, v2);
 					else
-						ppat->columns[col]->SetValueNormalized(row, 1.0 - (double)(row - r.top) / (r.bottom - r.top), v2, v1);
-						*/
-					if (v1 < v2)
-						ppat->columns[col]->SetValueNormalized(row, ::Interpolate((double)(row - r.top) / (r.bottom - r.top), v1, v2, expintp), v1, v2);
-					else
-						ppat->columns[col]->SetValueNormalized(row, ::Interpolate(1.0 - (double)(row - r.top) / (r.bottom - r.top), v1, v2, expintp), v2, v1);
+						ppat->columns[col]->SetValueNormalized(row, ::Interpolate(1.0 - (double)(row - r.top) / (r.bottom - r.top), v1, v2, expintp, InterpolateParam, pew->LINEAR_INTERPOLATE_PARAM), v2, v1);
 				}
 			}
 			
@@ -2429,8 +3032,8 @@ LRESULT CPatEd::OnMidiNote(WPARAM wParam, LPARAM lParam)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-	int vel = lParam;
-	int n = wParam - pew->pCB->GetBaseOctave() * 12;
+	int vel = (int)lParam;
+	int n = (int)wParam - pew->pCB->GetBaseOctave() * 12;
 
 	if (vel > 0)
 		EditNote(n, false);

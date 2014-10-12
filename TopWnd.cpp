@@ -187,7 +187,7 @@ void CTopWnd::OnDraw(CDC *pDC)
 			CFont* pOldFont = pDC->SelectObject(&myVerticalFont);
 
 			CString s;
-			s = pc->GetShortDescription();
+			s = pc->GetName();
 			pDC->DrawText(s, &r, DT_BOTTOM|DT_SINGLELINE);
 
 			// Restore prev font

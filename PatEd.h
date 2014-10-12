@@ -48,6 +48,9 @@ public:
 	void InflatePattern(int delta); //BWC 
 	void Humanize(int delta, bool hEmpty);
 
+	bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName);
+
+
 	void InsertChord();
 
 	void Interpolate(bool expintp);
@@ -81,8 +84,6 @@ private:
 	void Tab();
 	void ShiftTab();
 	int GetDigitAtX(int x);
-//	double Interpolate(double a, double v1, double v2, bool expintp, int InterpolateParam);
-
 	
 	int GetRowY(int y);
 	void UpdateStatusBar();
@@ -93,6 +94,7 @@ private:
 	void EditByte(int n);
 	void EditWord(int n);
 	void EditSwitch(int n);
+	void EditAscii(char n);
 	void Clear();
 	void Insert();
 	void Delete();
@@ -161,6 +163,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 
 	CCursorPos cursor;
