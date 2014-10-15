@@ -52,6 +52,7 @@ public:
 
 
 	void InsertChord();
+	void Reverse();
 
 	void Interpolate(bool expintp);
 

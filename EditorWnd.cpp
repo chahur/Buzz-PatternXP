@@ -114,6 +114,9 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_CBN_SELENDOK(ID_INTERPOLATE_PARAM, OnComboInterpolateSelect)
 	ON_CBN_SELENDOK(IDC_INTERPOLATE_COMBO, OnComboInterpolateSelect)
 	
+	ON_COMMAND(ID_BT_REVERSE, OnButtonReverse)
+	ON_BN_CLICKED(IDC_REVERSE_BUTTON, OnButtonReverse) 
+	
 
 END_MESSAGE_MAP()
 
@@ -850,19 +853,11 @@ bool CEditorWnd::EnableCommandUI(int id)
 	switch(id)
 	{
 	case ID_EDIT_CUT: return pe.CanCut();
-	case ID_BT_CUT: return pe.CanCut();
 	case ID_EDIT_COPY: return pe.CanCopy();
-	case ID_BT_COPY: return pe.CanCopy();
 	case ID_EDIT_PASTE: return pe.CanPaste();
-	case ID_BT_PASTE: return pe.CanPaste();
 	case ID_EDIT_PASTE_SPECIAL: return pe.CanPaste();
-	case ID_BT_MERGE: return pe.CanPaste();
 	case ID_EDIT_UNDO: return pPattern != NULL && pPattern->actions.CanUndo();
 	case ID_EDIT_REDO: return pPattern != NULL && pPattern->actions.CanRedo();
-	case ID_BT_CLEAROFF: return pe.CanCut();
-	case ID_BT_ADDOFF: return pe.CanCut();
-	case ID_BT_UPOFF: return pe.CanCut();
-	case ID_BT_DOWNOFF: return pe.CanCut();
 	}
 
 	return false;
@@ -928,9 +923,10 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_ADDOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_UPOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_DOWNOFF, pe.CanCopy());
-	EnableToolbarButtonByCommand(&toolBar, ID_BT_HUMANIZE, pe.CanCopy());
+//	EnableToolbarButtonByCommand(&toolBar, ID_BT_HUMANIZE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INTERPOLATE, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_REVERSE, pe.CanCopy());
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); }
@@ -1315,6 +1311,11 @@ void CEditorWnd::OnComboInterpolateSelect()
 	pCB->WriteProfileInt("IndexInterpolate", GetComboBoxInterpolate());
 }
 
+
+void CEditorWnd::OnButtonReverse()
+{
+	pe.Reverse();
+}
 
 int CEditorWnd::GetEditorPatternPosition()
 {

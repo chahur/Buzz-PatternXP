@@ -109,49 +109,51 @@ END
 IDR_TOOLBAR TOOLBAR  16, 16
 BEGIN
 	SEPARATOR
-    BUTTON      32773
-    BUTTON      32774
+    BUTTON      ID_COLUMNS_BUTTON
+    BUTTON      ID_SELECT_FONT
     SEPARATOR
-    BUTTON      32775
+    BUTTON      ID_CHECK_MIDI_BT
     SEPARATOR
-	BUTTON      32791
-    BUTTON      32776
+	BUTTON      ID_COMBO_BAR_LABEL_BT
+    BUTTON      ID_COMBO_BAR_BT
     SEPARATOR
-    BUTTON      32777
-    BUTTON      32778
-    BUTTON      32779
-    BUTTON      32780
+    BUTTON      ID_BT_COPY
+    BUTTON      ID_BT_CUT
+    BUTTON      ID_BT_PASTE
+    BUTTON      ID_BT_MERGE
     SEPARATOR
-    BUTTON      32781
-    BUTTON      32782
-    BUTTON      32783
-    BUTTON      32784
+    BUTTON      ID_BT_CLEAROFF
+    BUTTON      ID_BT_ADDOFF
+    BUTTON      ID_BT_UPOFF
+    BUTTON      ID_BT_DOWNOFF
     SEPARATOR
-    BUTTON      32785
-    BUTTON      32786
+    BUTTON      ID_BT_REVERSE
     SEPARATOR
-    BUTTON      32787
-    BUTTON      32788
-    BUTTON      32789
+    BUTTON      ID_BT_IMPORT
+    BUTTON      ID_BT_EXPORT
     SEPARATOR
-	BUTTON      32793
-	BUTTON      32794
-	BUTTON      32795
+    BUTTON      ID_BT_SHRINK
+    BUTTON      ID_COMBO_SHRINK_BT
+    BUTTON      ID_BT_EXPAND
+    SEPARATOR
+	BUTTON      ID_BT_HUMANIZE
+	BUTTON      ID_HUMANIZE_DELTA_BT
+	BUTTON      ID_CHECK_HUMANIZE_EMPTY_BT
 	SEPARATOR
-	BUTTON      32796
-	BUTTON      32797
-	BUTTON      32798
-	BUTTON      32799
+	BUTTON      ID_BT_INSERT_CHORD
+	BUTTON      ID_COMBO_CHORD_BT
+	BUTTON      ID_BT_CHORD_FILE
+	BUTTON      ID_CHECK_CHORD_ONCE_BT
 	SEPARATOR
-	BUTTON      32800
-	BUTTON      32801
+	BUTTON      ID_BT_INTERPOLATE
+	BUTTON      ID_INTERPOLATE_PARAM_BT
 	SEPARATOR
-	BUTTON      32792
-	SEPARATOR
-	SEPARATOR
+	BUTTON      ID_CHECK_TOOLBAR_BT
 	SEPARATOR
 	SEPARATOR
-    BUTTON      32790
+	SEPARATOR
+	SEPARATOR
+    BUTTON      ID_CHECK_HELP_BT
     SEPARATOR
 END
 
@@ -217,7 +219,9 @@ IDD_DIALOGBAR DIALOGEX 0, 0, 810, 33
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-	PUSHBUTTON      "Columns...", 2009, 3, 2, 45, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Columns...", 2009, 3, 2, 45, 14, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "MIDI Edit", 2007, 53, 12, 45, 10, 0, WS_EX_LEFT
+    PUSHBUTTON      "Font...", 2008, 3, 16, 45, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Copy", 2015, 167, 2, 24, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Cut", 2014, 191, 2, 25, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Paste", 2013, 167, 16, 23, 14, 0, WS_EX_LEFT
@@ -227,25 +231,24 @@ BEGIN
     COMBOBOX        2010, 108, 17, 48, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     PUSHBUTTON      "Merge", 2011, 191, 16, 25, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Clear off", 2022, 230, 2, 36, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Import", 2023, 314, 2, 31, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Export", 2024, 314, 16, 31, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Shrink", 2025, 358, 2, 36, 14, 0, WS_EX_LEFT
-    COMBOBOX        2026, 394, 9, 20, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "Expand", 2027, 358, 16, 36, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Humanize", 2032, 425, 2, 36, 14, 0, WS_EX_LEFT
-    EDITTEXT        2033, 462, 3, 17, 12, ES_AUTOHSCROLL | ES_NUMBER, WS_EX_LEFT
-    AUTOCHECKBOX    "and empty", 2034, 427, 18, 48, 8, 0, WS_EX_LEFT
-    PUSHBUTTON      "Chord", 2035, 493, 2, 30, 14, 0, WS_EX_LEFT
-    COMBOBOX        2036, 494, 16, 38, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "...", 2038, 533, 16, 15, 14, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Once", 2037, 527, 4, 40, 8, 0, WS_EX_LEFT
-    PUSHBUTTON      "Interpolate", 2039, 567, 2, 46, 14, 0, WS_EX_LEFT
-    COMBOBOX        2040, 567, 16, 48, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "Reverse", 2041, 307, 2, 32, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Import", 2023, 345, 2, 31, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Export", 2024, 345, 16, 31, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Shrink", 2025, 389, 2, 36, 14, 0, WS_EX_LEFT
+    COMBOBOX        2026, 425, 9, 20, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "Expand", 2027, 389, 16, 36, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Humanize", 2032, 456, 2, 36, 14, 0, WS_EX_LEFT
+    EDITTEXT        2033, 493, 3, 17, 12, ES_AUTOHSCROLL | ES_NUMBER, WS_EX_LEFT
+    AUTOCHECKBOX    "and empty", 2034, 458, 18, 48, 8, 0, WS_EX_LEFT
+    PUSHBUTTON      "Chord", 2035, 524, 2, 30, 14, 0, WS_EX_LEFT
+    COMBOBOX        2036, 525, 16, 38, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
+    PUSHBUTTON      "...", 2038, 564, 16, 15, 14, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Once", 2037, 558, 4, 40, 8, 0, WS_EX_LEFT
+    PUSHBUTTON      "Interpolate", 2039, 598, 2, 46, 14, 0, WS_EX_LEFT
+    COMBOBOX        2040, 598, 16, 48, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     AUTOCHECKBOX    "Use toolbar", 2031, 748, 5, 48, 8, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Help", 2012, 748, 18, 31, 8, 0, WS_EX_LEFT
     LTEXT           "Bar", 0, 111, 5, 12, 8, SS_LEFT, WS_EX_LEFT
-    AUTOCHECKBOX    "MIDI Edit", 2007, 53, 12, 45, 10, 0, WS_EX_LEFT
-    PUSHBUTTON      "Font...", 2008, 3, 16, 45, 14, 0, WS_EX_LEFT
 END
 
 
@@ -331,23 +334,23 @@ STRINGTABLE
 BEGIN
     ID_COLUMNS_BUTTON       "Select Columns"
     ID_SELECT_FONT          "Select Font"
-    32777                   "Copy"
-    32778                   "Cut"
-    32779                   "Paste"
-    32780                   "Merge"
-    32781                   "Clear ""off"""
-    32782                   "Add ""off"""
-    32783                   "Shift ""off"" up"
-    32784                   "Shift ""off"" down"
-    32785                   "Import pattern"
-    32786                   "Export pattern"
-    32787                   "Shrink pattern"
-    32789                   "Expand pattern"
-	32793					"Humanize (0..99)"
-	32796					"Insert chord"
-	32798					"Select chords file"
-	33799					"Insert chord notes only one time"
-	32800					"Interpolate"
+    ID_BT_COPY              "Copy"
+    ID_BT_CUT               "Cut"
+    ID_BT_PASTE             "Paste"
+    ID_BT_MERGE             "Merge"
+    ID_BT_CLEAROFF          "Clear ""off"""
+    ID_BT_ADDOFF            "Add ""off"""
+    ID_BT_UPOFF             "Shift ""off"" up"
+    ID_BT_DOWNOFF           "Shift ""off"" down"
+    ID_BT_IMPORT            "Import pattern"
+    ID_BT_EXPORT            "Export pattern"
+    ID_BT_SHRINK            "Shrink pattern"
+    ID_BT_EXPAND            "Expand pattern"
+	ID_BT_HUMANIZE			"Humanize (0..99)"
+	ID_BT_INSERT_CHORD		"Insert chord"
+	ID_BT_CHORD_FILE		"Select chords file"
+	ID_BT_INTERPOLATE		"Interpolate"
+	ID_BT_REVERSE			"Reverse order"
 
 END
 

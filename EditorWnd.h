@@ -174,6 +174,8 @@ public:
 	afx_msg void OnButtonInterpolate();
 	afx_msg void OnComboInterpolateSelect();
 	
+	afx_msg void OnButtonReverse();
+	
 
 
 };

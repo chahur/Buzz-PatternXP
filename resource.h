@@ -43,6 +43,7 @@
 #define IDC_CHORD_FILE_BUTTON			2038
 #define IDC_INTERPOLATE_BUTTON			2039
 #define IDC_INTERPOLATE_COMBO			2040
+#define IDC_REVERSE_BUTTON				2041
 
 #define ID_COLUMNS_BUTTON               32773
 #define ID_SELECT_FONT                  32774
@@ -84,6 +85,8 @@
 #define ID_BT_INTERPOLATE               32800
 #define ID_INTERPOLATE_PARAM_BT         32801
 #define ID_INTERPOLATE_PARAM            33801
+#define ID_BT_REVERSE					33802
+
 
 
 

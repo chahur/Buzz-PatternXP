@@ -1784,6 +1784,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_HOME: HomeTop(); break; //BWC
 		case VK_END: EndBottom(); break; //BWC
 		case 'H': InsertChord(); break;
+		case 'D': Reverse(); break;
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -2927,6 +2928,57 @@ void CPatEd::Interpolate(bool expintp)
 	Invalidate();
 
 }
+
+
+void CPatEd::Reverse()
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelRect();
+
+	ppat->actions.BeginAction(pew, "Reverse");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++)
+		{
+			//int v1 = ppat->columns[col]->GetValue(r.top);
+			//int v2 = ppat->columns[col]->GetValue(r.bottom);
+			
+			CColumn *pc = ppat->columns[col].get();
+
+			MapIntToValue colbuf;
+			MapIntToValue::const_iterator ei;
+
+			// First, copy the data of the column to colbuf
+			// row y goes to r.bottom - (y - r.top)
+			for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+			{					
+				int y = (*ei).first;
+				int data = (*ei).second;
+				if ((y>=r.top) && (y<=r.bottom))
+					colbuf[r.bottom - (y - r.top)] = data;	
+				if (y>r.bottom) break;
+			}
+
+			// Then clear the datas between top and bottom
+			pc->ClearEventRange(r.top, r.bottom);
+
+			// Insert the saved datas at the reversed place
+			for (ei = colbuf.begin(); ei != colbuf.end(); ei++)
+			{					
+				int y = (*ei).first;
+				int data = (*ei).second;
+				pc->SetValue(y, data);					
+			}
+		}
+	}
+
+	Invalidate();
+}
+
 
 void CPatEd::ShiftValues(int delta)
 {
