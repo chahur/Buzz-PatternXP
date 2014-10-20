@@ -111,6 +111,7 @@ BEGIN
 	SEPARATOR
     BUTTON      ID_COLUMNS_BUTTON
     BUTTON      ID_SELECT_FONT
+	BUTTON      ID_PARAMETERS_BUTTON
     SEPARATOR
     BUTTON      ID_CHECK_MIDI_BT
     SEPARATOR
@@ -128,6 +129,7 @@ BEGIN
     BUTTON      ID_BT_DOWNOFF
     SEPARATOR
     BUTTON      ID_BT_REVERSE
+	BUTTON      ID_BT_MIRROR
     SEPARATOR
     BUTTON      ID_BT_IMPORT
     BUTTON      ID_BT_EXPORT
@@ -147,8 +149,8 @@ BEGIN
 	SEPARATOR
 	BUTTON      ID_BT_INTERPOLATE
 	BUTTON      ID_INTERPOLATE_PARAM_BT
-	SEPARATOR
-	BUTTON      ID_CHECK_TOOLBAR_BT
+//	SEPARATOR
+//	BUTTON      ID_CHECK_TOOLBAR_BT
 	SEPARATOR
 	SEPARATOR
 	SEPARATOR
@@ -160,7 +162,7 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
+// Bitmap--
 //
 
 IDR_TOOLBAR             BITMAP                  "toolbarPXP.bmp"
@@ -197,6 +199,20 @@ END
 //
 // Dialog 
 //
+IDD_PARAMETERS_DIALOG
+DIALOGEX 0, 0, 183, 126
+STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+CAPTION "PatternXP Parameters"
+FONT 8, "MS Shell Dlg", 400, 0, 1
+BEGIN
+    AUTOCHECKBOX    "Persistent selection", 3001, 19, 11, 133, 10, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Persistent Play Pos", 3002, 19, 25, 76, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Use Toolbar", 3003, 19, 39, 76, 8, 0, WS_EX_LEFT
+    DEFPUSHBUTTON   "OK", 1, 67, 105, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Cancel", 2, 122, 105, 50, 14, 0, WS_EX_LEFT
+END
+
+
 
 IDD_COLUMN_DIALOG DIALOGEX 0, 0, 179, 272
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -215,12 +231,13 @@ BEGIN
     LTEXT           "Rows per beat:",IDC_STATIC,7,51,50,8
 END
 
-IDD_DIALOGBAR DIALOGEX 0, 0, 810, 33
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-FONT 8, "MS Shell Dlg", 400, 0, 0x0
+IDD_DIALOGBAR DIALOGEX 0, 0, 742, 33
+STYLE DS_SHELLFONT | WS_CHILDWINDOW
+FONT 8, "MS Shell Dlg", 400, 0, 0
 BEGIN
     PUSHBUTTON      "Columns...", 2009, 3, 2, 45, 14, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "MIDI Edit", 2007, 53, 12, 45, 10, 0, WS_EX_LEFT
+    PUSHBUTTON      "Parameters", 2043, 49, 2, 44, 14, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "MIDI Edit", 2007, 52, 19, 45, 10, 0, WS_EX_LEFT
     PUSHBUTTON      "Font...", 2008, 3, 16, 45, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Copy", 2015, 167, 2, 24, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Cut", 2014, 191, 2, 25, 14, 0, WS_EX_LEFT
@@ -232,6 +249,7 @@ BEGIN
     PUSHBUTTON      "Merge", 2011, 191, 16, 25, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Clear off", 2022, 230, 2, 36, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Reverse", 2041, 307, 2, 32, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Mirror", 2042, 307, 16, 32, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Import", 2023, 345, 2, 31, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Export", 2024, 345, 16, 31, 14, 0, WS_EX_LEFT
     PUSHBUTTON      "Shrink", 2025, 389, 2, 36, 14, 0, WS_EX_LEFT
@@ -246,10 +264,10 @@ BEGIN
     AUTOCHECKBOX    "Once", 2037, 558, 4, 40, 8, 0, WS_EX_LEFT
     PUSHBUTTON      "Interpolate", 2039, 598, 2, 46, 14, 0, WS_EX_LEFT
     COMBOBOX        2040, 598, 16, 48, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    AUTOCHECKBOX    "Use toolbar", 2031, 748, 5, 48, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Help", 2012, 748, 18, 31, 8, 0, WS_EX_LEFT
+    AUTOCHECKBOX    "Help", 2012, 711, 18, 31, 8, 0, WS_EX_LEFT
     LTEXT           "Bar", 0, 111, 5, 12, 8, SS_LEFT, WS_EX_LEFT
 END
+
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -334,6 +352,7 @@ STRINGTABLE
 BEGIN
     ID_COLUMNS_BUTTON       "Select Columns"
     ID_SELECT_FONT          "Select Font"
+	ID_PARAMETERS_BUTTON	"Parameters"
     ID_BT_COPY              "Copy"
     ID_BT_CUT               "Cut"
     ID_BT_PASTE             "Paste"
@@ -351,6 +370,7 @@ BEGIN
 	ID_BT_CHORD_FILE		"Select chords file"
 	ID_BT_INTERPOLATE		"Interpolate"
 	ID_BT_REVERSE			"Reverse order"
+	ID_BT_MIRROR			"Mirror"
 
 END
 

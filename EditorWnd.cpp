@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <io.h>
+#include "Parameters.h"
 
 HHOOK g_hHook = 0;
 
@@ -33,8 +34,14 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_WM_SHOWWINDOW()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
+
 	ON_COMMAND(ID_COLUMNS_BUTTON, OnColumns)
+	ON_BN_CLICKED(IDC_COLUMNS_BUTTON, CEditorWnd::OnBnClickedColumnsButton) 
+	ON_COMMAND(ID_PARAMETERS_BUTTON, OnParameters)
+	ON_BN_CLICKED(IDC_PARAMETERS_BUTTON, OnParameters)
 	ON_COMMAND(ID_SELECT_FONT, OnSelectFont)
+	ON_BN_CLICKED(IDC_FONT_BUTTON, CEditorWnd::OnBnClickedFontButton)	
+
 	ON_COMMAND(ID_EDIT_UNDO, OnEditUndo)
 	ON_COMMAND(ID_EDIT_REDO, OnEditRedo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateEditUndo)
@@ -48,11 +55,9 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateClipboard)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateClipboard)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE_SPECIAL, OnUpdateClipboard) //BWC
-	ON_BN_CLICKED(IDC_COLUMNS_BUTTON, CEditorWnd::OnBnClickedColumnsButton) //BWC!!!
-	ON_BN_CLICKED(IDC_FONT_BUTTON, CEditorWnd::OnBnClickedFontButton) //BWC!!!
 	
-	ON_BN_CLICKED(IDC_MIDI_EDIT, OnCheckedMidiEdit) //BWC!!!
-	ON_BN_CLICKED(ID_CHECK_MIDI, OnCheckedMidiEdit) //BWC
+	ON_BN_CLICKED(IDC_MIDI_EDIT, OnCheckedMidiEdit) 
+	ON_BN_CLICKED(ID_CHECK_MIDI, OnCheckedMidiEdit) 
 
 	ON_BN_CLICKED(IDC_MISC_BUTTON, OnBnClickedMisc) //BWC
 	ON_BN_CLICKED(IDC_PASTE_BUTTON, OnEditPaste) //BWC
@@ -86,9 +91,6 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	
 	ON_BN_CLICKED(IDC_HELP_CHECK, OnCheckedHelp) //BWC
 	ON_BN_CLICKED(ID_CHECK_HELP, OnCheckedHelp) //BWC
-
-	ON_BN_CLICKED(ID_CHECK_TOOLBAR, OnCheckedToolbar) //BWC
-	ON_BN_CLICKED(IDC_TOOLBAR_BUTTON, OnCheckedToolbar)
 		
 	ON_COMMAND(ID_BT_HUMANIZE, OnButtonHumanize) //BWC
 	ON_EN_CHANGE(ID_HUMANIZE_DELTA, OnChangeHumanize)
@@ -116,6 +118,8 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	
 	ON_COMMAND(ID_BT_REVERSE, OnButtonReverse)
 	ON_BN_CLICKED(IDC_REVERSE_BUTTON, OnButtonReverse) 
+	ON_COMMAND(ID_BT_MIRROR, OnButtonMirror)
+	ON_BN_CLICKED(IDC_MIRROR_BUTTON, OnButtonMirror) 
 	
 
 END_MESSAGE_MAP()
@@ -322,13 +326,13 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 
 	// Insert "Use toolbar" check box
-	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
+/*	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
     toolBar.SetButtonInfo(index, ID_CHECK_TOOLBAR_BT, TBBS_SEPARATOR, 72);
     toolBar.GetItemRect(index, &rect);
 	rect.top++;
 	toolBar.checkToolbar.Create("Use toolbar", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_TOOLBAR);
 	toolBar.checkToolbar.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
- 
+ */
 	// Insert "Help" check box
 	index = toolBar.CommandToIndex(ID_CHECK_HELP_BT);
     toolBar.SetButtonInfo(index, ID_CHECK_HELP_BT, TBBS_SEPARATOR, 48);
@@ -385,6 +389,9 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
 	InsertChordOnce = pCB->GetProfileInt("InsertChordOnce", false)!=0;
 	
+	PersistentSelection= pCB->GetProfileInt("PersistentSelection", true)!=0;
+	PersistentPlayPos= pCB->GetProfileInt("PersistentPlayPos", true)!=0;
+
 	ChordPathName[0]=0;
 	pCB->GetProfileString("ChordPathName", ChordPathName, "");
 
@@ -414,7 +421,7 @@ void CEditorWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 	DoShowHelp();
 }
 
-/* ---- Checkbox "Toolbar" -----*/
+/* ---- Checkbox "Toolbar" -----
 bool CEditorWnd::GetCheckBoxToolbar()
 {
 	if (toolbarvisible)  
@@ -437,6 +444,7 @@ void CEditorWnd::SetCheckBoxToolbar(bool AValue)
 		pc->SetCheck(BST_VAL);
 	}
 }
+*/
 
 /* ---- Checkbox "Help" -----*/
 bool CEditorWnd::GetCheckBoxHelp()
@@ -622,22 +630,17 @@ void CEditorWnd::ToolbarChanged()
 	/* Disable controls action */
 	UpdatingToolbar = true;
 
-/*	char debugtxt[256];
-	sprintf(debugtxt,"CEditorWnd::ToolbarChanged - toolbar visible %d", toolbarvisible);
-	pCB->WriteLine(debugtxt);
-*/
-
 	if (toolbarvisible) 
 	{
 		toolBar.ShowWindow(SW_SHOWNORMAL);
 		dlgBar.ShowWindow(SW_HIDE);
-		SetCheckBoxToolbar(true);
+//		SetCheckBoxToolbar(true);
 	}
 	else
 	{
 		dlgBar.ShowWindow(SW_SHOWNORMAL);
 		toolBar.ShowWindow(SW_HIDE);
-		SetCheckBoxToolbar(false);
+//		SetCheckBoxToolbar(false);
 	}
 
 	SetCheckBoxHelp(helpvisible);
@@ -794,6 +797,21 @@ void CEditorWnd::DeleteLastTrack()
 
 }
 
+void CEditorWnd::OnParameters()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	if (pPattern == NULL)
+		return;
+
+	CParametersDialog dlg(this);
+	dlg.pew = this;
+	if (dlg.DoModal() == IDOK)
+	{
+		ToolbarChanged();
+	}	
+}
+
 void CEditorWnd::OnColumns()
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -923,20 +941,32 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_ADDOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_UPOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_DOWNOFF, pe.CanCopy());
-//	EnableToolbarButtonByCommand(&toolBar, ID_BT_HUMANIZE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INTERPOLATE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_REVERSE, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_MIRROR, pe.CanCopy());
 }
 
-void CEditorWnd::OnEditCut() { pe.OnEditCut(); }
-void CEditorWnd::OnEditCopy() { pe.OnEditCopy(); }
-void CEditorWnd::OnEditPaste() { pe.OnEditPaste(); }
+void CEditorWnd::OnEditCut() { pe.OnEditCut(); pe.SetFocus();}
+void CEditorWnd::OnEditCopy() { pe.OnEditCopy(); pe.SetFocus();}
+void CEditorWnd::OnEditPaste() { pe.OnEditPaste(); pe.SetFocus();}
 void CEditorWnd::OnEditPasteSpecial() { pe.OnEditPasteSpecial(); } //BWC
-void CEditorWnd::OnClearNoteOff() { pe.OnClearNoteOff(); } //BWC
-void CEditorWnd::OnBnClickedAddOff() { pe.OnAddNoteOff(); } //BWC
-void CEditorWnd::OnBnClickedUpOff() { pe.OnUpNoteOff(); } //BWC
-void CEditorWnd::OnBnClickedDownOff() { pe.OnDownNoteOff(); } //BWC
+void CEditorWnd::OnClearNoteOff() { 
+	pe.OnClearNoteOff(); 
+	pe.SetFocus();
+} 
+void CEditorWnd::OnBnClickedAddOff() { 
+	pe.OnAddNoteOff(); 
+	pe.SetFocus();
+} 
+void CEditorWnd::OnBnClickedUpOff() { 
+	pe.OnUpNoteOff(); 
+	pe.SetFocus();
+}
+void CEditorWnd::OnBnClickedDownOff() { 
+	pe.OnDownNoteOff(); 
+	pe.SetFocus();
+} 
 
 
 void CEditorWnd::OnBnClickedColumnsButton()
@@ -953,27 +983,32 @@ void CEditorWnd::OnCheckedMidiEdit()
 {
 	if (UpdatingToolbar) return;
 	MidiEditMode = GetCheckBoxMidiEdit();
+	pe.SetFocus();
 }
 
 
 void CEditorWnd::OnBnClickedMisc()
 {
 	OnEditPasteSpecial();
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnBnClickedClearOff()
 {	
 	OnClearNoteOff();
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnBnClickedImport()
 {
 	pe.ImportPattern();
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnBnClickedExport()
 {	
 	pe.ExportPattern();
+	pe.SetFocus();
 }
 	
 void CEditorWnd::OnButtonShrink()
@@ -981,6 +1016,7 @@ void CEditorWnd::OnButtonShrink()
 	int inflateFactor = GetComboBoxInflate();
 	if (inflateFactor>=0)
 		pe.InflatePattern(-inflateFactor);
+	pe.SetFocus();
 }
 	
 void CEditorWnd::OnButtonExpand()
@@ -988,6 +1024,7 @@ void CEditorWnd::OnButtonExpand()
 	int inflateFactor = GetComboBoxInflate();
 	if (inflateFactor>=0)
 		pe.InflatePattern(inflateFactor);
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnChangeHumanize() 
@@ -1004,11 +1041,13 @@ void CEditorWnd::OnChangeHumanize()
 		DeltaHumanize=x;
 		pCB->WriteProfileInt("DeltaHumanize", DeltaHumanize);
 	}
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnButtonHumanize()
 {	
 	pe.Humanize(DeltaHumanize, HumanizeEmpty);
+	pe.SetFocus();
 }
 	
 
@@ -1129,6 +1168,8 @@ void CEditorWnd::InitChords()
 	// First, empty the combo
 	cb->ResetContent();
 	toolBar.comboChords.ResetContent();
+	// Empty the Chords vector
+	Chords.clear();
 
 	ifstream expfile (pathName, ios::in);  
 	if (expfile)  
@@ -1170,8 +1211,8 @@ void CEditorWnd::InitChords()
 				txt[itxt]=0; 
 				itxt=0;
 				// Second field : interval of the notes
-				// Keep it in the array of chords
-				strcpy(Chords[iChord], txt);
+				// Keep it in the vector of chords
+				Chords.push_back(txt);
 				iChord++;
 			}
 		}
@@ -1201,12 +1242,12 @@ void CEditorWnd::OnButtonSelectChordFile()
 			GeneratorFileName(chordsName, "Basic1.chords");
 	}
 
-	if (!pe.DialogFileName("chords", "Chords", "Select chords file", chordsName, ChordPathName))
-		return;
-
-	pCB->WriteProfileString("ChordPathName", ChordPathName);
-
-	InitChords();
+	if (pe.DialogFileName("chords", "Chords", "Select chords file", chordsName, ChordPathName))
+	{
+		pCB->WriteProfileString("ChordPathName", ChordPathName);
+		InitChords();
+	}
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnCheckedChordOnce()
@@ -1214,6 +1255,7 @@ void CEditorWnd::OnCheckedChordOnce()
 	if (UpdatingToolbar) return;
 	InsertChordOnce = GetCheckBoxChordOnce();
 	pCB->WriteProfileInt("InsertChordOnce", InsertChordOnce);
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnComboBarSelect()
@@ -1221,20 +1263,24 @@ void CEditorWnd::OnComboBarSelect()
 	BarComboIndex = GetComboBoxBar();
 	pCB->SetModifiedFlag();
 	Invalidate();
+	pe.SetFocus();
 }
 
+/*
 void CEditorWnd::OnCheckedToolbar()
 {
 	if (UpdatingToolbar) return;
 	toolbarvisible = GetCheckBoxToolbar();
 	ToolbarChanged();
 }
+*/
 
 void CEditorWnd::OnCheckedHumanizeEmpty()
 {
 	if (UpdatingToolbar) return;
 	HumanizeEmpty = GetCheckBoxHumanizeEmpty();
 	pCB->WriteProfileInt("HumanizeEmpty", HumanizeEmpty);
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnCheckedHelp()
@@ -1243,6 +1289,7 @@ void CEditorWnd::OnCheckedHelp()
 	helpvisible = GetCheckBoxHelp();
 	pCB->WriteProfileInt("helpvisible", helpvisible);
 	DoShowHelp();
+	pe.SetFocus();
 }
 
 static DWORD CALLBACK MyStreamInCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
@@ -1299,22 +1346,32 @@ void CEditorWnd::DoShowHelp()
 void CEditorWnd::OnButtonInsertChord()
 {
 	pe.InsertChord();
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnButtonInterpolate()
 {
 	pe.Interpolate(false);
+	pe.SetFocus();
 }
 
 void CEditorWnd::OnComboInterpolateSelect()
 {
 	pCB->WriteProfileInt("IndexInterpolate", GetComboBoxInterpolate());
+	pe.SetFocus();
 }
 
 
 void CEditorWnd::OnButtonReverse()
 {
 	pe.Reverse();
+	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonMirror()
+{
+	pe.Mirror();
+	pe.SetFocus();
 }
 
 int CEditorWnd::GetEditorPatternPosition()

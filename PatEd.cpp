@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <math.h>
 
 
 
@@ -853,7 +854,16 @@ int CPatEd::BeatsInMeasureBar()
 	CMachinePattern *ppat = pew->pPattern;
 	if (pew->BarComboIndex==0) // Automatic mode
 	{ 
-		return (4 * ppat->rowsPerBeat);
+		int bar = 4;
+	
+		if (ppat->numBeats % 13 == 0) bar = 13;
+		else if (ppat->numBeats % 11 == 0) bar = 11;
+		else if (ppat->numBeats % 9 == 0) bar = 9;
+		else if (ppat->numBeats % 7 == 0) bar = 7;
+		else if (ppat->numBeats % 5 == 0) bar = 5;
+		else if (ppat->numBeats % 3 == 0) bar = 3;
+
+		return (bar * ppat->rowsPerBeat);
 	}
 	else
 		return (pew->BarComboIndex * ppat->rowsPerBeat);
@@ -864,8 +874,8 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 	COLORREF color;
 
 	int bar = 4;
-	
-	if (ppat->numBeats % 13 == 0) bar = 13;
+	if (pew->BarComboIndex >0) bar = pew->BarComboIndex;
+	else if (ppat->numBeats % 13 == 0) bar = 13;
 	else if (ppat->numBeats % 11 == 0) bar = 11;
 	else if (ppat->numBeats % 9 == 0) bar = 9;
 	else if (ppat->numBeats % 7 == 0) bar = 7;
@@ -876,7 +886,7 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 	{
 		color = bgsel;
 	}
-	else if (DrawMeasureBar(row, ppat->rowsPerBeat, pew->BarComboIndex))
+	else if (DrawMeasureBar(row, ppat->rowsPerBeat, bar))
 	{
 		if (muted)
 			color = Blend(bgcolvdark, bgcol, 0.5f);
@@ -1028,8 +1038,8 @@ void CPatEd::InsertChord()
 			char c;
 			// Get current chord description
 			char SelectedChord[20];
-			strcpy(SelectedChord, pew->Chords[pew->ChordsComboIndex()]);
-
+			strcpy(SelectedChord, pew->Chords[pew->ChordsComboIndex()].c_str());
+			
 			// Get next track, next note column
 			int icol = cursor.column+1;
 			while (!stopChord) 
@@ -1319,7 +1329,8 @@ void CPatEd::MoveCursorDelta(int dx, int dy)
 
 void CPatEd::PatternChanged()
 {
-//	KillSelection(); BWC : Keep selection persistent
+	if (!pew->PersistentSelection)
+		KillSelection(); // BWC : Keep selection persistent
 	MoveCursor(cursor);
 	Invalidate();
 	UpdateStatusBar();
@@ -1784,7 +1795,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_HOME: HomeTop(); break; //BWC
 		case VK_END: EndBottom(); break; //BWC
 		case 'H': InsertChord(); break;
-		case 'D': Reverse(); break;
+		case 'D': if (shiftdown) Mirror(); else Reverse(); break;
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -2944,9 +2955,6 @@ void CPatEd::Reverse()
 
 		for (int col = r.left; col <= r.right; col++)
 		{
-			//int v1 = ppat->columns[col]->GetValue(r.top);
-			//int v2 = ppat->columns[col]->GetValue(r.bottom);
-			
 			CColumn *pc = ppat->columns[col].get();
 
 			MapIntToValue colbuf;
@@ -2973,6 +2981,127 @@ void CPatEd::Reverse()
 				int data = (*ei).second;
 				pc->SetValue(y, data);					
 			}
+		}
+	}
+
+	Invalidate();
+}
+
+double round(double d)
+{
+  return floor(d + 0.5);
+}
+
+void CPatEd::Mirror()
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelRect();
+
+	ppat->actions.BeginAction(pew, "Mirror");
+	{
+		MACHINE_LOCK;
+
+		for (int col = r.left; col <= r.right; col++)
+		{
+			CColumn *pc = ppat->columns[col].get();
+
+			MapIntToValue::const_iterator ei;
+
+			switch(pc->GetParamType())
+			{
+			case pt_note:
+				{
+				// Mirror notes is relative to first note of the selection
+				byte ZeroVal=0;
+	
+				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;
+					if (y>r.bottom) break;
+					if ((y>=r.top) && (y<=r.bottom))
+					{
+						if (data != NOTE_OFF) 
+						{
+							ZeroVal = (byte)data;
+							int octave = ZeroVal >> 4;
+							int note = (ZeroVal & 15) -1;
+							ZeroVal = 12*octave + note;
+							break;
+						}
+					}
+				}
+				if (ZeroVal>0)
+				{ 
+					// Then mirror each value according to ZeroVal
+					for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+					{					
+						int y = (*ei).first;
+						byte data = (byte)(*ei).second;
+						int octave = data >> 4;
+						int note = (data & 15) -1;
+						data = 12*octave + note;
+						byte NewData = ZeroVal - (data-ZeroVal);
+						octave = NewData / 12;
+						note = NewData - (octave*12);
+					
+						pc->SetValue(y, (octave << 4) + note + 1);
+					}
+				}
+
+				}
+				break;
+			case pt_byte:
+			case pt_word:
+				{
+				int MinVal=MAXINT;
+				int MaxVal=-1;
+				double ZeroVal=0;
+				// First, get the min and max values of the selection
+				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+				{					
+					int y = (*ei).first;
+					int data = (*ei).second;
+					if (y>r.bottom) break;
+					if ((y>=r.top) && (y<=r.bottom))
+					{
+						if (data > MaxVal) MaxVal = data;
+						if (data < MinVal) MinVal = data;
+					}
+				}
+
+				if (MaxVal>0)
+				{ 
+					ZeroVal = MinVal + ((double)(MaxVal-MinVal)/2);
+					// Then mirror each value according to ZeroVal
+					for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+					{					
+						int y = (*ei).first;
+						int data = (*ei).second;
+						if (y>r.bottom) break;
+						if ((y>=r.top) && (y<=r.bottom))
+							pc->SetValue(y, round(ZeroVal - (data-ZeroVal)));					
+					}
+				}
+				}
+				break;
+			case pt_switch:
+				{   // Invert the data
+					for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+					{					
+						int y = (*ei).first;
+						int data = (*ei).second;
+						if (y>r.bottom) break;
+						if ((y>=r.top) && (y<=r.bottom))
+							pc->SetValue(y, !data);					
+					}
+				}
+				break;
+			}
+
 		}
 	}
 
@@ -3048,7 +3177,8 @@ void CPatEd::OnTimer(UINT_PTR nIDEvent)
 	{
 		r.top = drawPlayPos;
 		r.bottom = r.top + 1;
-		drawPlayPos = -1;
+		if (!pew->PersistentPlayPos)
+			drawPlayPos = -1;
 		InvalidateRect(CanvasToClient(r));
 	}
 

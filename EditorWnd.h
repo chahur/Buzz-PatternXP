@@ -12,6 +12,9 @@
 #include "ColumnDialog.h"
 #include "ActionStack.h"
 
+
+typedef std::vector<std::string> str_vec_t;
+
 class CEditorWnd : public CWnd
 {
 	DECLARE_DYNAMIC(CEditorWnd)
@@ -52,9 +55,8 @@ private:
 	void InitChords();
 	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
 
-
-	bool GetCheckBoxToolbar();
-	void SetCheckBoxToolbar(bool AValue);
+//	bool GetCheckBoxToolbar();
+//	void SetCheckBoxToolbar(bool AValue);
 
 	bool GetCheckBoxHelp();
 	void SetCheckBoxHelp(bool AValue);
@@ -103,7 +105,7 @@ public:
 	int rowNumWndWidth;
 	int topWndHeight;
 
-	char Chords[200][20];
+	str_vec_t Chords;
 
 //	CFuBar reBar;
 	CToolBar2 toolBar;
@@ -120,6 +122,9 @@ public:
 	bool ShowParamText;
 	bool ShowTrackToolbar;
 	int LINEAR_INTERPOLATE_PARAM;
+
+	bool PersistentSelection;
+	bool PersistentPlayPos;
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
@@ -139,7 +144,7 @@ public:
 	afx_msg void OnEditPaste();
 	afx_msg void OnEditPasteSpecial();
 	afx_msg void OnClearNoteOff();
-	
+	afx_msg void OnParameters();
 
 protected:
 //	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
@@ -166,7 +171,7 @@ public:
 	afx_msg void OnCheckedHelp();
 	afx_msg void OnComboBarSelect();
 
-	afx_msg void OnCheckedToolbar();
+//	afx_msg void OnCheckedToolbar();
 
 	afx_msg void OnButtonInsertChord();
 	afx_msg void OnButtonSelectChordFile();
@@ -175,6 +180,8 @@ public:
 	afx_msg void OnComboInterpolateSelect();
 	
 	afx_msg void OnButtonReverse();
+	afx_msg void OnButtonMirror();
+	
 	
 
 
