@@ -1696,6 +1696,24 @@ void CPatEd::Insert()
 	InvalidateGroup(cursor.row, cursor.column);
 }
 
+void CPatEd::InsertRow()
+{
+	CMachinePattern *ppat = pew->pPattern;
+
+	ppat->actions.BeginAction(pew, "Insert Row");
+	{
+		MACHINE_LOCK;
+
+		int cc = (int)ppat->columns.size();
+
+		for (int c = 0; c < cc; c++)
+			ppat->columns[c]->Insert(cursor.row, ppat->GetRowCount());
+	}
+
+	Invalidate();
+}
+
+
 void CPatEd::Delete()
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -1712,6 +1730,22 @@ void CPatEd::Delete()
 	}
 
 	InvalidateGroup(cursor.row, cursor.column);
+}
+
+void CPatEd::DeleteRow()
+{
+	CMachinePattern *ppat = pew->pPattern;
+
+	ppat->actions.BeginAction(pew, "Delete Row");
+	{
+		MACHINE_LOCK;
+		int cc = (int)ppat->columns.size();
+
+		for (int c = 0; c < cc; c++)
+			ppat->columns[c]->Delete(cursor.row);
+	}
+
+	Invalidate();
 }
 
 void CPatEd::Rotate(bool reverse)
@@ -1796,6 +1830,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_END: EndBottom(); break; //BWC
 		case 'H': InsertChord(); break;
 		case 'D': if (shiftdown) Mirror(); else Reverse(); break;
+		case 'P': if (shiftdown) DeleteRow(); else InsertRow(); break;
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -1810,16 +1845,15 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_DOWN: CursorSelect(0, 1); break;
 		case VK_LEFT: CursorSelect(-1, 0); break;
 		case VK_RIGHT: CursorSelect(1, 0); break;
-		case VK_PRIOR: CursorSelect(0, -BeatsInMeasureBar()); break; // BWC
-		case VK_NEXT: CursorSelect(0, BeatsInMeasureBar()); break; // BWC
+		case VK_PRIOR: CursorSelect(0, -BeatsInMeasureBar()); break;
+		case VK_NEXT: CursorSelect(0, BeatsInMeasureBar()); break; 
 		case VK_HOME: CursorSelect(0, -(1 << 24)); break;
 		case VK_END: CursorSelect(0, (1 << 24)); break;
 		case VK_SUBTRACT: ShiftValues(-1); break;
 		case VK_ADD: ShiftValues(1); break;
-		case VK_DIVIDE: ShiftValues(-12); break; //BWC
-		case VK_MULTIPLY: ShiftValues(12); break; //BWC
+		case VK_DIVIDE: ShiftValues(-12); break; 
+		case VK_MULTIPLY: ShiftValues(12); break; 
 		}
-
 
 	}
 	else
@@ -3048,7 +3082,9 @@ void CPatEd::Mirror()
 						octave = NewData / 12;
 						note = NewData - (octave*12);
 					
-						pc->SetValue(y, (octave << 4) + note + 1);
+						if (y>r.bottom) break;
+						if ((y>=r.top) && (y<=r.bottom))
+							pc->SetValue(y, (octave << 4) + note + 1);
 					}
 				}
 

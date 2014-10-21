@@ -54,6 +54,8 @@ public:
 	void InsertChord();
 	void Reverse();
 	void Mirror();
+	void InsertRow();
+	void DeleteRow();
 
 	void Interpolate(bool expintp);
 

@@ -181,6 +181,10 @@ public:
 	
 	afx_msg void OnButtonReverse();
 	afx_msg void OnButtonMirror();
+	afx_msg void OnButtonInsertRow();
+	afx_msg void OnButtonDeleteRow();
+
+	
 	
 	
 

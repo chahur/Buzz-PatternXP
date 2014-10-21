@@ -46,6 +46,8 @@
 #define IDC_REVERSE_BUTTON				2041
 #define IDC_MIRROR_BUTTON				2042
 #define IDC_PARAMETERS_BUTTON			2043
+#define IDC_BT_INSROW					2044
+#define IDC_BT_DELROW					2045
 
 #define IDD_PARAMETERS_DIALOG           3000
 #define ID_PERSISTENT_SELECTION         3001
@@ -93,9 +95,12 @@
 #define ID_BT_INTERPOLATE               32800
 #define ID_INTERPOLATE_PARAM_BT         32801
 #define ID_INTERPOLATE_PARAM            33801
-#define ID_BT_REVERSE					33802
-#define ID_BT_MIRROR					33803
-#define ID_PARAMETERS_BUTTON			33804
+#define ID_BT_REVERSE					32802
+#define ID_BT_MIRROR					32803
+#define ID_PARAMETERS_BUTTON			32804
+#define ID_BT_INSROW					32805
+#define ID_BT_DELROW					32806
+
 
 
 

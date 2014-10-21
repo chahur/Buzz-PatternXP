@@ -120,6 +120,12 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_BN_CLICKED(IDC_REVERSE_BUTTON, OnButtonReverse) 
 	ON_COMMAND(ID_BT_MIRROR, OnButtonMirror)
 	ON_BN_CLICKED(IDC_MIRROR_BUTTON, OnButtonMirror) 
+
+	ON_COMMAND(ID_BT_INSROW, OnButtonInsertRow)
+	ON_BN_CLICKED(IDC_BT_INSROW, OnButtonInsertRow) 
+	ON_COMMAND(ID_BT_DELROW, OnButtonDeleteRow)
+	ON_BN_CLICKED(IDC_BT_DELROW, OnButtonDeleteRow) 
+	
 	
 
 END_MESSAGE_MAP()
@@ -1371,6 +1377,18 @@ void CEditorWnd::OnButtonReverse()
 void CEditorWnd::OnButtonMirror()
 {
 	pe.Mirror();
+	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonInsertRow()
+{
+	pe.InsertRow();
+	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonDeleteRow()
+{
+	pe.DeleteRow();
 	pe.SetFocus();
 }
 
