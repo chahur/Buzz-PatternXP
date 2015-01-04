@@ -1,12 +1,11 @@
 #pragma once
 
 #include "resource.h"
-
 #include "afxwin.h"
 
 class CEditorWnd;
 
-// CColumnDialog dialog
+// CParametersDialog dialog
 
 class CParametersDialog : public CDialog
 {

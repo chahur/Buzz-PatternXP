@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "TopWnd.h"
 #include "EditorWnd.h"
+#include <io.h>
 
 // CTopWnd
 
@@ -217,7 +218,42 @@ void CTopWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 		if (col < 0)
 			return;
 
-		pew->pCB->ShowMachineWindow(pew->pPattern->columns[col]->GetMachine(), true);
+		bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
+
+		if (ctrldown) {
+			// Help file for this machine
+			char path_buffer[_MAX_PATH];
+			char drive[_MAX_DRIVE];
+			char dir[_MAX_DIR];
+			char fname[_MAX_FNAME];
+			char FullFilename[_MAX_FNAME];
+			char ext[_MAX_EXT];
+
+			HMODULE hm = (HMODULE)pew->pCB->GetMachineModuleHandle(pew->pPattern->columns[col]->GetMachine());
+			GetModuleFileName(hm, path_buffer, sizeof(path_buffer));
+			_splitpath_s( path_buffer, drive, _MAX_DRIVE, dir, _MAX_DIR, fname,
+							_MAX_FNAME, ext, _MAX_EXT );
+			sprintf(FullFilename,"%s%s%s%s", drive, dir, fname, ".htm");
+			// Check if the file exists
+			if (_access (FullFilename, 0) == 0) 
+				ShellExecute(NULL, _T("open"), FullFilename, NULL, NULL, SW_SHOWNORMAL);
+			else {
+				sprintf(FullFilename,"%s%s%s%s", drive, dir, fname, ".html");
+				if (_access (FullFilename, 0) == 0) 
+					ShellExecute(NULL, "open", FullFilename, NULL, NULL, SW_SHOWNORMAL);
+				else {
+					sprintf(FullFilename,"%s%s%s%s", drive, dir, fname, ".txt");
+					if (_access (FullFilename, 0) == 0) 
+						ShellExecute(NULL, "open", FullFilename, NULL, NULL, SW_SHOWNORMAL);
+					else
+						pew->pCB->MessageBox("Sorry, no help for this machine.");
+				}
+			}
+
+		}
+		else
+			// Show machine window
+			pew->pCB->ShowMachineWindow(pew->pPattern->columns[col]->GetMachine(), true);
 	}
 	else if (pew->ShowTrackToolbar) 
 	{
@@ -266,10 +302,6 @@ void CTopWnd::TrackToolbarButton(CPoint point)
 		int cl = pew->pe.GetColumnX(fc);
 		int btw = pew->pe.GetTrackWidth(col) / 4;
 		
-/*		char debugtxt[256];
-		sprintf(debugtxt,"CTopWnd::TrackToolbarButton y:%d, cl:%d, btw:%d", point.y, cl, btw);
-		pew->pCB->WriteLine(debugtxt);
-	*/	
 		if (point.x < cl+btw) {
 			// button copy
 			pew->pe.SelectTrackByNo(col);

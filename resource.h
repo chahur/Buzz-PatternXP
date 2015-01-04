@@ -48,11 +48,19 @@
 #define IDC_PARAMETERS_BUTTON			2043
 #define IDC_BT_INSROW					2044
 #define IDC_BT_DELROW					2045
+#define IDC_TONAL_COMBO					2046
+#define IDC_TONAL_BUTTON				2047
+
 
 #define IDD_PARAMETERS_DIALOG           3000
 #define ID_PERSISTENT_SELECTION         3001
 #define ID_PERSISTENT_PLAYPOS           3002
 #define ID_USE_TOOLBAR			        3003
+#define ID_IMPORT_AUTO_RESIZE	        3004
+#define ID_CHORD_AUTO_REFRESH	        3005
+#define ID_PGUPDOWN_DISABLED	        3006
+#define ID_HOME_DISABLED				3007
+
 
 
 #define ID_COLUMNS_BUTTON               32773
@@ -100,6 +108,15 @@
 #define ID_PARAMETERS_BUTTON			32804
 #define ID_BT_INSROW					32805
 #define ID_BT_DELROW					32806
+
+#define ID_LABEL_TONAL_BT				32807
+#define ID_LABEL_TONAL					33807
+#define ID_COMBO_TONAL_BT				32808
+#define ID_COMBO_TONAL					33808
+#define ID_TONAL_BT						32809
+
+
+#define IDD_CHORD_EXPERT_DIALOG			4000
 
 
 

@@ -36,6 +36,10 @@ CPatEd::CPatEd()
 	selMode = column;
 	invalidateInTimer = false;
 	drawing = false;
+	CheckRefreshChordCount=0;
+	AnalyseChordRefresh=false;
+	AnalysingChords = false;
+
 }
 
 CPatEd::~CPatEd()
@@ -328,6 +332,7 @@ int HexToInt(char c)
 	return res;
 }
 
+
 void CPatEd::TextToFieldImport(char *txt, CColumn *pc, int irow)
 {
 //	char debugtxt[256];
@@ -418,7 +423,7 @@ CColumn *CPatEd::GetCursorColumn()
 }
 
 
-bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName)
+bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -426,7 +431,10 @@ bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LP
 	char ssuf[20];
     sprintf(szFilters, "%s (*.%s)|*.%s|All Files (*.*)|*.*||", FileLibelle, Suffix, Suffix);
     sprintf(ssuf, "*.%s", Suffix);
-	CFileDialog dlgFile(TRUE, Suffix, ssuf, OFN_HIDEREADONLY, szFilters);
+	int OpenMode = (DoOpen ? 1 : 0);
+	int OpenParams = (DoOpen ? OFN_HIDEREADONLY|OFN_FILEMUSTEXIST : OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT);
+
+	CFileDialog dlgFile(OpenMode, Suffix, ssuf, OpenParams, szFilters);
 	
 	dlgFile.m_ofn.lpstrTitle = FileTitle;
 	dlgFile.m_ofn.lpstrFile = InitFilename;
@@ -435,8 +443,7 @@ bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LP
 		return false;
 
 	sprintf(pathName, "%s", dlgFile.GetPathName());
-	return true;
-	
+	return true;	
 }
 
 void CPatEd::ExportPattern()
@@ -445,7 +452,7 @@ void CPatEd::ExportPattern()
 	char pathName[255];
 	pCB->GetProfileString("ExportPathName", exportpathName, "");
 
-	if (!DialogFileName("csv", "Pattern file", "Export pattern", exportpathName, pathName))
+	if (!DialogFileName("csv", "Pattern file", "Export pattern", exportpathName, pathName, false))
 		return;
 
 	pCB->WriteProfileString("ExportPathName", pathName);
@@ -510,7 +517,7 @@ void CPatEd::ImportPattern()
 	char pathName[255];
 	pCB->GetProfileString("ExportPathName", exportpathName, "");
 
-	if (!DialogFileName("csv", "Pattern file", "Import pattern", exportpathName, pathName))
+	if (!DialogFileName("csv", "Pattern file", "Import pattern", exportpathName, pathName, true))
 		return;
 
 	pCB->WriteProfileString("ExportPathName", pathName);
@@ -520,8 +527,8 @@ void CPatEd::ImportPattern()
 	{
 		MACHINE_LOCK;
 	
-		int const lastrow = pew->pPattern->GetRowCount();
-		int const lastcol = (int)ppat->columns.size();
+		int lastrow = pew->pPattern->GetRowCount();
+		int lastcol = (int)ppat->columns.size();
 
 		ifstream expfile (pathName, ios::in);  
 		if (expfile)  
@@ -541,6 +548,20 @@ void CPatEd::ImportPattern()
 	
 				itxt=0;
 				icol=0;
+
+				if (pew->ImportAutoResize)
+				{
+					// check if enough rows in the pattern
+					if (irow >= lastrow) 
+					{
+						lastrow = lastrow + BUZZ_TICKS_PER_BEAT;
+						pCB->SetPatternLength(ppat->pPattern, lastrow);
+					}
+				}
+				else
+				if (irow >= lastrow) 
+					break;
+
 
 				for (int i=0; i < (int)impRow.length(); i++)
 				{
@@ -576,8 +597,6 @@ void CPatEd::ImportPattern()
 
 				// Get next row
 				irow++;
-				if (irow > lastrow) 
-					break;
 			}
 		
 			expfile.close();  
@@ -585,16 +604,17 @@ void CPatEd::ImportPattern()
 		}
 	}
 	pCB->SetModifiedFlag();
-	Invalidate();
+	pew->UpdateCanvasSize();
+	pew->Invalidate();
+	DoAnalyseChords();
+
 }
 
 void CPatEd::InflatePattern(int delta)
 {
-	// char debugtxt[256];
 	if (delta > 0) {
-		// Confirm action first
-		 
-		// Expand pattern x2
+	 
+		// Expand pattern x delta
 		CMachinePattern *ppat = pew->pPattern;
 		
 		ppat->actions.BeginAction(pew, "Inflate pattern");
@@ -643,44 +663,48 @@ void CPatEd::InflatePattern(int delta)
 		delta = -delta;
 		CMachinePattern *ppat = pew->pPattern;
 		
-		ppat->actions.BeginAction(pew, "Inflate pattern");
+		// Do not collapse to death !
+		if (ppat->numBeats / delta * BUZZ_TICKS_PER_BEAT >= 1) 
 		{
-			MACHINE_LOCK;
-			// Expand rows per beats
-			ppat->SetRowsPerBeat(ppat->rowsPerBeat * delta);
 
-			for (int col = 0; col < (int)ppat->columns.size(); col++)
+			ppat->actions.BeginAction(pew, "Inflate pattern");
 			{
-				CColumn *pc = ppat->columns[col].get();
+				MACHINE_LOCK;
+				// Expand rows per beats
+				ppat->SetRowsPerBeat(ppat->rowsPerBeat * delta);
 
-				MapIntToValue colbuf;
-				MapIntToValue::const_iterator ei;
+				for (int col = 0; col < (int)ppat->columns.size(); col++)
+				{
+					CColumn *pc = ppat->columns[col].get();
 
-				// First, copy the data of the column to colbuf
-				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
-				{					
-					int y = (*ei).first;
-					int data = (*ei).second;						
-					colbuf[y] = data;					
+					MapIntToValue colbuf;
+					MapIntToValue::const_iterator ei;
+
+					// First, copy the data of the column to colbuf
+					for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+					{					
+						int y = (*ei).first;
+						int data = (*ei).second;						
+						colbuf[y] = data;					
+					}
+
+					// Clear the column
+					pc->Clear();
+
+					// Now move the data from y to y/delta
+					for (ei = colbuf.begin(); ei != colbuf.end(); ei++)
+					{					
+						int y = (*ei).first;
+						int data = (*ei).second;
+
+						// Move value to row : y / delta
+						pc->SetValue(y/delta, data);					
+					}
 				}
 
-				// Clear the column
-				pc->Clear();
-
-				// Now move the data from y to y/delta
-				for (ei = colbuf.begin(); ei != colbuf.end(); ei++)
-				{					
-					int y = (*ei).first;
-					int data = (*ei).second;
-
-					// Move value to row : y / delta
-					pc->SetValue(y/delta, data);					
-				}
+				// Resize the pattern / delta
+				pCB->SetPatternLength(ppat->pPattern, ppat->numBeats / delta * BUZZ_TICKS_PER_BEAT);
 			}
-
-			// Resize the pattern / delta
-			pCB->SetPatternLength(ppat->pPattern, ppat->numBeats / delta * BUZZ_TICKS_PER_BEAT);
-
 		}
 
 		pCB->SetModifiedFlag();
@@ -688,6 +712,7 @@ void CPatEd::InflatePattern(int delta)
 		pew->UpdateCanvasSize();
 		pew->Invalidate();
 	}
+	DoAnalyseChords();
 
 }
 
@@ -834,7 +859,7 @@ void CPatEd::DrawColumn(CDC *pDC, int col, int x, COLORREF textcolor, CRect cons
 		if (pc->IsGraphical())
 			DrawGraphicalField(pDC, col, pnc, data, x, y, muted, hasvalue, textcolor);
 		else
-			DrawField(pDC, col, pnc, data, x, y, muted, hasvalue);
+			DrawField(pDC, col, pnc, data, x, y, muted, hasvalue, textcolor);
 	}
 }
 
@@ -852,7 +877,7 @@ bool DrawMeasureBar(int aRow, int arowsPerBeat, int aBarCnt)
 int CPatEd::BeatsInMeasureBar()
 {
 	CMachinePattern *ppat = pew->pPattern;
-	if (pew->BarComboIndex==0) // Automatic mode
+	if ((pew->BarComboIndex<=0) || (pew->BarComboIndex>8)) // Automatic mode
 	{ 
 		int bar = 4;
 	
@@ -874,7 +899,8 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 	COLORREF color;
 
 	int bar = 4;
-	if (pew->BarComboIndex >0) bar = pew->BarComboIndex;
+	if ((pew->BarComboIndex >0) && (pew->BarComboIndex <=8)) 
+		bar = pew->BarComboIndex;
 	else if (ppat->numBeats % 13 == 0) bar = 13;
 	else if (ppat->numBeats % 11 == 0) bar = 11;
 	else if (ppat->numBeats % 9 == 0) bar = 9;
@@ -909,7 +935,16 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 }
 
 
-void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue)
+bool CPatEd::CheckNoteInTonality(byte note)
+{
+	if (pew->TonalComboIndex <=0) return true;
+	if (pew->TonalComboIndex > (int)pew->TonalityList.size()) return true;
+	if (pew->TonalityList[pew->TonalComboIndex].notes.test(note)) return true;
+
+	return false;
+}
+
+void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor)
 {
 	CMachinePattern *ppat = pew->pPattern;
 	CColumn *pc = ppat->columns[col].get();
@@ -920,6 +955,18 @@ void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, 
 	char txt[6];
 	FieldToText(txt, pc->GetParamType(), pc->IsAscii(), hasvalue, (void *)&data);
 	
+	bool SetTextColorBack = false;
+	if (hasvalue && pc->GetParamType()==pt_note)
+	{
+		byte b = (byte)data;
+		if (b != NOTE_OFF)
+		if (!CheckNoteInTonality((b & 15) -1))
+		{
+			SetTextColorBack = true;
+			pDC->SetTextColor(RGB(255, 0, 0));
+		}
+	}
+
 	int len = (int)strlen(txt);
 	if (pnc != NULL && pc->MatchGroupAndTrack(*pnc))
 	{
@@ -941,6 +988,7 @@ void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, 
 
 //		pDC->TextOut(x - pew->fontSize.cx, y * pew->fontSize.cy, "-");
 	}
+	if (SetTextColorBack) pDC->SetTextColor(textcolor);
 
 }
 
@@ -989,6 +1037,19 @@ void CPatEd::DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x
 }
 
 
+bool CPatEd::CheckNoteCol()
+{
+	if (pew->pPattern == NULL)
+		return false;
+
+	CMachinePattern *ppat = pew->pPattern;
+	CColumn *pc = ppat->columns[cursor.column].get();
+	if (pc->GetParamType() != pt_note)
+		return false;
+
+	return true;
+}
+
 bool CPatEd::CanInsertChord()
 {
 	if (pew->pPattern == NULL)
@@ -1005,113 +1066,358 @@ bool CPatEd::CanInsertChord()
 
 }
 
-void CPatEd::InsertChord()
+void CPatEd::InsertChordNote(int note, int ChordIndex)
 {
-	// Insert a chord on the current row if there is a note in the current col
-	// The notes of the chord ar inserted one by one in the tracks on the right.
-		
+	if (pew->pPattern == NULL)
+		return;
+	// Insert note
 	CMachinePattern *ppat = pew->pPattern;
 	CColumn *pc = ppat->columns[cursor.column].get();
-	
-	// Must be on a column note
-	// Is there a note here ?
-	int value = pc->GetValue(cursor.row);
+
+	if (pc->GetParamType() != pt_note)
+		return;
+
+	ppat->actions.BeginAction(pew, "Insert chord and base");
+	{
+		MACHINE_LOCK;
+		pc->SetValue(cursor.row, note);	
+		DoInsertChord(ChordIndex);
+	}	
+}
+
+void CPatEd::InsertChord(int ChordIndex)
+{
 	if (CanInsertChord())
 	{
+		CMachinePattern *ppat = pew->pPattern;
+		CColumn *pc = ppat->columns[cursor.column].get();
 		ppat->actions.BeginAction(pew, "Insert chord");
 		{
 			MACHINE_LOCK;
-			// Is there a selection to limit the generation of the chord ?
-			int LastCol=0;
-			if (selection){
-				CRect r= GetSelRect();
-				if (r.right > cursor.column)
-					LastCol = r.right;
-			}
-
-			// Keep the root note of the chord
-			int rootChord = value;
-			bool stopChord = false;
-			bool cleanTracks = false;
-			int iChord = 0;
-			int delta;
-			char c;
-			// Get current chord description
-			char SelectedChord[20];
-			strcpy(SelectedChord, pew->Chords[pew->ChordsComboIndex()].c_str());
-			
-			// Get next track, next note column
-			int icol = cursor.column+1;
-			while (!stopChord) 
-			{
-				while ((icol<(int)ppat->columns.size()) && (ppat->columns[icol]->GetParamType() != pt_note))
-					icol++;
-		
-				if (icol<(int)ppat->columns.size())
-				{ 
-					// Check column limit
-					if ((LastCol<=0) || (icol<=LastCol))
-					{
-						if (cleanTracks)
-						{
-							ppat->columns[icol]->ClearValue(cursor.row);
-							icol++;
-						}
-						else
-						{
-							// Note column found
-							c = SelectedChord[iChord]; 
-							if (c==0)
-							{	// Restart chord with base note, add 1 octave
-								if (pew->InsertChordOnce)
-									cleanTracks=true;
-								else {
-									value = EncodeNote(DecodeNote(rootChord) + 12);
-									rootChord = value;
-									iChord = 0;
-								}
-							}
-							else 
-							{	// Get next note of chord
-								delta = HexToInt(c);
-								value = EncodeNote(DecodeNote(rootChord) + delta);
-								iChord++;
-							}	
-							
-							if (cleanTracks)
-								ppat->columns[icol]->ClearValue(cursor.row);
-							else {
-								// Check if the note is valid
-								int octave = value >> 4;
-								int note = (value & 15) -1;
-								// Last note is B-9
-								if ((!stopChord) && (octave<10)) {
-									ppat->columns[icol]->SetValue(cursor.row, value);								
-								}
-								else 
-									cleanTracks = true;
-							}
-							icol++;
-						}
-					}
-					else 
-					// Chords generated in the selection, don't clean the tracks outside
-						stopChord = true;
-				}
-				else
-				{	// No more track : end of the chord generation
-					stopChord = true;
-				}
-
-			}
-
-			pCB->SetModifiedFlag();
-			ColumnsChanged();
-			pew->UpdateCanvasSize();
-			pew->Invalidate();
+			DoInsertChord(ChordIndex);
 		}
 	}
+}
+
 	
+void CPatEd::DoInsertChord(int ChordIndex)
+{
+	// Insert a chord on the current row if there is a note in the current col
+	// The notes of the chord ar inserted one by one in the tracks on the right.		
+	
+	// Must be on a column note
+	// Is there a note here ?
+	if (CanInsertChord())
+	{
+		CMachinePattern *ppat = pew->pPattern;
+		CColumn *pc = ppat->columns[cursor.column].get();
+
+		// Is there a selection to limit the generation of the chord ?
+		int LastCol=0;
+		if (selection){
+			CRect r= GetSelRect();
+			if (r.right > cursor.column)
+				LastCol = r.right;
+		}
+
+		// Keep the root note of the chord
+		int value = pc->GetValue(cursor.row);
+		int rootChord = value;
+
+		bool stopChord = false;
+		bool cleanTracks = false;
+		int iChord = 0;
+		int delta;
+		char c;
+		// Get current chord description
+		char SelectedChord[20];
+		if (ChordIndex <0) ChordIndex = pew->ChordsComboIndex();
+		strcpy(SelectedChord, pew->Chords[ChordIndex].c_str());
+			
+		// Get next track, next note column
+		int icol = cursor.column+1;
+		while (!stopChord) 
+		{
+			while ((icol<(int)ppat->columns.size()) && (ppat->columns[icol]->GetParamType() != pt_note))
+				icol++;
+		
+			if (icol<(int)ppat->columns.size())
+			{ 
+				// Check column limit
+				if ((LastCol<=0) || (icol<=LastCol))
+				{
+					if (cleanTracks)
+					{
+						ppat->columns[icol]->ClearValue(cursor.row);
+						icol++;
+					}
+					else
+					{
+						// Note column found
+						c = SelectedChord[iChord]; 
+						if (c==0)
+						{	// Restart chord with base note, add 1 octave
+							if (pew->InsertChordOnce)
+								cleanTracks=true;
+							else {
+								value = EncodeNote(DecodeNote(rootChord) + 12);
+								rootChord = value;
+								iChord = 0;
+							}
+						}
+						else 
+						{	// Get next note of chord
+							delta = HexToInt(c);
+							value = EncodeNote(DecodeNote(rootChord) + delta);
+							iChord++;
+						}	
+							
+						if (cleanTracks)
+							ppat->columns[icol]->ClearValue(cursor.row);
+						else {
+							// Check if the note is valid
+							int octave = value >> 4;
+							int note = (value & 15) -1;
+							// Last note is B-9
+							if ((!stopChord) && (octave<10)) {
+								ppat->columns[icol]->SetValue(cursor.row, value);								
+							}
+							else 
+								cleanTracks = true;
+						}
+						icol++;
+					}
+				}
+				else 
+				// Chords generated in the selection, don't clean the tracks outside
+					stopChord = true;
+			}
+			else
+			{	// No more track : end of the chord generation
+				stopChord = true;
+			}
+
+		}
+
+		pCB->SetModifiedFlag();
+		ColumnsChanged();
+		pew->UpdateCanvasSize();
+		pew->Invalidate();
+		DoAnalyseChords();
+
+	}
+	
+}
+
+	
+void CPatEd::TestChords(note_bitset n, int ir)
+{
+	// Test each 12 base notes for each chord
+	// first base note is C
+	if ((int)n.count() < pew->minChordNotes)
+		// Not enough notes to make a chord
+		return;
+	else if ((int)n.count() > pew->maxChordNotes)
+		// Too much notes to make a chord
+		return;
+	else {
+		for (int ib=0; ib<12; ib++) {
+			for (int ic=0; ic< (int)pew->ChordsBase.size(); ic++) {
+				if (n == pew->ChordsBase[ic].notes) {
+					pew->RowNotes[ir].chord_index = ic;
+					pew->RowNotes[ir].base_note = ib;
+					return;
+				}
+			}
+			// test next base note
+			bool n0 = n[0];
+			n = (n>>1);
+			n.set(11, n0);
+		}
+		// No chord found, set a special value to chord_index
+		pew->RowNotes[ir].chord_index = -2;
+	}
+}
+	
+void CPatEd::DoAnalyseChords()
+{
+	if (pew->AutoChordExpert && pew->ChordExpertvisible) 
+		AnalyseChordRefresh= true;
+}
+
+void CPatEd::DoManualAnalyseChords()
+{
+	if (pew->ChordExpertvisible) 
+		AnalyseChordRefresh= true;
+}
+
+void CPatEd::CheckRefreshChords()
+{
+	if (!pew->ChordExpertvisible) return;
+	if (!AnalyseChordRefresh) return;
+
+	CheckRefreshChordCount++;
+	if (CheckRefreshChordCount>10)
+	{
+		CheckRefreshChordCount = 0;
+		AnalyseChordRefresh = false;
+		
+		AnalyseChords();
+		pew->leftwnd.Invalidate();
+	}
+}
+
+void CPatEd::AnalyseChords()
+{
+	if (AnalysingChords) return;
+
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL) return;
+	
+	if (!pew->ChordExpertvisible) return;
+	
+	__try
+	{
+		AnalysingChords = true;
+
+		// Check if quitting the analyse quickly
+		if (pew->Closing) __leave;
+
+		// Create the rows of the vector
+		pew->RowNotes.clear();
+		row_struct rs;
+		rs.base_octave=12;
+		rs.chord_index=-1;
+		rs.base_note=0;
+		rs.notes=0;
+		pew->RowNotes.resize(pew->pPattern->GetRowCount(), rs);
+
+		// Fill the note rows 
+		for (int col = 0; col<(int)ppat->columns.size(); col++)
+		{
+			CColumn *pc = ppat->columns[col].get();
+			
+			if (pc->GetParamType()==pt_note)
+			{
+				MapIntToValue::const_iterator ei;
+
+				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+				{					
+					// Check if quitting the analyse quickly
+					if (pew->Closing) __leave;
+
+					int y = (*ei).first;
+					byte data = (byte)(*ei).second;
+					if (data != NOTE_OFF)
+					{
+						int octave = data >> 4;
+						pew->RowNotes[y].base_octave = min(pew->RowNotes[y].base_octave, octave);
+						int note = (data & 15) -1;
+						pew->RowNotes[y].notes.set(note, true); 
+					}
+				}
+			}
+		}
+
+		// Now, analyse the rows to find the chords
+		for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)
+		{
+			// init chord_index to -1 (no chord)
+			pew->RowNotes[ir].chord_index = -1;
+
+			note_bitset n;
+			n = pew->RowNotes[ir].notes;
+
+			// Check if quitting the analyse quickly
+			if (pew->Closing) __leave;
+
+			// Test each 12 base notes for each chord
+			TestChords(n, ir);		
+		}
+
+		// Now, try to find chords in a beat or in a set of beats
+	
+		// Group beats up to BeatsInMeasureBar, don't try bigger sets
+		int BIMB = BeatsInMeasureBar() / ppat->rowsPerBeat;
+	
+		for (int irpb=1; irpb <= BIMB; irpb++) {
+			note_bitset n;
+			bool addnotes = false;
+			int startSetBeat = 0;
+		
+			// Test only subsets of the measure bar
+			if (BIMB % irpb == 0) {
+
+				for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)	{
+					// Check if quitting the analyse quickly
+					if (pew->Closing) __leave;
+
+					// ir Row is the start of a set of beats
+					if (ir % (irpb*ppat->rowsPerBeat) == 0) {
+						if (addnotes) {	
+							// We have been adding notes to the previous set, let's test it
+							TestChords(n, startSetBeat);
+							addnotes = false;
+						}
+
+						startSetBeat = ir;
+						// Shall we start with this new set ?
+						if (pew->RowNotes[ir].chord_index < 0) {
+							n = pew->RowNotes[ir].notes;
+							addnotes = true;
+						}
+		
+					}
+					else if (addnotes) 
+						n = n | pew->RowNotes[ir].notes;					
+				}
+
+				// Don't forget the last set
+				if (addnotes)
+					// Check chords for previous set of Beats
+					TestChords(n, startSetBeat);
+			}
+		}
+
+		// Finally, clean duplicates
+		bool cleanDuplicate = true;
+		int cleanNote = -1;
+		int cleanIndex = -1;
+		int cleanRow = -1;
+		BIMB = BeatsInMeasureBar();
+
+		for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)	{
+			// Check if quitting the analyse quickly
+			if (pew->Closing) __leave;
+
+			if (ir % BIMB == 0)
+				// Starting a new measure, reset the cleaning
+				cleanDuplicate = false;
+
+			if (pew->RowNotes[ir].chord_index >= 0) {
+				// A chord is found
+				if ((cleanDuplicate) &&
+					(pew->RowNotes[ir].chord_index == cleanIndex) && 
+					(pew->RowNotes[ir].base_note == cleanNote)) {
+					// Same chord, clean it
+					pew->RowNotes[ir].chord_index = -1;
+					// Update the base_octave if necessary
+					pew->RowNotes[cleanRow].base_octave = min(pew->RowNotes[cleanRow].base_octave, pew->RowNotes[ir].base_octave);
+				}
+				else {
+					// New chord, reset the cleaning
+					cleanRow = ir;
+					cleanIndex = pew->RowNotes[ir].chord_index;
+					cleanNote = pew->RowNotes[ir].base_note;
+					cleanDuplicate = true;
+				}
+			}
+		}
+	}
+	__finally
+	{
+	AnalysingChords = false;
+	}
 }
 
 
@@ -1334,6 +1640,7 @@ void CPatEd::PatternChanged()
 	MoveCursor(cursor);
 	Invalidate();
 	UpdateStatusBar();
+	pew->AnalyseChords();
 }
 
 
@@ -1529,6 +1836,8 @@ void CPatEd::EditNote(int n, bool canplay)
 
 	MoveCursorDelta(0, cursorStep);
 
+	DoAnalyseChords();
+
 }
 
 void CPatEd::PlayRow(bool allcolumns)
@@ -1564,6 +1873,7 @@ void CPatEd::EditOctave(int oct)
 		}
 
 		InvalidateField(cursor.row, cursor.column);
+		if (pew->AutoChordExpert) pew->AnalyseChords();
 	}
 
 	MoveCursorDelta(0, cursorStep);
@@ -1673,6 +1983,8 @@ void CPatEd::Clear()
 			InvalidateField(cursor.row, cursor.column + 1);
 		}
 	}
+	if (pc->GetParamType() == pt_note)
+		DoAnalyseChords();
 
 	InvalidateField(cursor.row, cursor.column);
 	MoveCursorDelta(0, cursorStep);
@@ -1694,6 +2006,7 @@ void CPatEd::Insert()
 	}
 
 	InvalidateGroup(cursor.row, cursor.column);
+	DoAnalyseChords();
 }
 
 void CPatEd::InsertRow()
@@ -1711,6 +2024,7 @@ void CPatEd::InsertRow()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 }
 
 
@@ -1730,6 +2044,7 @@ void CPatEd::Delete()
 	}
 
 	InvalidateGroup(cursor.row, cursor.column);
+	DoAnalyseChords();
 }
 
 void CPatEd::DeleteRow()
@@ -1746,6 +2061,7 @@ void CPatEd::DeleteRow()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 }
 
 void CPatEd::Rotate(bool reverse)
@@ -1763,6 +2079,7 @@ void CPatEd::Rotate(bool reverse)
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 }
 
 void CPatEd::ToggleGraphicalMode()
@@ -1828,9 +2145,11 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_NEXT: End(); break; //BWC
 		case VK_HOME: HomeTop(); break; //BWC
 		case VK_END: EndBottom(); break; //BWC
-		case 'H': InsertChord(); break;
+		case 'H': pew->OnButtonInsertChord(); break;
 		case 'D': if (shiftdown) Mirror(); else Reverse(); break;
 		case 'P': if (shiftdown) DeleteRow(); else InsertRow(); break;
+		case VK_SUBTRACT: if (shiftdown) ShiftValues(-12); break; 
+		case VK_ADD: if (shiftdown) ShiftValues(12); break; 
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -1851,8 +2170,6 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_END: CursorSelect(0, (1 << 24)); break;
 		case VK_SUBTRACT: ShiftValues(-1); break;
 		case VK_ADD: ShiftValues(1); break;
-		case VK_DIVIDE: ShiftValues(-12); break; 
-		case VK_MULTIPLY: ShiftValues(12); break; 
 		}
 
 	}
@@ -1862,13 +2179,17 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		{
 		case VK_UP: MoveCursorDelta(0, -1); break;
 		case VK_DOWN: MoveCursorDelta(0, 1); break;
-		// BWC : use BarComboIndex to compute the delta of prior/next page
-		case VK_PRIOR: MoveCursorDelta(0, -BeatsInMeasureBar()); break;
-		case VK_NEXT: MoveCursorDelta(0, BeatsInMeasureBar()); break;
+		//Use BarComboIndex to compute the delta of prior/next page
+		case VK_PRIOR: 
+			if (pew->PgUpDownDisabled) MoveCursorDelta(0, -ppat->rowsPerBeat); 
+			else MoveCursorDelta(0, -BeatsInMeasureBar()); break;
+		case VK_NEXT: 
+			if (pew->PgUpDownDisabled) MoveCursorDelta(0, ppat->rowsPerBeat); 
+			else MoveCursorDelta(0, BeatsInMeasureBar()); break;
 		case VK_RIGHT: MoveCursorDelta(1, 0); break;
 		case VK_LEFT: MoveCursorDelta(-1, 0); break;
 		case VK_TAB: Tab(); break;
-		case VK_HOME: HomeOld(); break;
+		case VK_HOME: if (pew->HomeDisabled) Home(); else HomeOld(); break;
 		case VK_END: End(); break;
 		case VK_OEM_PERIOD: Clear(); break;
 		case VK_INSERT: Insert(); break;
@@ -2144,26 +2465,12 @@ void CPatEd::UpdateStatusBar()
 
 	int value = pc->GetValue(cursor.row);
 
-	// char txt[6];
-	// FieldToText(txt, pc->GetParamType(), pc->HasValue(cursor.row), (void *)&value);
-
 	if (value != pc->GetNoValue())
 	{
 		s = FieldToLongText(pc->GetParamType(), pc->HasValue(cursor.row), value);
 
 		char const *desc = pc->DescribeValue(value, pCB);
 
-		// s = txt;
-		/* if (value != pc->GetNoValue()) {
-			if (pc->GetParamType()!=pt_note)
-				s.Format("%s | %d", txt, value);
-			else 
-				s.Format("%s", txt);
-
-			if (desc != NULL && strlen(desc) > 0)
-				s += (CString)" (" + desc + ")"; 
-				
-		}*/
 		if (value != pc->GetNoValue() && desc != NULL && strlen(desc) > 0)
 			s += (CString)" " + desc;
 	}
@@ -2479,6 +2786,8 @@ void CPatEd::OnEditCut()
 
 	pew->OnUpdateClipboard();
 	Invalidate();
+	DoAnalyseChords();
+
 }
 
 void CPatEd::OnEditCopy()
@@ -2540,6 +2849,8 @@ void CPatEd::OnEditPaste()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
+
 }
 
 void CPatEd::OnEditPasteSpecial()
@@ -2578,6 +2889,8 @@ void CPatEd::OnEditPasteSpecial()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
+
 }
 
 void CPatEd::OnAddNoteOff()
@@ -3019,6 +3332,7 @@ void CPatEd::Reverse()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 }
 
 double round(double d)
@@ -3142,6 +3456,7 @@ void CPatEd::Mirror()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 }
 
 
@@ -3164,6 +3479,7 @@ void CPatEd::ShiftValues(int delta)
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 
 }
 
@@ -3232,6 +3548,8 @@ void CPatEd::OnTimer(UINT_PTR nIDEvent)
 		Invalidate();
 	}
 
+	CheckRefreshChords();
+
 	CScrollWnd::OnTimer(nIDEvent);
 
 }
@@ -3272,5 +3590,6 @@ void CPatEd::ImportOld()
 	}
 
 	Invalidate();
+	DoAnalyseChords();
 
 }

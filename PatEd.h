@@ -3,9 +3,42 @@
 #include "MachinePattern.h"
 #include "ScrollWnd.h"
 #include "CursorPos.h"
+#include <bitset>
+
 
 class CEditorWnd;
 
+int HexToInt(char c);
+
+typedef bitset<12> note_bitset;
+
+struct chord_struct
+{
+	string name;
+	note_bitset notes;
+};
+
+struct row_struct
+{
+	note_bitset notes;
+	int chord_index;
+	int base_note;
+	int base_octave;
+};
+
+struct grid_struct
+{
+	note_bitset notes;
+	int chord_index;
+	int base_note;
+	int delta;
+};
+
+typedef std::vector<std::string> string_vector;
+typedef std::vector<row_struct> row_vector;
+typedef std::vector<grid_struct> grid_vector;
+typedef std::vector<chord_struct> chord_vector;
+typedef std::vector<row_vector> row_vector_vector;
 
 // CPatEd
 
@@ -48,14 +81,20 @@ public:
 	void InflatePattern(int delta); //BWC 
 	void Humanize(int delta, bool hEmpty);
 
-	bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName);
+	bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen);
 
+	void InsertChord(int ChordIndex = -1);
+	void InsertChordNote(int note, int ChordIndex);
 
-	void InsertChord();
 	void Reverse();
 	void Mirror();
 	void InsertRow();
 	void DeleteRow();
+	void DoAnalyseChords();
+	void DoManualAnalyseChords();
+	void DoInsertChord(int ChordIndex);
+
+
 
 	void Interpolate(bool expintp);
 
@@ -63,6 +102,7 @@ public:
 	bool CanCopy();
 	bool CanPaste();
 	bool CanInsertChord();
+	bool CheckNoteCol();
 
 
 	int GetColumnAtX(int x);
@@ -78,10 +118,11 @@ public:
 private:
 	void TextToFieldImport(char *txt, CColumn *pc, int irow);
 	void DrawColumn(CDC *pDC, int col, int x, COLORREF textcolor, CRect const &clipbox);
-	void DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue);
+	void DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor);
 	void DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor);
 	void DrawCursor(CDC *pDC);
-	
+	bool CheckNoteInTonality(byte note);
+
 	CRect GetCursorRect(CCursorPos const &p);
 	void MoveCursor(CCursorPos newpos, bool killsel = true);
 	void MoveCursorDelta(int dx, int dy);
@@ -117,6 +158,10 @@ private:
 	
 	bool InSelection(int row, int column);
 	void Randomize();
+
+	void TestChords(note_bitset n, int ir);
+	void CheckRefreshChords();
+	void AnalyseChords();
 
 	void ShiftValues(int delta);
 	void WriteState();
@@ -154,6 +199,9 @@ private:
 	SelectionMode selMode;
 
 	bool invalidateInTimer;
+	bool AnalyseChordRefresh;
+	int CheckRefreshChordCount;
+	bool AnalysingChords;
 
 	bool drawing;
 	int drawColumn;

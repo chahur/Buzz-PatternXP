@@ -8,6 +8,7 @@
 #include <fstream>
 #include <io.h>
 #include "Parameters.h"
+#include "ChordExpert.h"
 
 HHOOK g_hHook = 0;
 
@@ -21,7 +22,12 @@ CEditorWnd::CEditorWnd()
 {
 	pPattern = NULL;
 
+	Closing = false;
 	MidiEditMode = false;
+	BarComboIndex = 0;
+	TonalComboIndex  = 0;
+	PgUpDownDisabled = false;
+	HomeDisabled = false;
 }
 
 CEditorWnd::~CEditorWnd()
@@ -34,6 +40,7 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_WM_SHOWWINDOW()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
+	ON_WM_CLOSE()
 
 	ON_COMMAND(ID_COLUMNS_BUTTON, OnColumns)
 	ON_BN_CLICKED(IDC_COLUMNS_BUTTON, CEditorWnd::OnBnClickedColumnsButton) 
@@ -126,7 +133,12 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_COMMAND(ID_BT_DELROW, OnButtonDeleteRow)
 	ON_BN_CLICKED(IDC_BT_DELROW, OnButtonDeleteRow) 
 	
-	
+	ON_CBN_SELENDOK(IDC_TONAL_COMBO, OnComboTonalSelect)
+	ON_CBN_SELENDOK(ID_COMBO_TONAL, OnComboTonalSelect)
+	ON_COMMAND(ID_TONAL_BT, OnButtonTonality)
+	ON_BN_CLICKED(IDC_TONAL_BUTTON, OnButtonTonality) 
+
+
 
 END_MESSAGE_MAP()
 
@@ -205,6 +217,10 @@ void CEditorWnd::UpdateCanvasSize()
 	
 }
 
+void CEditorWnd::OnClose()
+{
+	Closing = true;
+}
 
 int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
@@ -248,8 +264,6 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
    
 	toolBar.EnableToolTips(true);
 	EnableToolTips(true);
-	// toolBar.pCB = pCB; DEBUG
-
 	
 	// Insert "midi edit" check box
 	int index = toolBar.CommandToIndex(ID_CHECK_MIDI_BT);
@@ -330,15 +344,23 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.comboInterpolate.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_INTERPOLATE_PARAM);
 	toolBar.comboInterpolate.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 
+	// Insert Tonal combo and button
+	index = toolBar.CommandToIndex(ID_LABEL_TONAL_BT);
+    toolBar.SetButtonInfo(index, ID_LABEL_TONAL_BT, TBBS_SEPARATOR, 36);  
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 5;
+	toolBar.labelTonal.Create("Tonal", SS_CENTER|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_LABEL_TONAL);
+	toolBar.labelTonal.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 	
 
-	// Insert "Use toolbar" check box
-/*	index = toolBar.CommandToIndex(ID_CHECK_TOOLBAR_BT);
-    toolBar.SetButtonInfo(index, ID_CHECK_TOOLBAR_BT, TBBS_SEPARATOR, 72);
-    toolBar.GetItemRect(index, &rect);
-	rect.top++;
-	toolBar.checkToolbar.Create("Use toolbar", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_TOOLBAR);
-	toolBar.checkToolbar.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
- */
+	index = toolBar.CommandToIndex(ID_COMBO_TONAL_BT);
+    toolBar.SetButtonInfo(index, ID_COMBO_TONAL_BT, TBBS_SEPARATOR, 64); 
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 1;
+    rect.bottom = rect.top + 80;
+	toolBar.comboTonal.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_TONAL);
+	toolBar.comboTonal.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+
+
 	// Insert "Help" check box
 	index = toolBar.CommandToIndex(ID_CHECK_HELP_BT);
     toolBar.SetButtonInfo(index, ID_CHECK_HELP_BT, TBBS_SEPARATOR, 48);
@@ -387,19 +409,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	pe.linkVert = &leftwnd;
 	pe.linkHorz = &topwnd;
 
-	ShowParamText =	pCB->GetProfileInt("ShowParamText", true)!=0;
-	ShowTrackToolbar = pCB->GetProfileInt("ShowTrackToolbar", true)!=0;
-	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true)!=0;
-	DeltaHumanize = pCB->GetProfileInt("DeltaHumanize", 10);
-	HumanizeEmpty = pCB->GetProfileInt("HumanizeEmpty", true)!=0;
-	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
-	InsertChordOnce = pCB->GetProfileInt("InsertChordOnce", false)!=0;
-	
-	PersistentSelection= pCB->GetProfileInt("PersistentSelection", true)!=0;
-	PersistentPlayPos= pCB->GetProfileInt("PersistentPlayPos", true)!=0;
-
-	ChordPathName[0]=0;
-	pCB->GetProfileString("ChordPathName", ChordPathName, "");
+	ReadParamProfile();
 
 	ToolbarChanged();
 
@@ -414,43 +424,47 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
+void CEditorWnd::ReadParamProfile()
+{
+	ShowParamText =	pCB->GetProfileInt("ShowParamText", true)!=0;
+	ShowTrackToolbar = pCB->GetProfileInt("ShowTrackToolbar", true)!=0;
+	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true)!=0;
+	ChordExpertvisible = pCB->GetProfileInt("ChordExpertvisible", true)!=0;
+
+	DeltaHumanize = pCB->GetProfileInt("DeltaHumanize", 10);
+	HumanizeEmpty = pCB->GetProfileInt("HumanizeEmpty", true)!=0;
+	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
+	InsertChordOnce = pCB->GetProfileInt("InsertChordOnce", false)!=0;
+	
+	PersistentSelection= pCB->GetProfileInt("PersistentSelection", true)!=0;
+	PersistentPlayPos= pCB->GetProfileInt("PersistentPlayPos", true)!=0;
+	ImportAutoResize= pCB->GetProfileInt("ImportAutoResize", true)!=0;
+	AutoChordExpert= pCB->GetProfileInt("AutoChordExpert", false)!=0;
+
+	PgUpDownDisabled= pCB->GetProfileInt("PgUpDownDisabled", false)!=0;
+	HomeDisabled= pCB->GetProfileInt("HomeDisabled", false)!=0;
+
+	ChordPathName[0]=0;
+	pCB->GetProfileString("ChordPathName", ChordPathName, "");
+}
+
+
 void CEditorWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 {
 	CWnd::OnShowWindow(bShow, nStatus);
 
+	Closing = false;
+
 	// If the configuration of the toolbar have been changed in another instance of patternXP, init it now.
-	helpvisible = pCB->GetProfileInt("helpvisible", false)!=0;
-	toolbarvisible = pCB->GetProfileInt("ToolbarVisible", true)!=0;
+	ReadParamProfile();
 
 	ToolbarChanged();
 
 	DoShowHelp();
-}
 
-/* ---- Checkbox "Toolbar" -----
-bool CEditorWnd::GetCheckBoxToolbar()
-{
-	if (toolbarvisible)  
-		return toolBar.checkToolbar.GetCheck() == BST_CHECKED;
-	else {
-		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
-		return pc->GetCheck() == BST_CHECKED;
-	}
-}
+//	AnalyseChords();
 
-void CEditorWnd::SetCheckBoxToolbar(bool AValue)
-{
-	int BST_VAL;
-	if (AValue) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
-
-	if (toolbarvisible)  
-		toolBar.checkToolbar.SetCheck(BST_VAL);
-	else {
-		CButton *pc = (CButton *)dlgBar.GetDlgItem(IDC_TOOLBAR_BUTTON);
-		pc->SetCheck(BST_VAL);
-	}
 }
-*/
 
 /* ---- Checkbox "Help" -----*/
 bool CEditorWnd::GetCheckBoxHelp()
@@ -560,6 +574,17 @@ int CEditorWnd::GetComboBoxBar()
 	}
 }
 
+/*---- Combo box "Tonal Bar" ----*/
+int CEditorWnd::GetComboBoxTonal()
+{
+	if (toolbarvisible)  
+		return toolBar.comboTonal.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
 /* ---- Checkbox "Humanize empty" -----*/
 bool CEditorWnd::GetCheckBoxHumanizeEmpty()
 {
@@ -640,13 +665,11 @@ void CEditorWnd::ToolbarChanged()
 	{
 		toolBar.ShowWindow(SW_SHOWNORMAL);
 		dlgBar.ShowWindow(SW_HIDE);
-//		SetCheckBoxToolbar(true);
 	}
 	else
 	{
 		dlgBar.ShowWindow(SW_SHOWNORMAL);
 		toolBar.ShowWindow(SW_HIDE);
-//		SetCheckBoxToolbar(false);
 	}
 
 	SetCheckBoxHelp(helpvisible);
@@ -685,6 +708,9 @@ void CEditorWnd::UpdateWindowSizes()
 	int top = cr.top + topWndHeight;
 	int left = rowNumWndWidth;
 
+	if (ChordExpertvisible)
+		left = left + 60;
+
 	if (helpvisible) {
 		helptext.MoveWindow(cr.right-helpwidth, cr.top, helpwidth, cr.bottom -cr.top);
 		cr.right = cr.right-helpwidth; }
@@ -722,6 +748,8 @@ void CEditorWnd::ShowParamTextChanged()
 	FontChanged();
 	pCB->WriteProfileInt("ShowParamText", ShowParamText);
 	pCB->WriteProfileInt("ShowTrackToolbar", ShowTrackToolbar);	
+	pCB->WriteProfileInt("ChordExpertvisible", ChordExpertvisible);	
+	
 }
 
 
@@ -801,6 +829,23 @@ void CEditorWnd::DeleteLastTrack()
 	UpdateCanvasSize();
 	Invalidate();
 
+	if (AutoChordExpert) AnalyseChords();
+}
+
+void CEditorWnd::OnChordExpert()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+	
+	if (pPattern == NULL)
+		return;
+
+	CChordExpertDialog dlg(this);
+	dlg.pew = this;
+	dlg.CursorRow = pe.cursor.row;
+	if (dlg.DoModal() == IDOK)
+	{
+		
+	}	
 }
 
 void CEditorWnd::OnParameters()
@@ -857,6 +902,7 @@ void CEditorWnd::OnEditUndo()
 	pe.ColumnsChanged();
 	UpdateCanvasSize();
 	Invalidate();
+	if (AutoChordExpert) AnalyseChords();
 }
 
 void CEditorWnd::OnEditRedo()
@@ -867,6 +913,7 @@ void CEditorWnd::OnEditRedo()
 	pe.ColumnsChanged();
 	UpdateCanvasSize();
 	Invalidate();
+	if (AutoChordExpert) AnalyseChords();
 }
 
 void CEditorWnd::OnUpdateEditUndo(CCmdUI *pCmdUI) { pCmdUI->Enable(pPattern != NULL && pPattern->actions.CanUndo()); }
@@ -947,7 +994,7 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_ADDOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_UPOFF, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_DOWNOFF, pe.CanCopy());
-	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_INSERT_CHORD, pe.CanInsertChord() || (ChordExpertvisible && pe.CheckNoteCol()));
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INTERPOLATE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_REVERSE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_MIRROR, pe.CanCopy());
@@ -1047,7 +1094,6 @@ void CEditorWnd::OnChangeHumanize()
 		DeltaHumanize=x;
 		pCB->WriteProfileInt("DeltaHumanize", DeltaHumanize);
 	}
-	pe.SetFocus();
 }
 
 void CEditorWnd::OnButtonHumanize()
@@ -1143,6 +1189,27 @@ void CEditorWnd::InitToolbarData()
 	toolBar.comboInterpolate.SetCurSel(indexInterpolate);
 	cb3->SetCurSel(indexInterpolate);
 
+
+	InitTonal();
+	toolBar.comboTonal.SetCurSel(TonalComboIndex);
+	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
+	cb4->SetCurSel(TonalComboIndex);
+
+}
+
+note_bitset GetBaseChord(LPSTR txt)
+{
+	note_bitset res;
+	// First bit always set to true (note base of the chord)
+	res.set(0, true); 
+	for (int i=0; txt[i]>0; i++)
+	{
+		char c = txt[i]; 
+		int delta = HexToInt(c);
+		int d = delta - ((delta /12)*12);
+		res.set(d, true); 
+	}
+	return res;
 }
 
 void CEditorWnd::InitChords()
@@ -1176,6 +1243,10 @@ void CEditorWnd::InitChords()
 	toolBar.comboChords.ResetContent();
 	// Empty the Chords vector
 	Chords.clear();
+	ChordsBase.clear();
+	minChordNotes=12;
+	maxChordNotes=0;
+
 
 	ifstream expfile (pathName, ios::in);  
 	if (expfile)  
@@ -1185,6 +1256,8 @@ void CEditorWnd::InitChords()
 			// Skip comment lines (starting with ;)
 			if (((int)impChord.length()>0) && (impChord[0] !=';'))
 			{
+				chord_struct cs;
+
 				txt[0]=0;
 				itxt=0;
 				getval=false;
@@ -1198,6 +1271,7 @@ void CEditorWnd::InitChords()
 						// Add it in the combo box.
 						toolBar.comboChords.AddString(txt);
 						cb->AddString(txt);
+						cs.name = txt;
 						getval=true;
 					}
 					else 
@@ -1219,6 +1293,12 @@ void CEditorWnd::InitChords()
 				// Second field : interval of the notes
 				// Keep it in the vector of chords
 				Chords.push_back(txt);
+				cs.notes = GetBaseChord(txt);
+				ChordsBase.push_back(cs);
+				int csnc = cs.notes.count();
+				if (minChordNotes>csnc) minChordNotes=csnc;
+				if (maxChordNotes<csnc) maxChordNotes=csnc;
+
 				iChord++;
 			}
 		}
@@ -1248,12 +1328,112 @@ void CEditorWnd::OnButtonSelectChordFile()
 			GeneratorFileName(chordsName, "Basic1.chords");
 	}
 
-	if (pe.DialogFileName("chords", "Chords", "Select chords file", chordsName, ChordPathName))
+	if (pe.DialogFileName("chords", "Chords", "Select chords file", chordsName, ChordPathName, true))
 	{
 		pCB->WriteProfileString("ChordPathName", ChordPathName);
 		InitChords();
+		AnalyseChords();
 	}
 	pe.SetFocus();
+}
+
+note_bitset GetTonality(int count)
+{
+	// Init in C major (no Flat or Sharp)
+//	note_bitset res("101011010101");
+	note_bitset res("101010110101"); // Bitsets are set from right to left
+
+	if (count <0)
+	{ 
+		// Bémol    : si, mi, la, ré, sol, do, fa
+		// Flat     : B,  E,  A,  D,  G,   C,  F
+		// Flat pos : 11, 4,  9,  2,  7,   0,  5 
+		res.set(11, false); res.set(10, true); 
+		
+		if (count<-1) {	res.set(4, false); res.set(3, true); }
+		if (count<-2) {	res.set(9, false); res.set(8, true); }
+		if (count<-3) {	res.set(2, false); res.set(1, true); }
+		if (count<-4) {	res.set(7, false); res.set(6, true); }
+		if (count<-5) {	res.set(0, false); res.set(11, true); }
+		if (count<-6) {	res.set(5, false); res.set(4, true); }
+	}
+	else if (count >0)
+	{ 
+		// Dièse     : fa, do, sol, ré, la, mi, si
+		// Sharp     : F,  C,  G,   D,  A,  E,  B
+		// Sharp pos : 5,  0,  7,   2,  9,  4, 11   
+		res.set(5, false); res.set(6, true); 
+		
+		if (count>1) {	res.set(0, false); res.set(1, true); }
+		if (count>2) {	res.set(7, false); res.set(8, true); }
+		if (count>3) {	res.set(2, false); res.set(3, true); }
+		if (count>4) {	res.set(9, false); res.set(10, true); }
+		if (count>5) {	res.set(4, false); res.set(5, true); }
+		if (count>6) {	res.set(11, false); res.set(0, true); }
+	}
+	else // Count == 0
+	{
+		// Leave as it is
+	}
+
+	return res;
+}
+
+void CEditorWnd::InitTonality(LPSTR txt, int sharpCount)
+{
+	chord_struct cs;
+	toolBar.comboTonal.AddString(txt);
+	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
+	cb4->AddString(txt);
+
+	cs.name = txt;	
+	if (sharpCount >-999)
+		cs.notes = GetTonality(sharpCount);
+	else
+		cs.notes.reset();
+
+	TonalityList.push_back(cs);
+}
+
+void CEditorWnd::InitTonal()
+{
+	// Init the notes of each tonality.
+	TonalityList.clear();
+
+	// First entry : no tonality
+	InitTonality("None", -999);
+
+	InitTonality("C-Maj", 0);
+	InitTonality("C-min", -3);
+	InitTonality("C#-Maj", 7);
+	InitTonality("C#-min", 4);
+	InitTonality("Db-Maj", -5);
+	InitTonality("D-Maj", 2);
+	InitTonality("D-min", -1);
+	InitTonality("D#-min", 6);
+	InitTonality("Eb-Maj", -3);
+	InitTonality("Eb-min", -6);
+	InitTonality("E-Maj", 4);
+	InitTonality("E-min", 1);
+	InitTonality("F-Maj", -1);
+	InitTonality("F-min", -4);
+	InitTonality("F#-Maj", 6);
+	InitTonality("F#-min", 3);
+	InitTonality("Gb-Maj", -6);
+	InitTonality("G-Maj", 1);
+	InitTonality("G-min", -2);
+	InitTonality("G#-min", 5);
+	InitTonality("Ab-Maj", -4);
+	InitTonality("Ab-min", -7);
+	InitTonality("A-Maj", 3);
+	InitTonality("A-min", 0);
+	InitTonality("A#-min", 7);
+	InitTonality("Bb-Maj", -2);
+	InitTonality("Bb-min", -5);
+	InitTonality("B-Maj", 5);
+	InitTonality("B-min", 2);
+	InitTonality("Cb-Maj", -7);
+
 }
 
 void CEditorWnd::OnCheckedChordOnce()
@@ -1272,14 +1452,23 @@ void CEditorWnd::OnComboBarSelect()
 	pe.SetFocus();
 }
 
-/*
-void CEditorWnd::OnCheckedToolbar()
+void CEditorWnd::OnComboTonalSelect()
 {
-	if (UpdatingToolbar) return;
-	toolbarvisible = GetCheckBoxToolbar();
-	ToolbarChanged();
+	TonalComboIndex = GetComboBoxTonal();
+	pCB->SetModifiedFlag();
+	Invalidate();
+	pe.SetFocus();
 }
-*/
+
+void CEditorWnd::OnButtonTonality()
+{
+	// Analyse the pattern to determine the tonality
+	::MessageBox(NULL, "Analyses the pattern to determine the tonality ... not done yet.", "Pattern XP", MB_OK | MB_ICONWARNING);
+
+	pe.SetFocus();
+}
+
+
 
 void CEditorWnd::OnCheckedHumanizeEmpty()
 {
@@ -1301,12 +1490,9 @@ void CEditorWnd::OnCheckedHelp()
 static DWORD CALLBACK MyStreamInCallback(DWORD dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 {
    CFile* pFile = (CFile*) dwCookie;
-
    *pcb = pFile->Read(pbBuff, cb);
-
    return 0;
 }
-
 
 void CEditorWnd::GeneratorFileName(LPSTR FullFilename, LPSTR AFilename)
 {
@@ -1351,7 +1537,11 @@ void CEditorWnd::DoShowHelp()
 
 void CEditorWnd::OnButtonInsertChord()
 {
-	pe.InsertChord();
+	if (pe.CheckNoteCol()) 
+		if (pe.CanInsertChord())
+			pe.InsertChord();
+		else
+			OnChordExpert();
 	pe.SetFocus();
 }
 
@@ -1390,6 +1580,14 @@ void CEditorWnd::OnButtonDeleteRow()
 {
 	pe.DeleteRow();
 	pe.SetFocus();
+}
+
+void CEditorWnd::AnalyseChords()
+{
+	if (ChordExpertvisible) {
+		// Do it asynchronous
+		pe.DoManualAnalyseChords();
+	}
 }
 
 int CEditorWnd::GetEditorPatternPosition()

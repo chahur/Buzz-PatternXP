@@ -12,6 +12,8 @@ F: Clear Note Off
 J: Shift down Note Off
 A: Select All
 H: Insert chord
+D: Reverse Selection
+P: Insert row
 PrevPage: First row
 NextPage : Last row
 Home : First col, first row
@@ -26,12 +28,14 @@ V: Merge
 T: Select track
 F: Add Note Off
 J: Shift up Note Off
+D: Mirror Selection
+P: Delete row
+SUBTRACT: ShiftValues(-12)
+ADD: ShiftValues(12)
 
 [shift]
 SUBTRACT: ShiftValues(-1)
 ADD: ShiftValues(1)
-DIVIDE: ShiftValues(-12)
-MULTIPLY: ShiftValues(12)
 
 [ctrl + alt]
 I: Import Old
@@ -49,3 +53,6 @@ HOME : do as built-in editor
 1: Note off
 4: PlayRow (1 track)
 8: PlayRow (all tracks)
+
+DblClick on MachineName opens the Machine window
+Ctrl + DblClick on MachineName opens the Machine help

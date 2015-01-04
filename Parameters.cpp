@@ -22,7 +22,7 @@ CParametersDialog::~CParametersDialog()
 
 
 BEGIN_MESSAGE_MAP(CParametersDialog, CDialog)
-//	ON_CBN_EDITUPDATE(IDC_COMBO1, CColumnDialog::OnCbnEditupdateCombo1) 
+//	ON_CBN_EDITUPDATE(IDC_COMBO1, CParametersDialog::OnCbnEditupdateCombo1) 
 END_MESSAGE_MAP()
 
 
@@ -43,8 +43,25 @@ BOOL CParametersDialog::OnInitDialog()
 	if (pew->toolbarvisible) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
 	pc = (CButton *)GetDlgItem(ID_USE_TOOLBAR);
 	pc->SetCheck(BST_VAL);
-	
 
+	if (pew->ImportAutoResize) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_IMPORT_AUTO_RESIZE);
+	pc->SetCheck(BST_VAL);
+
+	if (pew->AutoChordExpert) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_CHORD_AUTO_REFRESH);
+	pc->SetCheck(BST_VAL);
+	
+	if (pew->PgUpDownDisabled) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_PGUPDOWN_DISABLED);
+	pc->SetCheck(BST_VAL);
+
+	if (pew->HomeDisabled) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_HOME_DISABLED);
+	pc->SetCheck(BST_VAL);
+
+
+	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -62,6 +79,23 @@ void CParametersDialog::OnOK()
 	
 	pc = (CButton *)GetDlgItem(ID_USE_TOOLBAR);
 	pew->toolbarvisible = (pc->GetCheck() == BST_CHECKED);
+
+	pc = (CButton *)GetDlgItem(ID_IMPORT_AUTO_RESIZE);
+	pew->pCB->WriteProfileInt("ImportAutoResize", pc->GetCheck() == BST_CHECKED);
+	pew->ImportAutoResize= pew->pCB->GetProfileInt("ImportAutoResize", true)!=0;
+	
+	pc = (CButton *)GetDlgItem(ID_CHORD_AUTO_REFRESH);
+	pew->pCB->WriteProfileInt("AutoChordExpert", pc->GetCheck() == BST_CHECKED);
+	pew->AutoChordExpert= pew->pCB->GetProfileInt("AutoChordExpert", true)!=0;
+
+	pc = (CButton *)GetDlgItem(ID_PGUPDOWN_DISABLED);
+	pew->pCB->WriteProfileInt("PgUpDownDisabled", pc->GetCheck() == BST_CHECKED);
+	pew->PgUpDownDisabled= pew->pCB->GetProfileInt("PgUpDownDisabled", false)!=0;
+
+	pc = (CButton *)GetDlgItem(ID_HOME_DISABLED);
+	pew->pCB->WriteProfileInt("HomeDisabled", pc->GetCheck() == BST_CHECKED);
+	pew->HomeDisabled= pew->pCB->GetProfileInt("HomeDisabled", false)!=0;
+
 
 	CDialog::OnOK();
 }

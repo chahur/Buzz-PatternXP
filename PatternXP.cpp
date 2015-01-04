@@ -312,12 +312,18 @@ void mi::Init(CMachineDataInput * const pi)
 		}
 
 		// Add at the end, read the new params
-		byte bar;
-		pi->Read(bar);
-		if ((bar>=0)&&(bar<=8))
-		  patEd->BarComboIndex = bar;
+		byte ci = 0;
+		pi->Read(ci);
+		if ((ci>=0)&&(ci<=8))
+		  patEd->BarComboIndex = ci;
 		else
 		  patEd->BarComboIndex = 0;
+
+		pi->Read(ci);
+		if ((ci>=0)&&(ci<=30))
+		  patEd->TonalComboIndex = ci;
+		else
+		  patEd->TonalComboIndex = 0;
 	}
 
 }
@@ -336,9 +342,12 @@ void mi::Save(CMachineDataOutput * const po)
 	}
 
 	// Add at the end, write the new params
-	byte bar;
-	bar = patEd->BarComboIndex;
-	po->Write(bar);
+	byte ci;
+	ci = patEd->BarComboIndex;
+	po->Write(ci);
+
+	ci = patEd->TonalComboIndex;
+	po->Write(ci);
 }
 
 void *miex::CreatePatternEditor(void *parenthwnd)

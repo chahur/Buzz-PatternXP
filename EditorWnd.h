@@ -11,9 +11,10 @@
 #include <afxpriv.h>
 #include "ColumnDialog.h"
 #include "ActionStack.h"
+#include <bitset>
 
 
-typedef std::vector<std::string> str_vec_t;
+static char const NoteTo2char[] = "C-C#D-EbE-F-F#G-G#A-BbB-";
 
 class CEditorWnd : public CWnd
 {
@@ -41,6 +42,7 @@ public:
 	void OnUpdateClipboard();
 	void OnUpdateSelection();
 	void OnUpdatePosition(); 
+	void AnalyseChords();
 
 
 private:
@@ -48,15 +50,18 @@ private:
 	void UpdateWindowSizes();
 	void FontChanged();
 	void ToolbarChanged();
+	void ReadParamProfile();
+
 
 	void InitToolbarData();
 	void DoShowHelp();
 	void UpdateButtons();
 	void InitChords();
-	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
+	void InitTonal();
+	void InitTonality(LPSTR txt, int sharpCount);
 
-//	bool GetCheckBoxToolbar();
-//	void SetCheckBoxToolbar(bool AValue);
+
+	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
 
 	bool GetCheckBoxHelp();
 	void SetCheckBoxHelp(bool AValue);
@@ -70,6 +75,8 @@ private:
 	int  GetComboBoxInflate();
 
 	int  GetComboBoxBar();
+
+	int GetComboBoxTonal();
 
 	bool GetCheckBoxHumanizeEmpty();
 	void SetCheckBoxHumanizeEmpty(bool AValue);
@@ -98,6 +105,8 @@ public:
 	int helpwidth;
 	bool helpvisible;
 	bool toolbarvisible;
+	bool ChordExpertvisible;
+	bool Closing;
 
 	CMachinePattern *pPattern;
 	CFont font;
@@ -105,7 +114,13 @@ public:
 	int rowNumWndWidth;
 	int topWndHeight;
 
-	str_vec_t Chords;
+	// Chords 
+	string_vector Chords;
+	chord_vector ChordsBase;
+	chord_vector TonalityList;
+	row_vector RowNotes;
+	int minChordNotes;
+	int maxChordNotes;
 
 //	CFuBar reBar;
 	CToolBar2 toolBar;
@@ -113,6 +128,7 @@ public:
 
 	bool MidiEditMode;
 	int BarComboIndex;
+	int TonalComboIndex;
 	int DeltaHumanize;
 	bool HumanizeEmpty;
 	int ChordsComboIndex() {return GetComboBoxChords();};
@@ -125,9 +141,14 @@ public:
 
 	bool PersistentSelection;
 	bool PersistentPlayPos;
+	bool ImportAutoResize;
+	bool AutoChordExpert;
+	bool PgUpDownDisabled;
+	bool HomeDisabled;
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnClose();
 	
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
@@ -145,6 +166,8 @@ public:
 	afx_msg void OnEditPasteSpecial();
 	afx_msg void OnClearNoteOff();
 	afx_msg void OnParameters();
+	afx_msg void OnChordExpert();
+
 
 protected:
 //	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
@@ -171,8 +194,6 @@ public:
 	afx_msg void OnCheckedHelp();
 	afx_msg void OnComboBarSelect();
 
-//	afx_msg void OnCheckedToolbar();
-
 	afx_msg void OnButtonInsertChord();
 	afx_msg void OnButtonSelectChordFile();
 	afx_msg void OnCheckedChordOnce();
@@ -184,10 +205,8 @@ public:
 	afx_msg void OnButtonInsertRow();
 	afx_msg void OnButtonDeleteRow();
 
-	
-	
-	
-
+	afx_msg void OnButtonTonality();
+	afx_msg void OnComboTonalSelect();	
 
 };
 

@@ -29,6 +29,9 @@ public:
 	CComboBox comboChords;
 	CButton checkChordsOnce;
 	CComboBox comboInterpolate;
+	CStatic labelTonal;
+	CComboBox comboTonal;
+
 	CMICallbacks *pCB;
 	afx_msg LRESULT CToolBar2::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);
 	afx_msg BOOL OnToolTipNotify(UINT id, NMHDR *pNMHDR,LRESULT *pResult);

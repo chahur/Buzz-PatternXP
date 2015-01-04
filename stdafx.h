@@ -65,11 +65,10 @@
 #include <queue>
 #include <tuple>
 
-#include "../../buzz/xmemdc.h"
+#include "..\..\buzz\xmemdc.h"
 
 //#define MI_DEBUG_LOCKS
-#include "../../buzz/MachineInterface.h"
-
+#include "..\..\buzz\MachineInterface.h"
 
 using namespace std;
 using namespace std::tr1;

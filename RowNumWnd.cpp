@@ -24,6 +24,8 @@ BEGIN_MESSAGE_MAP(CRowNumWnd, CScrollWnd)
 END_MESSAGE_MAP()
 
 
+//static char const NoteTo2char[] = "C-C#D-EbE-F-F#G-G#A-BbB-";
+
 void CRowNumWnd::OnDraw(CDC *pDC)
 {
 	CRect clr;
@@ -50,12 +52,36 @@ void CRowNumWnd::OnDraw(CDC *pDC)
 
 	int const firstrow = max(0, clipbox.top / pew->fontSize.cy);
 	int const lastrow = min(pew->pPattern->GetRowCount(), clipbox.bottom / pew->fontSize.cy + 1);
-
+	int const lmargin = pew->ChordExpertvisible ? 60 : 0;
 	for (int y = firstrow; y < lastrow; y++)
 	{
+		if (pew->ChordExpertvisible)
+		{ 
+			// Draw chords value 
+			if (y < (int)pew->RowNotes.size()) 
+			{
+				if (pew->RowNotes[y].chord_index >= 0)
+				{
+					string s_chord;
+					char s_basenote[3];
+					s_basenote[0] = NoteTo2char[pew->RowNotes[y].base_note*2+0];
+				    s_basenote[1] = NoteTo2char[pew->RowNotes[y].base_note*2+1];
+					s_basenote[2] = 0;
+					s_chord =  s_basenote + pew->ChordsBase[pew->RowNotes[y].chord_index].name;
+					pDC->TextOut(0, y * pew->fontSize.cy, s_chord.c_str(), s_chord.size());
+				}
+				else
+				if (pew->RowNotes[y].chord_index == -2)
+				{
+					pDC->TextOut(0, y * pew->fontSize.cy, "unknown", 7);
+				}
+
+			}
+		}
+
 		char buf[8];
 		sprintf(buf, "%5d  ", y);
-		pDC->TextOut(0, y * pew->fontSize.cy, buf, 5);
+		pDC->TextOut(lmargin, y * pew->fontSize.cy, buf, 5);
 	}
 
 	pDC->SelectObject(pOldFont);
