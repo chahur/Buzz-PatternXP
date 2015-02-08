@@ -50,6 +50,10 @@
 #define IDC_BT_DELROW					2045
 #define IDC_TONAL_COMBO					2046
 #define IDC_TONAL_BUTTON				2047
+#define IDC_TRANSPOSE_COMBO				2048
+#define IDC_MINUS_BUTTON				2049
+#define IDC_PLUS_BUTTON					2050
+
 
 
 #define IDD_PARAMETERS_DIALOG           3000
@@ -114,6 +118,10 @@
 #define ID_COMBO_TONAL_BT				32808
 #define ID_COMBO_TONAL					33808
 #define ID_TONAL_BT						32809
+#define ID_BT_MINUS						32810
+#define ID_COMBO_TRANSPOSE_BT			32811
+#define ID_COMBO_TRANSPOSE				33811
+#define ID_BT_PLUS						32812
 
 
 #define IDD_CHORD_EXPERT_DIALOG			4000

@@ -31,6 +31,7 @@ public:
 	CComboBox comboInterpolate;
 	CStatic labelTonal;
 	CComboBox comboTonal;
+	CComboBox comboTranspose;
 
 	CMICallbacks *pCB;
 	afx_msg LRESULT CToolBar2::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM);

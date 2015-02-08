@@ -138,6 +138,14 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_COMMAND(ID_TONAL_BT, OnButtonTonality)
 	ON_BN_CLICKED(IDC_TONAL_BUTTON, OnButtonTonality) 
 
+	ON_CBN_SELENDOK(IDC_TRANSPOSE_COMBO, OnComboTransposeSelect)
+	ON_CBN_SELENDOK(ID_COMBO_TRANSPOSE, OnComboTransposeSelect)
+	ON_COMMAND(ID_BT_MINUS, OnButtonTransposeDown)
+	ON_COMMAND(ID_BT_PLUS, OnButtonTransposeUp)
+	ON_BN_CLICKED(IDC_MINUS_BUTTON, OnButtonTransposeDown) 
+	ON_BN_CLICKED(IDC_PLUS_BUTTON, OnButtonTransposeUp) 
+	
+
 
 
 END_MESSAGE_MAP()
@@ -360,6 +368,16 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.comboTonal.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_TONAL);
 	toolBar.comboTonal.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 
+	// Insert Transpose combo
+	index = toolBar.CommandToIndex(ID_COMBO_TRANSPOSE_BT);
+    toolBar.SetButtonInfo(index, ID_COMBO_TRANSPOSE_BT, TBBS_SEPARATOR, 40); 
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 1;  
+    rect.bottom = rect.top + 80;
+	toolBar.comboTranspose.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_TRANSPOSE);
+	toolBar.comboTranspose.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+
+	
 
 	// Insert "Help" check box
 	index = toolBar.CommandToIndex(ID_CHECK_HELP_BT);
@@ -574,7 +592,7 @@ int CEditorWnd::GetComboBoxBar()
 	}
 }
 
-/*---- Combo box "Tonal Bar" ----*/
+/*---- Combo box "Tonal" ----*/
 int CEditorWnd::GetComboBoxTonal()
 {
 	if (toolbarvisible)  
@@ -584,6 +602,19 @@ int CEditorWnd::GetComboBoxTonal()
 		return cb->GetCurSel();
 	}
 }
+
+/*---- Combo box "Transpose" ----*/
+int CEditorWnd::GetComboBoxTranspose()
+{
+	if (toolbarvisible)  
+		return toolBar.comboTranspose.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_TRANSPOSE_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
+
 
 /* ---- Checkbox "Humanize empty" -----*/
 bool CEditorWnd::GetCheckBoxHumanizeEmpty()
@@ -998,12 +1029,14 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_INTERPOLATE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_REVERSE, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_MIRROR, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_MINUS, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_PLUS, pe.CanCopy());
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); pe.SetFocus();}
 void CEditorWnd::OnEditCopy() { pe.OnEditCopy(); pe.SetFocus();}
 void CEditorWnd::OnEditPaste() { pe.OnEditPaste(); pe.SetFocus();}
-void CEditorWnd::OnEditPasteSpecial() { pe.OnEditPasteSpecial(); } //BWC
+void CEditorWnd::OnEditPasteSpecial() { pe.OnEditPasteSpecial(); pe.SetFocus();} 
 void CEditorWnd::OnClearNoteOff() { 
 	pe.OnClearNoteOff(); 
 	pe.SetFocus();
@@ -1195,6 +1228,37 @@ void CEditorWnd::InitToolbarData()
 	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
 	cb4->SetCurSel(TonalComboIndex);
 
+	toolBar.comboTranspose.AddString("1");
+	toolBar.comboTranspose.AddString("2");
+	toolBar.comboTranspose.AddString("3");
+	toolBar.comboTranspose.AddString("4");
+	toolBar.comboTranspose.AddString("5");
+	toolBar.comboTranspose.AddString("6");
+	toolBar.comboTranspose.AddString("7");
+	toolBar.comboTranspose.AddString("8");
+	toolBar.comboTranspose.AddString("9");
+	toolBar.comboTranspose.AddString("10");
+	toolBar.comboTranspose.AddString("11");
+	toolBar.comboTranspose.AddString("12");
+	TransposeComboIndex=0;
+	toolBar.comboTranspose.SetCurSel(TransposeComboIndex);
+	
+	CComboBox *cb5 = (CComboBox *)dlgBar.GetDlgItem(IDC_TRANSPOSE_COMBO);
+	cb5->AddString("1");
+	cb5->AddString("2");
+	cb5->AddString("3");
+	cb5->AddString("4");
+	cb5->AddString("5");
+	cb5->AddString("6");
+	cb5->AddString("7");
+	cb5->AddString("8");
+	cb5->AddString("9");
+	cb5->AddString("10");
+	cb5->AddString("11");
+	cb5->AddString("12");
+	cb5->SetCurSel(TransposeComboIndex);
+	
+
 }
 
 note_bitset GetBaseChord(LPSTR txt)
@@ -1379,14 +1443,16 @@ note_bitset GetTonality(int count)
 	return res;
 }
 
-void CEditorWnd::InitTonality(LPSTR txt, int sharpCount)
+void CEditorWnd::InitTonality(LPSTR txt, int basenote, bool major, int sharpCount)
 {
-	chord_struct cs;
+	tonality_struct cs;
 	toolBar.comboTonal.AddString(txt);
 	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
 	cb4->AddString(txt);
 
 	cs.name = txt;	
+	cs.base_note = basenote;
+	cs.major = major;
 	if (sharpCount >-999)
 		cs.notes = GetTonality(sharpCount);
 	else
@@ -1401,38 +1467,38 @@ void CEditorWnd::InitTonal()
 	TonalityList.clear();
 
 	// First entry : no tonality
-	InitTonality("None", -999);
+	InitTonality("None", -1, true, -999);
 
-	InitTonality("C-Maj", 0);
-	InitTonality("C-min", -3);
-	InitTonality("C#-Maj", 7);
-	InitTonality("C#-min", 4);
-	InitTonality("Db-Maj", -5);
-	InitTonality("D-Maj", 2);
-	InitTonality("D-min", -1);
-	InitTonality("D#-min", 6);
-	InitTonality("Eb-Maj", -3);
-	InitTonality("Eb-min", -6);
-	InitTonality("E-Maj", 4);
-	InitTonality("E-min", 1);
-	InitTonality("F-Maj", -1);
-	InitTonality("F-min", -4);
-	InitTonality("F#-Maj", 6);
-	InitTonality("F#-min", 3);
-	InitTonality("Gb-Maj", -6);
-	InitTonality("G-Maj", 1);
-	InitTonality("G-min", -2);
-	InitTonality("G#-min", 5);
-	InitTonality("Ab-Maj", -4);
-	InitTonality("Ab-min", -7);
-	InitTonality("A-Maj", 3);
-	InitTonality("A-min", 0);
-	InitTonality("A#-min", 7);
-	InitTonality("Bb-Maj", -2);
-	InitTonality("Bb-min", -5);
-	InitTonality("B-Maj", 5);
-	InitTonality("B-min", 2);
-	InitTonality("Cb-Maj", -7);
+	InitTonality("C-Maj", 0, true, 0);
+	InitTonality("C-min", 0, false, -3);
+	InitTonality("C#-Maj", 1, true, 7);
+	InitTonality("C#-min", 1, false, 4);
+	InitTonality("Db-Maj", 1, true, -5);
+	InitTonality("D-Maj", 2, true, 2);
+	InitTonality("D-min", 2, false, -1);
+	InitTonality("D#-min", 3, false, 6);
+	InitTonality("Eb-Maj", 3, true, -3);
+	InitTonality("Eb-min", 3, false, -6);
+	InitTonality("E-Maj", 4, true, 4);
+	InitTonality("E-min", 4, false, 1);
+	InitTonality("F-Maj", 5, true, -1);
+	InitTonality("F-min", 5, false, -4);
+	InitTonality("F#-Maj", 6, true, 6);
+	InitTonality("F#-min", 6, false, 3);
+	InitTonality("Gb-Maj", 6, true, -6);
+	InitTonality("G-Maj", 7, true, 1);
+	InitTonality("G-min", 7, false, -2);
+	InitTonality("G#-min", 8, false, 5);
+	InitTonality("Ab-Maj", 8, true, -4);
+	InitTonality("Ab-min", 8, false, -7);
+	InitTonality("A-Maj", 9, true, 3);
+	InitTonality("A-min", 9, false, 0);
+	InitTonality("A#-min", 10, false, 7);
+	InitTonality("Bb-Maj", 10, true, -2);
+	InitTonality("Bb-min", 10, false, -5);
+	InitTonality("B-Maj", 11, true, 5);
+	InitTonality("B-min", 11, false, 2);
+	InitTonality("Cb-Maj", 11, true, -7);
 
 }
 
@@ -1460,6 +1526,14 @@ void CEditorWnd::OnComboTonalSelect()
 	pe.SetFocus();
 }
 
+void CEditorWnd::OnComboTransposeSelect()
+{
+	TransposeComboIndex = GetComboBoxTranspose();
+//	pCB->SetModifiedFlag();
+	Invalidate();
+	pe.SetFocus();
+}
+
 void CEditorWnd::OnButtonTonality()
 {
 	// Analyse the pattern to determine the tonality
@@ -1467,8 +1541,6 @@ void CEditorWnd::OnButtonTonality()
 
 	pe.SetFocus();
 }
-
-
 
 void CEditorWnd::OnCheckedHumanizeEmpty()
 {
@@ -1557,7 +1629,6 @@ void CEditorWnd::OnComboInterpolateSelect()
 	pe.SetFocus();
 }
 
-
 void CEditorWnd::OnButtonReverse()
 {
 	pe.Reverse();
@@ -1579,6 +1650,18 @@ void CEditorWnd::OnButtonInsertRow()
 void CEditorWnd::OnButtonDeleteRow()
 {
 	pe.DeleteRow();
+	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonTransposeUp()
+{
+	pe.ShiftValues(TransposeComboIndex+1);
+	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonTransposeDown()
+{
+	pe.ShiftValues(-TransposeComboIndex-1);
 	pe.SetFocus();
 }
 

@@ -18,6 +18,14 @@ struct chord_struct
 	note_bitset notes;
 };
 
+struct tonality_struct
+{
+	string name;
+	int base_note;
+	bool major;
+	note_bitset notes;
+};
+
 struct row_struct
 {
 	note_bitset notes;
@@ -38,6 +46,8 @@ typedef std::vector<std::string> string_vector;
 typedef std::vector<row_struct> row_vector;
 typedef std::vector<grid_struct> grid_vector;
 typedef std::vector<chord_struct> chord_vector;
+typedef std::vector<tonality_struct> tonality_vector;
+
 typedef std::vector<row_vector> row_vector_vector;
 
 // CPatEd
@@ -107,6 +117,7 @@ public:
 
 	int GetColumnAtX(int x);
 	int GetColumnX(int column);
+	void ShiftValues(int delta);
 	
 	void InvalidateInTimer() { invalidateInTimer = true; }
 
@@ -122,6 +133,7 @@ private:
 	void DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor);
 	void DrawCursor(CDC *pDC);
 	bool CheckNoteInTonality(byte note);
+	bool IsMajorTonality();
 
 	CRect GetCursorRect(CCursorPos const &p);
 	void MoveCursor(CCursorPos newpos, bool killsel = true);
@@ -163,7 +175,6 @@ private:
 	void CheckRefreshChords();
 	void AnalyseChords();
 
-	void ShiftValues(int delta);
 	void WriteState();
 	void MuteTrack();
 	CCursorPos GetDigitAtPoint(CPoint p);

@@ -58,7 +58,7 @@ private:
 	void UpdateButtons();
 	void InitChords();
 	void InitTonal();
-	void InitTonality(LPSTR txt, int sharpCount);
+	void InitTonality(LPSTR txt, int basenote, bool major, int sharpCount);
 
 
 	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
@@ -77,6 +77,7 @@ private:
 	int  GetComboBoxBar();
 
 	int GetComboBoxTonal();
+	int GetComboBoxTranspose();
 
 	bool GetCheckBoxHumanizeEmpty();
 	void SetCheckBoxHumanizeEmpty(bool AValue);
@@ -117,7 +118,7 @@ public:
 	// Chords 
 	string_vector Chords;
 	chord_vector ChordsBase;
-	chord_vector TonalityList;
+	tonality_vector TonalityList;
 	row_vector RowNotes;
 	int minChordNotes;
 	int maxChordNotes;
@@ -129,6 +130,7 @@ public:
 	bool MidiEditMode;
 	int BarComboIndex;
 	int TonalComboIndex;
+	int TransposeComboIndex;
 	int DeltaHumanize;
 	bool HumanizeEmpty;
 	int ChordsComboIndex() {return GetComboBoxChords();};
@@ -206,7 +208,12 @@ public:
 	afx_msg void OnButtonDeleteRow();
 
 	afx_msg void OnButtonTonality();
-	afx_msg void OnComboTonalSelect();	
+	afx_msg void OnComboTonalSelect();
+	afx_msg void OnComboTransposeSelect();
+	afx_msg void OnButtonTransposeUp();
+	afx_msg void OnButtonTransposeDown();
+	
+
 
 };
 

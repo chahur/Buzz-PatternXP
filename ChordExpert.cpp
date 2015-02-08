@@ -247,7 +247,7 @@ void CChordExpertDialog::UpdateWindowSize()
 
 	CStatic *pt = (CStatic *)GetDlgItem(3);
 	if (pt!=NULL)
-		pt->MoveWindow(25, cy-28, 120, 23);
+		pt->MoveWindow(25, cy-28, 150, 23);
 
 }
 

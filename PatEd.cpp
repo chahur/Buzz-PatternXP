@@ -937,11 +937,22 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 
 bool CPatEd::CheckNoteInTonality(byte note)
 {
+	// If no tonality defined, return true
 	if (pew->TonalComboIndex <=0) return true;
 	if (pew->TonalComboIndex > (int)pew->TonalityList.size()) return true;
-	if (pew->TonalityList[pew->TonalComboIndex].notes.test(note)) return true;
 
-	return false;
+	// Check if note is in the tonality defined for the pattern
+	return (pew->TonalityList[pew->TonalComboIndex].notes.test(note));
+}
+
+bool CPatEd::IsMajorTonality()
+{
+	// If no tonality defined, return true
+	if (pew->TonalComboIndex <=0) return true;
+	if (pew->TonalComboIndex > (int)pew->TonalityList.size()) return true;
+
+	// Check if the tonality defined for the pattern is in major mode
+	return (pew->TonalityList[pew->TonalComboIndex].major);
 }
 
 void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor)
@@ -3340,6 +3351,19 @@ double round(double d)
   return floor(d + 0.5);
 }
 
+int ModuloNote(int note, int &octave)
+{
+	if (note >= 12) {
+		octave = octave+1;
+		return (note - 12);
+	}
+	else if (note < 0) {
+		octave = octave-1;
+		return(note + 12);
+	}
+	else return note;
+}
+
 void CPatEd::Mirror()
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -3364,6 +3388,7 @@ void CPatEd::Mirror()
 				{
 				// Mirror notes is relative to first note of the selection
 				byte ZeroVal=0;
+				bool checkTonality = false;
 	
 				for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
 				{					
@@ -3376,7 +3401,14 @@ void CPatEd::Mirror()
 						{
 							ZeroVal = (byte)data;
 							int octave = ZeroVal >> 4;
-							int note = (ZeroVal & 15) -1;
+							int note;
+							// If tonal, use base note as Zero
+							if (pew->TonalComboIndex >0 && pew->TonalComboIndex <= (int)pew->TonalityList.size()){
+								checkTonality = true;
+								note = pew->TonalityList[pew->TonalComboIndex].base_note;
+							}
+							else
+								note = (ZeroVal & 15) -1;
 							ZeroVal = 12*octave + note;
 							break;
 						}
@@ -3391,10 +3423,43 @@ void CPatEd::Mirror()
 						byte data = (byte)(*ei).second;
 						int octave = data >> 4;
 						int note = (data & 15) -1;
+						bool inTonality;
+						if (checkTonality) inTonality = CheckNoteInTonality(note);
+
 						data = 12*octave + note;
 						byte NewData = ZeroVal - (data-ZeroVal);
 						octave = NewData / 12;
 						note = NewData - (octave*12);
+				//		bool MirrorUp = (data-ZeroVal<0);
+
+						if (checkTonality) 
+						{ // Use tonality
+							int deltamirror;
+							if (IsMajorTonality()) deltamirror=1; else deltamirror=-1;
+
+							if (inTonality){
+								// Note to mirror was in tonality
+								if (!CheckNoteInTonality(note)) {
+									// Mirror is not
+									note = ModuloNote(note + deltamirror, octave);
+
+								}
+							}
+							else
+							{
+								// Note to mirror was not in tonality
+								if (CheckNoteInTonality(note)) {
+									// Mirror is in tonality ... shift it
+									note = ModuloNote(note + deltamirror, octave);
+								}
+								// Check it twice ... is enough
+								if (CheckNoteInTonality(note)) {
+									// Mirror is in tonality... shift it
+									note = ModuloNote(note + deltamirror, octave);
+								}
+							}
+
+						}
 					
 						if (y>r.bottom) break;
 						if ((y>=r.top) && (y<=r.bottom))
@@ -3472,9 +3537,48 @@ void CPatEd::ShiftValues(int delta)
 	{
 		MACHINE_LOCK;
 
+		int delta1;
+		if (delta>0) delta1=1; else delta1=-1;
+
 		for (int col = r.left; col <= r.right; col++)
+		{
+			CColumn *pc = ppat->columns[col].get();
+			// if Shift <12 and Pattern is tonal and column is note
+			if ((delta!=12 && delta!=-12) && (pew->TonalComboIndex >0) && (pc->GetParamType()==pt_note))
+			{
+				for (int row = r.top; row <= r.bottom; row++) 
+				{
+					int val= pc->GetValue(row);
+					// If it's a note
+					if ((val != pc->GetNoValue()) && (val != NOTE_OFF)) {
+						// if note in tonality
+						if (CheckNoteInTonality((val & 15) -1)) 
+						{
+							ppat->columns[col]->ShiftValue(row, delta);
+							val= pc->GetValue(row);
+							// Stay in tonality
+							if (!CheckNoteInTonality((val & 15) -1)) 
+								ppat->columns[col]->ShiftValue(row, delta1);
+						}
+						else
+						{
+							ppat->columns[col]->ShiftValue(row, delta);
+							val= pc->GetValue(row);
+							// Stay out of tonality
+							if (CheckNoteInTonality((val & 15) -1)) 
+								ppat->columns[col]->ShiftValue(row, delta1);
+							val= pc->GetValue(row);
+							if (CheckNoteInTonality((val & 15) -1)) 
+								ppat->columns[col]->ShiftValue(row, delta1);
+						}
+					}
+
+				}
+			}
+			else
 			for (int row = r.top; row <= r.bottom; row++)
 				ppat->columns[col]->ShiftValue(row, delta);
+		}
 
 	}
 
