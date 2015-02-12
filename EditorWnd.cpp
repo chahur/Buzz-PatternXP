@@ -9,6 +9,7 @@
 #include <io.h>
 #include "Parameters.h"
 #include "ChordExpert.h"
+#include "TonalDlg.h"
 
 HHOOK g_hHook = 0;
 
@@ -480,8 +481,6 @@ void CEditorWnd::OnShowWindow(BOOL bShow, UINT nStatus)
 
 	DoShowHelp();
 
-//	AnalyseChords();
-
 }
 
 /* ---- Checkbox "Help" -----*/
@@ -923,6 +922,9 @@ void CEditorWnd::OnColumns()
 	pe.ColumnsChanged();
 	UpdateCanvasSize();
 	Invalidate();
+
+	if (AutoChordExpert) AnalyseChords();
+
 }
 
 void CEditorWnd::OnEditUndo()
@@ -1224,9 +1226,7 @@ void CEditorWnd::InitToolbarData()
 
 
 	InitTonal();
-	toolBar.comboTonal.SetCurSel(TonalComboIndex);
-	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
-	cb4->SetCurSel(TonalComboIndex);
+	SetComboBoxTonal(TonalComboIndex);
 
 	toolBar.comboTranspose.AddString("1");
 	toolBar.comboTranspose.AddString("2");
@@ -1257,8 +1257,16 @@ void CEditorWnd::InitToolbarData()
 	cb5->AddString("11");
 	cb5->AddString("12");
 	cb5->SetCurSel(TransposeComboIndex);
-	
+}
 
+void CEditorWnd::SetComboBoxTonal(int index)
+{
+	if (TonalComboIndex != index) pCB->SetModifiedFlag();
+
+	TonalComboIndex = index;
+	toolBar.comboTonal.SetCurSel(TonalComboIndex);
+	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
+	cb4->SetCurSel(TonalComboIndex);
 }
 
 note_bitset GetBaseChord(LPSTR txt)
@@ -1453,6 +1461,7 @@ void CEditorWnd::InitTonality(LPSTR txt, int basenote, bool major, int sharpCoun
 	cs.name = txt;	
 	cs.base_note = basenote;
 	cs.major = major;
+	cs.sharp_flat = sharpCount;
 	if (sharpCount >-999)
 		cs.notes = GetTonality(sharpCount);
 	else
@@ -1537,7 +1546,18 @@ void CEditorWnd::OnComboTransposeSelect()
 void CEditorWnd::OnButtonTonality()
 {
 	// Analyse the pattern to determine the tonality
-	::MessageBox(NULL, "Analyses the pattern to determine the tonality ... not done yet.", "Pattern XP", MB_OK | MB_ICONWARNING);
+//	::MessageBox(NULL, "Analyses the pattern to determine the tonality ... not done yet.", "Pattern XP", MB_OK | MB_ICONWARNING);
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	if (pPattern == NULL)
+		return;
+
+	CTonalDialog dlg(this);
+	dlg.pew = this;
+	if (dlg.DoModal() == IDOK)
+	{
+		//
+	}	
 
 	pe.SetFocus();
 }

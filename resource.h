@@ -125,6 +125,14 @@
 
 
 #define IDD_CHORD_EXPERT_DIALOG			4000
+#define IDD_TONAL_DIALOG				5000
+#define IDD_FIRST_NOTE					3 
+#define IDD_SHARP						100
+#define IDD_FLAT						101
+#define IDD_MAJOR						102
+#define IDD_MINOR						103
+#define IDD_RADIOMINOR					104
+#define IDD_RADIOMAJOR					105
 
 
 

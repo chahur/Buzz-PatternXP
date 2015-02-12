@@ -14,7 +14,10 @@
 #include <bitset>
 
 
-static char const NoteTo2char[] = "C-C#D-EbE-F-F#G-G#A-BbB-";
+static char const NoteTo2char[]     = "C-C#D-EbE-F-F#G-G#A-BbB-";
+static char const NoteToText[]      = "C-C#D-D#E-F-F#G-G#A-A#B-";
+static char const NoteToTextStrip[] = "C C#D D#E F F#G G#A A#B ";
+
 
 class CEditorWnd : public CWnd
 {
@@ -43,6 +46,7 @@ public:
 	void OnUpdateSelection();
 	void OnUpdatePosition(); 
 	void AnalyseChords();
+	void SetComboBoxTonal(int index);
 
 
 private:
@@ -77,6 +81,7 @@ private:
 	int  GetComboBoxBar();
 
 	int GetComboBoxTonal();
+
 	int GetComboBoxTranspose();
 
 	bool GetCheckBoxHumanizeEmpty();
@@ -118,12 +123,14 @@ public:
 	// Chords 
 	string_vector Chords;
 	chord_vector ChordsBase;
-	tonality_vector TonalityList;
 	row_vector RowNotes;
 	int minChordNotes;
 	int maxChordNotes;
 
-//	CFuBar reBar;
+	// Tonality
+	tonality_vector TonalityList;
+	int tonality_notes[12];
+
 	CToolBar2 toolBar;
 	CDialogBar dlgBar;
 

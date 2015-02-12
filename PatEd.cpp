@@ -39,7 +39,6 @@ CPatEd::CPatEd()
 	CheckRefreshChordCount=0;
 	AnalyseChordRefresh=false;
 	AnalysingChords = false;
-
 }
 
 CPatEd::~CPatEd()
@@ -66,7 +65,6 @@ void CPatEd::SetPattern(CMachinePattern *p)
 {
 	
 }
-static char const NoteToText[] = "C-C#D-D#E-F-F#G-G#A-A#B-";
 static char const NibbleToHexText[] = "0123456789ABCDEF";
 
 static void FieldToText(char *txt, CMPType type, bool ascii, bool hasval, void *fdata)
@@ -1278,6 +1276,39 @@ void CPatEd::CheckRefreshChords()
 	}
 }
 
+void CPatEd::AnalyseTonality()
+{
+
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL) return;
+	
+	// Create the array of notes
+	for (int i=0; i<12; i++) pew->tonality_notes[i]=0;
+
+	// Fill the note rows 
+	for (int col = 0; col<(int)ppat->columns.size(); col++)
+	{
+		CColumn *pc = ppat->columns[col].get();
+			
+		if (pc->GetParamType()==pt_note)
+		{
+			MapIntToValue::const_iterator ei;
+
+			for (ei = pc->EventsBegin(); ei != pc->EventsEnd(); ei++)
+			{					
+				int y = (*ei).first;
+				byte data = (byte)(*ei).second;
+				if (data != NOTE_OFF)
+				{
+					// int octave = data >> 4;
+					int note = (data & 15) -1;
+					pew->tonality_notes[note]++;
+				}
+			}
+		}
+	}
+}
+
 void CPatEd::AnalyseChords()
 {
 	if (AnalysingChords) return;
@@ -1591,6 +1622,26 @@ void CPatEd::InvalidateGroup(int row, int column)
 	InvalidateRect(CanvasToClient(r));
 }
 
+
+void CPatEd::MoveCursorUpDown(int dy)
+{
+	MoveCursorDelta(0, dy);
+}
+
+void CPatEd::MoveCursorPgUpDown(int dy)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (dy < 0)
+	{
+		if (pew->PgUpDownDisabled) MoveCursorDelta(0, -ppat->rowsPerBeat); 
+		else MoveCursorDelta(0, -BeatsInMeasureBar()); 
+	}
+	else if (dy > 0)
+	{
+		if (pew->PgUpDownDisabled) MoveCursorDelta(0, ppat->rowsPerBeat); 
+		else MoveCursorDelta(0, BeatsInMeasureBar());
+	}
+}
 
 
 void CPatEd::MoveCursorDelta(int dx, int dy)
@@ -2189,14 +2240,9 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		switch(nChar)
 		{
 		case VK_UP: MoveCursorDelta(0, -1); break;
-		case VK_DOWN: MoveCursorDelta(0, 1); break;
-		//Use BarComboIndex to compute the delta of prior/next page
-		case VK_PRIOR: 
-			if (pew->PgUpDownDisabled) MoveCursorDelta(0, -ppat->rowsPerBeat); 
-			else MoveCursorDelta(0, -BeatsInMeasureBar()); break;
-		case VK_NEXT: 
-			if (pew->PgUpDownDisabled) MoveCursorDelta(0, ppat->rowsPerBeat); 
-			else MoveCursorDelta(0, BeatsInMeasureBar()); break;
+		case VK_DOWN: MoveCursorDelta(0, 1); break;	
+		case VK_PRIOR: MoveCursorPgUpDown(-1); break; //Use BarComboIndex to compute the delta of prior/next page
+		case VK_NEXT:  MoveCursorPgUpDown(1); break;
 		case VK_RIGHT: MoveCursorDelta(1, 0); break;
 		case VK_LEFT: MoveCursorDelta(-1, 0); break;
 		case VK_TAB: Tab(); break;
@@ -3421,49 +3467,52 @@ void CPatEd::Mirror()
 					{					
 						int y = (*ei).first;
 						byte data = (byte)(*ei).second;
-						int octave = data >> 4;
-						int note = (data & 15) -1;
-						bool inTonality;
-						if (checkTonality) inTonality = CheckNoteInTonality(note);
+						if (data != NOTE_OFF) 
+						{
+							int octave = data >> 4;
+							int note = (data & 15) -1;
+							bool inTonality;
+							if (checkTonality) inTonality = CheckNoteInTonality(note);
 
-						data = 12*octave + note;
-						byte NewData = ZeroVal - (data-ZeroVal);
-						octave = NewData / 12;
-						note = NewData - (octave*12);
-				//		bool MirrorUp = (data-ZeroVal<0);
+							data = 12*octave + note;
+							byte NewData = ZeroVal - (data-ZeroVal);
+							octave = NewData / 12;
+							note = NewData - (octave*12);
+					//		bool MirrorUp = (data-ZeroVal<0);
 
-						if (checkTonality) 
-						{ // Use tonality
-							int deltamirror;
-							if (IsMajorTonality()) deltamirror=1; else deltamirror=-1;
+							if (checkTonality) 
+							{ // Use tonality
+								int deltamirror;
+								if (IsMajorTonality()) deltamirror=1; else deltamirror=-1;
 
-							if (inTonality){
-								// Note to mirror was in tonality
-								if (!CheckNoteInTonality(note)) {
-									// Mirror is not
-									note = ModuloNote(note + deltamirror, octave);
+								if (inTonality){
+									// Note to mirror was in tonality
+									if (!CheckNoteInTonality(note)) {
+										// Mirror is not
+										note = ModuloNote(note + deltamirror, octave);
 
+									}
 								}
+								else
+								{
+									// Note to mirror was not in tonality
+									if (CheckNoteInTonality(note)) {
+										// Mirror is in tonality ... shift it
+										note = ModuloNote(note + deltamirror, octave);
+									}
+									// Check it twice ... is enough
+									if (CheckNoteInTonality(note)) {
+										// Mirror is in tonality... shift it
+										note = ModuloNote(note + deltamirror, octave);
+									}
+								}
+
 							}
-							else
-							{
-								// Note to mirror was not in tonality
-								if (CheckNoteInTonality(note)) {
-									// Mirror is in tonality ... shift it
-									note = ModuloNote(note + deltamirror, octave);
-								}
-								// Check it twice ... is enough
-								if (CheckNoteInTonality(note)) {
-									// Mirror is in tonality... shift it
-									note = ModuloNote(note + deltamirror, octave);
-								}
-							}
-
-						}
 					
-						if (y>r.bottom) break;
-						if ((y>=r.top) && (y<=r.bottom))
-							pc->SetValue(y, (octave << 4) + note + 1);
+							if (y>r.bottom) break;
+							if ((y>=r.top) && (y<=r.bottom))
+								pc->SetValue(y, (octave << 4) + note + 1);
+						}
 					}
 				}
 

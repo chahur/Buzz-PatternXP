@@ -23,6 +23,7 @@ struct tonality_struct
 	string name;
 	int base_note;
 	bool major;
+	int sharp_flat;
 	note_bitset notes;
 };
 
@@ -103,8 +104,10 @@ public:
 	void DoAnalyseChords();
 	void DoManualAnalyseChords();
 	void DoInsertChord(int ChordIndex);
+	void MoveCursorUpDown(int dy);
+	void MoveCursorPgUpDown(int dy);
 
-
+	void AnalyseTonality();
 
 	void Interpolate(bool expintp);
 
@@ -113,7 +116,6 @@ public:
 	bool CanPaste();
 	bool CanInsertChord();
 	bool CheckNoteCol();
-
 
 	int GetColumnAtX(int x);
 	int GetColumnX(int column);

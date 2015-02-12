@@ -235,9 +235,11 @@ bool miex::ExportMidiEvents(CPattern *p, CMachineDataOutput *pout) { return pmi-
 bool miex::ImportMidiEvents(CPattern *p, CMachineDataInput *pin) 
 { 
 	auto pmp = pmi->patterns[p];
-
-	pmp->actions.BeginAction(pmi->patEd, "Add Track");
-
+	
+	if (pmi->patEd->pPattern) // BWC
+	{
+		pmp->actions.BeginAction(pmi->patEd, "Add Track");
+	}
 	pmi->patEd->AddTrack(0xffff);
 
 	return pmp->ImportMidiEvents(pin, pmi->targetMachine, pmi->pCB); 

@@ -6,6 +6,9 @@
 #include "EditorWnd.h"
 
 
+//-----------------------------------------------------------------------------
+// CCEGrid : Chords display grid
+
 IMPLEMENT_DYNAMIC(CCEGrid, CScrollWnd)
 
 CCEGrid::CCEGrid()
@@ -79,6 +82,8 @@ void CCEGrid::OnDraw(CDC *pDC)
 		for (int row = 0; row < RowCount; row++)
 			OnDrawCell(pDC, col, row);
 
+	DisplaySelectedChord(CurrentCol, CurrentRow);
+
 	pDC->SelectObject(pOldFont);
 	pDC->SelectObject(pOldPen);
 
@@ -110,7 +115,8 @@ void CCEGrid::OnDrawCell(CDC *pDC, int col, int row)
 
 void CCEGrid::GetCellText(LPSTR sText, int col, int row)
 {
-	if (row < (int)SortedChords[col].size()) {
+	if (row < (int)SortedChords[col].size()) 
+	{
 		row_struct rs = SortedChords[col][row];
 		char s_basenote[3];
 		string s_c;
@@ -122,8 +128,6 @@ void CCEGrid::GetCellText(LPSTR sText, int col, int row)
 	}
 	else
 		sText[0] = 0;
-
-
 }
 
 void CCEGrid::CursorSelect(int dx, int dy)
@@ -138,6 +142,12 @@ void CCEGrid::CursorSelect(int dx, int dy)
 
 BOOL CCEGrid::OnKeyDown(UINT nChar)
 {
+	bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
+	bool shiftdown = (GetKeyState(VK_SHIFT) & (1 << 15)) != 0;
+	bool altdown = (GetKeyState(VK_MENU) & (1 << 15)) != 0;
+
+	if (ctrldown || altdown || shiftdown) return false;
+
 	switch(nChar)
 	{
 	case VK_UP:    CursorSelect(0, -1); break;
@@ -174,16 +184,41 @@ void CCEGrid::OnLButtonDblClk(UINT nFlags, CPoint point)
 }
 
 
+void CCEGrid::DisplaySelectedChord(int col, int row)
+{
+	char sText[48];
+	sText[0] = 0;
+
+	if ((col >=0) && (col < (int)SortedChords.size()) &&
+		(row >=0) && (row <(int)SortedChords[col].size()))
+	{
+		row_struct rs = SortedChords[col][row];
+		char s_basenote[3];
+		string s_c;
+		s_basenote[0] = NoteTo2char[rs.base_note*2+0];
+		s_basenote[1] = NoteTo2char[rs.base_note*2+1];
+		s_basenote[2] = 0;
+
+		char SelectedChord[20];
+		strcpy(SelectedChord, pew->Chords[rs.chord_index].c_str());
+
+		sprintf(sText, "Selected : %s %s",s_basenote, SelectedChord);
+	}
+	
+	if (labelChord!=NULL)
+		labelChord->SetWindowText(sText);
+}
+
+
 
 //-----------------------------------------------------------------------------
-// CParametersDialog dialog
+// CChordExpertDialog dialog
 
 IMPLEMENT_DYNAMIC(CChordExpertDialog, CDialog)
 
 CChordExpertDialog::CChordExpertDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(CChordExpertDialog::IDD, pParent)
 {
-
 
 }
 
@@ -195,6 +230,9 @@ CChordExpertDialog::~CChordExpertDialog()
 BEGIN_MESSAGE_MAP(CChordExpertDialog, CDialog)
 	ON_WM_SIZE()
 	ON_WM_KEYDOWN()
+	ON_BN_CLICKED(5, OnBnClickedUp) 
+	ON_BN_CLICKED(6, OnBnClickedDown) 
+
 END_MESSAGE_MAP()
 
 
@@ -215,9 +253,33 @@ BOOL CChordExpertDialog::PreTranslateMessage(MSG* pMsg)
 {
     if (pMsg->message==WM_KEYDOWN)  {
 		if (ceGrid.OnKeyDown(pMsg->wParam)) return true;
+		else if (OnKeyDown(pMsg->wParam)) return true;
     }
  
     return CDialog::PreTranslateMessage(pMsg);  
+}
+
+BOOL CChordExpertDialog::OnKeyDown(UINT nChar)
+{
+	bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
+	bool shiftdown = (GetKeyState(VK_SHIFT) & (1 << 15)) != 0;
+	bool altdown = (GetKeyState(VK_MENU) & (1 << 15)) != 0;
+
+	if (ctrldown ) 
+	{
+		switch(nChar)
+		{
+		case VK_UP:    OnBnClickedUp(); break;
+		case VK_DOWN:  OnBnClickedDown();  break;
+		case VK_PRIOR: pew->pe.MoveCursorPgUpDown(-1); break;
+		case VK_NEXT:  pew->pe.MoveCursorPgUpDown(1); break;
+
+		default : return false;
+		}
+		return true;
+	}
+	else
+		return false;
 }
 
 void CChordExpertDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -237,42 +299,30 @@ void CChordExpertDialog::UpdateWindowSize()
 
 	ceGrid.MoveWindow(0, 0, cx, cy - 36);
 
-	CButton *pc = (CButton *)GetDlgItem(1);
-	if (pc!=NULL)
-		pc->MoveWindow(cx - 185, cy-32, 60, 23);
+	CButton *pc = (CButton *)GetDlgItem(1); // Insert
+	if (pc!=NULL) pc->MoveWindow(cx - 165, cy-32, 60, 23);
 	
-	pc = (CButton *)GetDlgItem(2);
-	if (pc!=NULL)
-		pc->MoveWindow(cx -85, cy-32, 60, 23);
+	pc = (CButton *)GetDlgItem(2);  // Close
+	if (pc!=NULL) pc->MoveWindow(cx -85, cy-32, 60, 23);
 
-	CStatic *pt = (CStatic *)GetDlgItem(3);
-	if (pt!=NULL)
-		pt->MoveWindow(25, cy-28, 150, 23);
+	pc = (CButton *)GetDlgItem(5);  // Up
+	if (pc!=NULL) pc->MoveWindow(cx -245, cy-32, 32, 23);
+
+	pc = (CButton *)GetDlgItem(6);  // Down
+	if (pc!=NULL) pc->MoveWindow(cx -205, cy-32, 32, 23);
+
+	CStatic *pt = (CStatic *)GetDlgItem(3);  // Current chord
+	if (pt!=NULL) pt->MoveWindow(25, cy-28, 150, 23);
+
+	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord
+	if (ceGrid.labelChord!=NULL) ceGrid.labelChord->MoveWindow(200, cy-28, 150, 23);
 
 }
 
-BOOL CChordExpertDialog::OnInitDialog()
+void CChordExpertDialog::InitGrid()
 {
-	CDialog::OnInitDialog();
-
-	ceGrid.Create(NULL, NULL, WS_CHILD | WS_VISIBLE, CRect(0, 0, 10, 10), this, 1, NULL);
-	ceGrid.pew = pew;
-	ceGrid.ModifyStyleEx(0, WS_EX_CLIENTEDGE, SWP_DRAWFRAME);
-	ceGrid.AlwaysShowVerticalScrollBar(true);
-	ceGrid.AlwaysShowHorizontalScrollBar(true);
-
-	ceGrid.ShowWindow(SW_SHOW);
-
-	// Resize the dialog to the last saved datas
-	CRect dialogrect;
-	dialogrect.top = pew->pCB->GetProfileInt("ChordExpertDialog.top", 100);
-	dialogrect.left = pew->pCB->GetProfileInt("ChordExpertDialog.left", 100);
-	dialogrect.bottom = pew->pCB->GetProfileInt("ChordExpertDialog.bottom", 300);
-	dialogrect.right = pew->pCB->GetProfileInt("ChordExpertDialog.right", 300);
-	MoveWindow(dialogrect);
-
 	// Get the previous chord of the pattern
-	int ir = CursorRow;
+	int ir = CursorRow-1;
 	while (ir>=0 && pew->RowNotes[ir].chord_index < 0) ir--;
 	
 	if (ir >=0)	{
@@ -311,8 +361,33 @@ BOOL CChordExpertDialog::OnInitDialog()
 
 
 	UpdateWindowSize();
+	ceGrid.Invalidate();
 	ceGrid.SetFocus();
-	
+}
+
+BOOL CChordExpertDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	ceGrid.Create(NULL, NULL, WS_CHILD | WS_VISIBLE, CRect(0, 0, 10, 10), this, 1, NULL);
+	ceGrid.pew = pew;
+	ceGrid.ModifyStyleEx(0, WS_EX_CLIENTEDGE, SWP_DRAWFRAME);
+	ceGrid.AlwaysShowVerticalScrollBar(true);
+	ceGrid.AlwaysShowHorizontalScrollBar(true);
+
+	ceGrid.ShowWindow(SW_SHOW);
+
+	// Resize the dialog to the last saved datas
+	CRect dialogrect;
+	dialogrect.top = pew->pCB->GetProfileInt("ChordExpertDialog.top", 100);
+	dialogrect.left = pew->pCB->GetProfileInt("ChordExpertDialog.left", 100);
+	dialogrect.bottom = pew->pCB->GetProfileInt("ChordExpertDialog.bottom", 300);
+	dialogrect.right = pew->pCB->GetProfileInt("ChordExpertDialog.right", 300);
+	MoveWindow(dialogrect);
+
+	// Initialize the chord grid according to the current chord
+	InitGrid();
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -458,7 +533,7 @@ void CChordExpertDialog::OnOK()
 		pew->pe.InsertChordNote((BaseOctave << 4) + rs.base_note + 1, rs.chord_index);
 	}
 
-	CDialog::OnOK();
+//	CDialog::OnOK(); do not close the dialog
 }
 
 void CChordExpertDialog::OnCancel()
@@ -467,3 +542,18 @@ void CChordExpertDialog::OnCancel()
 	CDialog::OnCancel();
 }
 
+void CChordExpertDialog::OnBnClickedUp()
+{
+	// Move cursor 1 row up
+	pew->pe.MoveCursorUpDown(-1);
+	CursorRow = pew->pe.cursor.row;
+	InitGrid();
+}
+
+void CChordExpertDialog::OnBnClickedDown()
+{
+	// Move cursor 1 row down
+	pew->pe.MoveCursorUpDown(1);
+	CursorRow = pew->pe.cursor.row;
+	InitGrid();
+}

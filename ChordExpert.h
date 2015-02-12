@@ -23,6 +23,7 @@ public:
 	void GetCellText(LPSTR sText, int col, int row);
 	void RefreshCanvasSize();
 	void CursorSelect(int dx, int dy);
+	void DisplaySelectedChord(int col, int row);
 
 
 protected:
@@ -42,6 +43,7 @@ public:
 	BOOL OnKeyDown(UINT nChar);
 	CEditorWnd *pew;
 	CWnd *pced;
+	CStatic *labelChord;
 
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -75,11 +77,16 @@ protected:
 	void UpdateWindowSize();
 	void SaveDialogPos();
 	void InitNotesGrid();
+	void InitGrid();
+
 
 	DECLARE_MESSAGE_MAP()
 public:
+
 	virtual BOOL OnInitDialog();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	BOOL CChordExpertDialog::OnKeyDown(UINT nChar);
+
 
 protected:
 	virtual void OnOK();
@@ -88,5 +95,7 @@ public:
 //	afx_msg void OnCbnEditupdateCombo1();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnBnClickedUp();
+	afx_msg void OnBnClickedDown();
 
 };

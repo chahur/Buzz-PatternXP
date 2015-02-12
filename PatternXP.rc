@@ -84,14 +84,14 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "TODO: <File description>"
-            VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "SineSynth.dll"
-            VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
-            VALUE "OriginalFilename", "SineSynth.dll"
-            VALUE "ProductName", "TODO: <Product name>"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "CompanyName", "Jeskola Buzz"
+            VALUE "FileDescription", "Pattern XP editor"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "Jeskola Pattern XP.dll"
+            VALUE "LegalCopyright", "(c) Jeskola Buzz.  All rights reserved."
+            VALUE "OriginalFilename", "Jeskola Pattern XP.dll"
+            VALUE "ProductName", "Buzz"
+            VALUE "ProductVersion", "1.0.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -213,9 +213,44 @@ STYLE WS_THICKFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
 CAPTION "Chord expert"
 FONT 8, "MS Shell Dlg", 400, 0, 1
 BEGIN
-    DEFPUSHBUTTON   "OK", 1, 120, 105, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", 2, 200, 105, 50, 14, 0, WS_EX_LEFT
+    DEFPUSHBUTTON   "Insert", 1, 120, 105, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Close", 2, 200, 105, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Up", 5, 200, 105, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Down", 6, 200, 105, 50, 14, 0, WS_EX_LEFT
     LTEXT           "Chord : Unknown", 3, 10, 105, 120, 14, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Undefined", 4, 10, 105, 120, 14, SS_LEFT, WS_EX_LEFT
+END
+
+IDD_TONAL_DIALOG
+DIALOGEX 0, 0, 289, 162
+STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+CAPTION "Tonality detection"
+FONT 8, "MS Shell Dlg", 400, 0, 1
+BEGIN
+    DEFPUSHBUTTON   "OK", 1,				126, 145, 50, 14, 0, WS_EX_LEFT
+    PUSHBUTTON      "Cancel", 2,			206, 145, 50, 14, 0, WS_EX_LEFT
+    LTEXT           "C",  IDD_FIRST_NOTE,   21, 14, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "C#", IDD_FIRST_NOTE+1, 21, 24, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "D",  IDD_FIRST_NOTE+2, 21, 34, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "D#", IDD_FIRST_NOTE+3, 21, 44, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "E",  IDD_FIRST_NOTE+4, 21, 54, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "F",  IDD_FIRST_NOTE+5, 21, 64, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "F#", IDD_FIRST_NOTE+6, 21, 74, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "G",  IDD_FIRST_NOTE+7, 21, 84, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "G#", IDD_FIRST_NOTE+8, 21, 94, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "A",  IDD_FIRST_NOTE+9, 21, 104, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "A#", IDD_FIRST_NOTE+10,21, 114, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "B",  IDD_FIRST_NOTE+11,21, 124, 50, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "Sharp", IDD_SHARP,		89, 24, 190, 8, SS_LEFT, WS_EX_LEFT
+	LTEXT           "Flat",  IDD_FLAT,		89, 42, 190, 8, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Minor", IDD_MINOR,     89, 72, 60, 8, SS_LEFT, WS_EX_LEFT
+    LTEXT           "Major", IDD_MAJOR,     89, 90, 60, 8, SS_LEFT, WS_EX_LEFT
+    GROUPBOX        "Notes", 90,		     9, 3, 70, 137, 0, WS_EX_LEFT
+    GROUPBOX        "Select tonality", 91,  84, 111, 199, 29, 0, WS_EX_LEFT
+    GROUPBOX        "Analyse", 92, 			84, 3, 199, 108, 0, WS_EX_LEFT
+    AUTORADIOBUTTON "Minor", IDD_RADIOMINOR,116, 125, 33, 8, WS_GROUP, WS_EX_LEFT
+    AUTORADIOBUTTON "Major", IDD_RADIOMAJOR,170, 125, 33, 8, 0, WS_EX_LEFT
+
 END
 
 IDD_PARAMETERS_DIALOG
@@ -406,6 +441,7 @@ BEGIN
 	ID_BT_MIRROR			"Mirror"
 	ID_BT_INSROW			"Insert row"
 	ID_BT_DELROW			"Delete row"
+	ID_TONAL_BT				"Tonality detection"
 	ID_BT_MINUS				"Shift down xN" 
 	ID_BT_PLUS				"Shift up xN"
 
