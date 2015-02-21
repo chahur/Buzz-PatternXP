@@ -53,6 +53,10 @@ public:
 
 };
 
+#define SORT_UNDEFINED 0
+#define SORT_BYNOTE 1
+#define SORT_BYDISTANCE 2
+
 class CChordExpertDialog : public CDialog
 {
 	DECLARE_DYNAMIC(CChordExpertDialog)
@@ -66,10 +70,13 @@ public:
 
 	CEditorWnd *pew;
 	CCEGrid ceGrid;
+
 	int CursorRow;
 	int BaseOctave;
+	int BaseNote;
 //	int ChordRow;
 	string ChordText;
+	int SortBy;
 
 private:
 
@@ -77,7 +84,7 @@ protected:
 	void UpdateWindowSize();
 	void SaveDialogPos();
 	void InitNotesGrid();
-	void InitGrid();
+	void InitGrid(int SortType);
 
 
 	DECLARE_MESSAGE_MAP()
@@ -97,5 +104,8 @@ public:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnBnClickedUp();
 	afx_msg void OnBnClickedDown();
-
+	afx_msg void OnBnClickedClear();
+	afx_msg void OnListBoxSelectionChange();
+	afx_msg void OnBnClickedSortByNote();
+	afx_msg void OnBnClickedSortByDistance();
 };

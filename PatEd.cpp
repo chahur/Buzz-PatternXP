@@ -330,6 +330,16 @@ int HexToInt(char c)
 	return res;
 }
 
+char IntToHex(int i)
+{
+	char res = '0';
+	
+	if ((i>=0) && (i<=9)) res = ('0'+i);
+	else if ((i>=10) && (i<=35)) res = ('A'+i-10);
+
+	return res;
+}
+
 
 void CPatEd::TextToFieldImport(char *txt, CColumn *pc, int irow)
 {
@@ -1118,6 +1128,10 @@ void CPatEd::DoInsertChord(int ChordIndex)
 	// Is there a note here ?
 	if (CanInsertChord())
 	{
+		int ChordNotes[256];
+		int ChordNotesIndex = 0;
+		for (int i=0; i<256; i++) ChordNotes[i] = 0;
+
 		CMachinePattern *ppat = pew->pPattern;
 		CColumn *pc = ppat->columns[cursor.column].get();
 
@@ -1131,12 +1145,16 @@ void CPatEd::DoInsertChord(int ChordIndex)
 
 		// Keep the root note of the chord
 		int value = pc->GetValue(cursor.row);
+		ChordNotes[ChordNotesIndex] = value;
+		ChordNotesIndex++;
+
 		int rootChord = value;
 
 		bool stopChord = false;
 		bool cleanTracks = false;
 		int iChord = 0;
 		int delta;
+		int lastnote;
 		char c;
 		// Get current chord description
 		char SelectedChord[20];
@@ -1157,7 +1175,7 @@ void CPatEd::DoInsertChord(int ChordIndex)
 				{
 					if (cleanTracks)
 					{
-						ppat->columns[icol]->ClearValue(cursor.row);
+						if (pew->ArpeggioComboIndex<=0)	ppat->columns[icol]->ClearValue(cursor.row);
 						icol++;
 					}
 					else
@@ -1170,6 +1188,11 @@ void CPatEd::DoInsertChord(int ChordIndex)
 								cleanTracks=true;
 							else {
 								value = EncodeNote(DecodeNote(rootChord) + 12);
+								/* ADD a param here
+								while (value<=lastnote) {
+									value = EncodeNote(DecodeNote(value) + 12);
+								}
+								*/
 								rootChord = value;
 								iChord = 0;
 							}
@@ -1182,14 +1205,19 @@ void CPatEd::DoInsertChord(int ChordIndex)
 						}	
 							
 						if (cleanTracks)
-							ppat->columns[icol]->ClearValue(cursor.row);
+						{
+							if (pew->ArpeggioComboIndex<=0)	ppat->columns[icol]->ClearValue(cursor.row);
+						}
 						else {
 							// Check if the note is valid
 							int octave = value >> 4;
 							int note = (value & 15) -1;
 							// Last note is B-9
 							if ((!stopChord) && (octave<10)) {
-								ppat->columns[icol]->SetValue(cursor.row, value);								
+								if (pew->ArpeggioComboIndex<=0)	ppat->columns[icol]->SetValue(cursor.row, value);	
+								lastnote = value;
+								ChordNotes[ChordNotesIndex] = value;
+								ChordNotesIndex++;
 							}
 							else 
 								cleanTracks = true;
@@ -1208,14 +1236,101 @@ void CPatEd::DoInsertChord(int ChordIndex)
 
 		}
 
+		// Generate the notes in the pattern according to the selected arpeggio 
+		// 1rst column is : cursor.column (contains the root note)
+		icol = cursor.column;
+		int irow = cursor.row;
+
+		// Use default arpeggio ?
+		if (pew->ArpeggioComboIndex>0)
+		{
+			for (int ArpeggioRow=0; ArpeggioRow < pew->ArpeggioRowCount; ArpeggioRow++)
+			{
+				// Clean the row (irow+ArpeggioRow)
+				int columnsize = (int)ppat->columns.size();
+				if ((LastCol>0) && (LastCol<columnsize)) columnsize = LastCol+1;
+
+				for (int c = 0; c < columnsize ; c++)
+					if (ppat->columns[c]->GetParamType() == pt_note)
+						ppat->columns[c]->ClearValue(irow+ArpeggioRow);
+
+				// Insert the notes 
+				// ArpeggioRows[ArpeggioRow][] gives the notes to insert in the row
+				for (int iArpeggioCol=0; pew->ArpeggioRows[ArpeggioRow][iArpeggioCol]!=0; iArpeggioCol++)
+				{
+					int iNote = HexToInt(pew->ArpeggioRows[ArpeggioRow][iArpeggioCol]);
+					// Insert note ChordNotes[] (if iNote < ChordNotesIndex) at the iNoteth note column 
+					if (iNote <= ChordNotesIndex)
+					{
+						icol = cursor.column;
+						int icolcount;
+						// Get the column iNoteth
+						for (icolcount=0; (icolcount<iNote) && (icol<columnsize); icolcount++)
+						{
+							while ((icol<columnsize) && 
+								   (ppat->columns[icol]->GetParamType() != pt_note))
+								icol++;
+							if (icolcount<iNote-1) icol++;
+						}
+						if ((icol < columnsize) && (icolcount==iNote))
+						{
+							ppat->columns[icol]->SetValue(irow+ArpeggioRow, ChordNotes[iNote-1]);
+						}
+
+					}
+
+				}
+			}
+		}
+		
+		
 		pCB->SetModifiedFlag();
 		ColumnsChanged();
 		pew->UpdateCanvasSize();
 		pew->Invalidate();
 		DoAnalyseChords();
+	}	
+}
 
+bool CPatEd::SaveArpeggio()
+{
+	// Copy data from the selection to the internal structure of arpeggio
+	if (selection)
+	{
+		CRect r= GetSelRect();
+		CMachinePattern *ppat = pew->pPattern;
+
+		pew->ArpeggioRowCount=r.bottom-r.top+1;
+
+		for (int row=r.top; row<=r.bottom; row++)
+		{
+			char ArpBuf[256];
+			int iArpBuf=0;
+			int iCol=0;
+
+			for (int col=r.left; col<=r.right; col++)
+			{
+				CColumn *pc = ppat->columns[col].get();
+				
+				if (pc->GetParamType() == pt_note) {
+					iCol++;
+					int val = pc->GetValue(row);
+					if ((val != pc->GetNoValue())&&(val != NOTE_OFF)) {
+						ArpBuf[iArpBuf]=IntToHex(iCol);
+						iArpBuf++;
+					}
+				}
+			}
+			ArpBuf[iArpBuf]=0;
+			strcpy(pew->ArpeggioRows[row-r.top], ArpBuf);			
+		}
 	}
-	
+	else
+		return false;
+	return true;
+
+
+
 }
 
 	
@@ -2126,6 +2241,23 @@ void CPatEd::DeleteRow()
 	DoAnalyseChords();
 }
 
+void CPatEd::ClearRow()
+{
+	CMachinePattern *ppat = pew->pPattern;
+
+	ppat->actions.BeginAction(pew, "Clear Row");
+	{
+		MACHINE_LOCK;
+		int cc = (int)ppat->columns.size();
+
+		for (int c = 0; c < cc; c++)
+			ppat->columns[c]->ClearValue(cursor.row);
+	}
+
+	Invalidate();
+	DoAnalyseChords();
+}
+
 void CPatEd::Rotate(bool reverse)
 {
 	CMachinePattern *ppat = pew->pPattern;
@@ -2182,8 +2314,22 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case 'I': ImportOld(); break;
 		case 'X': ExportPattern(); break; //BWC
 		case 'P': ImportPattern(); break; //BWC
-		case VK_SUBTRACT : InflatePattern(-2); break; //BWC 
-		case VK_ADD : InflatePattern(2); break; // BWC
+		case VK_SUBTRACT : {
+			int inflateFactor = pew->GetComboBoxInflate();
+			if (inflateFactor>=0)
+				InflatePattern(-inflateFactor); 
+			else	
+				InflatePattern(-2); 
+			break; //BWC
+			}
+		case VK_ADD : {
+			int inflateFactor = pew->GetComboBoxInflate();
+			if (inflateFactor>=0)
+				InflatePattern(inflateFactor); 
+			else
+				InflatePattern(2); 
+			break; // BWC
+			}
 		}
 	}
 	else if (ctrldown)

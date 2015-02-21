@@ -10,6 +10,8 @@
 #include "Parameters.h"
 #include "ChordExpert.h"
 #include "TonalDlg.h"
+#include "INI.h"
+#include "SaveArpeggio.h"
 
 HHOOK g_hHook = 0;
 
@@ -29,10 +31,13 @@ CEditorWnd::CEditorWnd()
 	TonalComboIndex  = 0;
 	PgUpDownDisabled = false;
 	HomeDisabled = false;
+	ArpeggioComboIndex = 0;
+	SLArpeggio = new CStringList();
 }
 
 CEditorWnd::~CEditorWnd()
 {
+	delete SLArpeggio;
 }
 
 
@@ -96,6 +101,8 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_BN_CLICKED(IDC_SHRINK_BUTTON, OnButtonShrink) //BWC
 	ON_COMMAND(ID_BT_EXPAND, OnButtonExpand) //BWC
 	ON_BN_CLICKED(IDC_EXPAND_BUTTON, OnButtonExpand) //BWC
+	ON_CBN_SELENDOK(ID_COMBO_SHRINK, OnComboShrinkSelect)
+	ON_CBN_SELENDOK(IDC_INFLATE_COMBO, OnComboShrinkSelect)
 	
 	ON_BN_CLICKED(IDC_HELP_CHECK, OnCheckedHelp) //BWC
 	ON_BN_CLICKED(ID_CHECK_HELP, OnCheckedHelp) //BWC
@@ -145,6 +152,11 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_COMMAND(ID_BT_PLUS, OnButtonTransposeUp)
 	ON_BN_CLICKED(IDC_MINUS_BUTTON, OnButtonTransposeDown) 
 	ON_BN_CLICKED(IDC_PLUS_BUTTON, OnButtonTransposeUp) 
+	
+	ON_CBN_SELENDOK(IDC_ARPEGGIO_COMBO, OnComboArpeggioSelect)
+	ON_CBN_SELENDOK(ID_COMBO_ARPEGGIO, OnComboArpeggioSelect)
+	ON_COMMAND(ID_BT_ARPEGGIO_SAVE, OnArpeggioSave)
+	ON_BN_CLICKED(IDC_ARPEGGIO_SAVE, OnArpeggioSave) 
 	
 
 
@@ -256,7 +268,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	
 	// Create Toolbar
 
-	toolBar.CreateEx(this, 0, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
+	 toolBar.CreateEx(this, 0, WS_CHILD | WS_VISIBLE | CBRS_TOP | CCS_NORESIZE |CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
 	toolBar.LoadToolBar(IDR_TOOLBAR); 
 	
 	// Set transparent color Magenta : RGB(255,0,255)
@@ -301,7 +313,7 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Insert Shrink Combo
 	index = toolBar.CommandToIndex(ID_COMBO_SHRINK_BT);
-    toolBar.SetButtonInfo(index, ID_COMBO_SHRINK_BT, TBBS_SEPARATOR, 32); 
+    toolBar.SetButtonInfo(index, ID_COMBO_SHRINK_BT, TBBS_SEPARATOR, 30); 
 	toolBar.GetItemRect(index, &rect);
 	rect.top = 1;  
     rect.bottom = rect.top + 80;
@@ -338,11 +350,20 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Insert "Insert chord once" check box
 	index = toolBar.CommandToIndex(ID_CHECK_CHORD_ONCE_BT);
-    toolBar.SetButtonInfo(index, ID_CHECK_CHORD_ONCE_BT, TBBS_SEPARATOR, 48);
+    toolBar.SetButtonInfo(index, ID_CHECK_CHORD_ONCE_BT, TBBS_SEPARATOR, 44);
     toolBar.GetItemRect(index, &rect);
 	rect.top++;
 	toolBar.checkChordsOnce.Create("Once", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_CHORD_ONCE);
 	toolBar.checkChordsOnce.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
+
+	// Insert arpeggio Combo
+	index = toolBar.CommandToIndex(ID_COMBO_ARPEGGIO_BT);
+    toolBar.SetButtonInfo(index, ID_COMBO_ARPEGGIO_BT, TBBS_SEPARATOR, 64); 
+	toolBar.GetItemRect(index, &rect);
+	rect.top = 1;  
+    rect.bottom = rect.top + 80;
+	toolBar.comboArpeggio.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_ARPEGGIO);
+	toolBar.comboArpeggio.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
 	
 	// Insert interpolate Combo
 	index = toolBar.CommandToIndex(ID_INTERPOLATE_PARAM_BT);
@@ -355,14 +376,14 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Insert Tonal combo and button
 	index = toolBar.CommandToIndex(ID_LABEL_TONAL_BT);
-    toolBar.SetButtonInfo(index, ID_LABEL_TONAL_BT, TBBS_SEPARATOR, 36);  
+    toolBar.SetButtonInfo(index, ID_LABEL_TONAL_BT, TBBS_SEPARATOR, 32);  
 	toolBar.GetItemRect(index, &rect);
 	rect.top = 5;
 	toolBar.labelTonal.Create("Tonal", SS_CENTER|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_LABEL_TONAL);
 	toolBar.labelTonal.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 	
 
 	index = toolBar.CommandToIndex(ID_COMBO_TONAL_BT);
-    toolBar.SetButtonInfo(index, ID_COMBO_TONAL_BT, TBBS_SEPARATOR, 64); 
+    toolBar.SetButtonInfo(index, ID_COMBO_TONAL_BT, TBBS_SEPARATOR, 56); 
 	toolBar.GetItemRect(index, &rect);
 	rect.top = 1;
     rect.bottom = rect.top + 80;
@@ -371,13 +392,12 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Insert Transpose combo
 	index = toolBar.CommandToIndex(ID_COMBO_TRANSPOSE_BT);
-    toolBar.SetButtonInfo(index, ID_COMBO_TRANSPOSE_BT, TBBS_SEPARATOR, 40); 
+    toolBar.SetButtonInfo(index, ID_COMBO_TRANSPOSE_BT, TBBS_SEPARATOR, 36); 
 	toolBar.GetItemRect(index, &rect);
 	rect.top = 1;  
     rect.bottom = rect.top + 80;
-	toolBar.comboTranspose.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_VSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_TRANSPOSE);
+	toolBar.comboTranspose.Create(CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_TABSTOP|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_COMBO_TRANSPOSE);
 	toolBar.comboTranspose.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
-
 	
 
 	// Insert "Help" check box
@@ -388,6 +408,8 @@ int CEditorWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	toolBar.checkHelp.Create("Help", BS_AUTOCHECKBOX|WS_CHILD|WS_VISIBLE, rect, &toolBar, ID_CHECK_HELP);
 	toolBar.checkHelp.SendMessage(WM_SETFONT, (WPARAM)HFONT(toolBar.tbFont),TRUE); 
    
+	toolBar.SendMessage(TB_AUTOSIZE, 0, 0);
+
 	// CDialogBar : Buttons bar
 	dlgBar.Create(this, IDD_DIALOGBAR, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, AFX_IDW_TOOLBAR);
 	
@@ -601,6 +623,29 @@ int CEditorWnd::GetComboBoxTonal()
 		return cb->GetCurSel();
 	}
 }
+
+/*---- Combo box "Arpeggio" ----*/
+int CEditorWnd::GetComboBoxArpeggio()
+{
+	if (toolbarvisible)  
+		return toolBar.comboArpeggio.GetCurSel();
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_ARPEGGIO_COMBO);
+		return cb->GetCurSel();
+	}
+}
+
+void CEditorWnd::SetComboBoxArpeggio(int index)
+{
+	if (toolbarvisible)  
+		toolBar.comboArpeggio.SetCurSel(index);
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_ARPEGGIO_COMBO);
+		cb->SetCurSel(index);
+	}
+}
+
+
 
 /*---- Combo box "Transpose" ----*/
 int CEditorWnd::GetComboBoxTranspose()
@@ -1033,6 +1078,8 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_MIRROR, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_MINUS, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBar, ID_BT_PLUS, pe.CanCopy());
+	EnableToolbarButtonByCommand(&toolBar, ID_BT_ARPEGGIO_SAVE, pe.CanCopy());
+	
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); pe.SetFocus();}
@@ -1257,6 +1304,8 @@ void CEditorWnd::InitToolbarData()
 	cb5->AddString("11");
 	cb5->AddString("12");
 	cb5->SetCurSel(TransposeComboIndex);
+
+	InitArpeggio();
 }
 
 void CEditorWnd::SetComboBoxTonal(int index)
@@ -1267,6 +1316,168 @@ void CEditorWnd::SetComboBoxTonal(int index)
 	toolBar.comboTonal.SetCurSel(TonalComboIndex);
 	CComboBox *cb4 = (CComboBox *)dlgBar.GetDlgItem(IDC_TONAL_COMBO);
 	cb4->SetCurSel(TonalComboIndex);
+}
+
+void CEditorWnd::GetComboBoxArpeggioText(LPSTR AValue)
+{
+	if (toolbarvisible)  
+		toolBar.comboArpeggio.GetLBText(ArpeggioComboIndex, AValue);
+	else {
+		CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_ARPEGGIO_COMBO);
+		cb->GetLBText(ArpeggioComboIndex, AValue);
+	}
+}
+
+void CEditorWnd::OnArpeggioSave()
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	// Save arpeggio in selection to internal structure
+	if (pe.SaveArpeggio()) 
+	{
+		char ArpeggioName[255];
+
+		// Save arpeggio to "Custom.arp" file
+		CIniReader m_IniReader;
+		char pathName[255];
+		GeneratorFileName(pathName, "Custom.arp");
+		m_IniReader.setINIFileName(pathName); 
+
+		CSaveArpeggioDialog dlg(this);
+		dlg.pew = this;
+		if (dlg.DoModal() == IDOK)
+		{
+			strcpy(ArpeggioName, dlg.SaveName);
+			if (strlen(ArpeggioName) <=0) return;
+
+			// Check if the name exists
+			if (m_IniReader.sectionExists(ArpeggioName)) {
+				// Override ?
+				char txt[255];
+				sprintf(txt, "[%s] already exists. Override ?", ArpeggioName); 
+				if (AfxMessageBox(txt, MB_YESNO)!=IDYES)
+					return;
+			}
+		}
+		else
+			return;
+
+		char ArpRowCount[20];
+
+		sprintf(ArpRowCount,"%d", ArpeggioRowCount);
+		m_IniReader.setKey(ArpRowCount, "Rows", ArpeggioName);
+		for (int i = 0; i<ArpeggioRowCount; i++)
+		{
+			char i_s[10];
+			sprintf(i_s,"%d", i+1);		
+			m_IniReader.setKey(ArpeggioRows[i], i_s, ArpeggioName);
+		}
+
+		// Load the arpeggio combo
+		InitArpeggio();
+		// Set Index to new arpeggio
+		// ArpeggioComboIndex = ...
+		POSITION pos = SLArpeggio->FindIndex(ArpeggioDefaultCount);
+		for (int i = ArpeggioDefaultCount; i<=SLArpeggio->GetCount(); i++)
+		{
+			CString txt = SLArpeggio->GetNext(pos);
+			if (strcmp(ArpeggioName, txt)==0) {
+				ArpeggioComboIndex=i;
+				toolBar.comboArpeggio.SetCurSel(ArpeggioComboIndex);
+				CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_ARPEGGIO_COMBO);
+				cb->SetCurSel(ArpeggioComboIndex);
+				break;
+			}
+		}
+	}
+}
+
+void CEditorWnd::OnComboArpeggioSelect()
+{
+	ArpeggioComboIndex = GetComboBoxArpeggio();
+
+	// Init internal structure
+	if (ArpeggioComboIndex>0)
+	{
+		char ArpeggioName[255];
+		GetComboBoxArpeggioText(ArpeggioName);
+
+		CIniReader m_IniReader;
+		char pathName[255];
+		if (ArpeggioComboIndex<ArpeggioDefaultCount)
+			GeneratorFileName(pathName, "Basic.arp");
+		else
+			GeneratorFileName(pathName, "Custom.arp");
+
+		m_IniReader.setINIFileName(pathName); 
+		CString val = m_IniReader.getKeyValue("Rows", ArpeggioName);
+		ArpeggioRowCount = atoi(val);
+		// Beware the max size (rowcount) of an arpeggio
+		if (ArpeggioRowCount>MAX_ARPEGGIO_ROWS) ArpeggioRowCount = MAX_ARPEGGIO_ROWS;
+
+		for (int i=0; i<ArpeggioRowCount; i++)
+		{
+			char i_s[10]; // should not be > 32
+			sprintf(i_s,"%d", i+1);
+			val = m_IniReader.getKeyValue(i_s, ArpeggioName);
+			if (strlen(val) >0)
+				strcpy(ArpeggioRows[i], val);
+			else
+				ArpeggioRows[i][0] = 0;
+		}
+	}
+	pe.SetFocus();
+}
+
+void CEditorWnd::InitArpeggio()
+{
+	// Load the combobox with the list of [sections] of the file "Basic.arp"
+	CIniReader m_IniReader;
+	char pathName[255];
+	GeneratorFileName(pathName, "Basic.arp");
+
+	m_IniReader.setINIFileName (pathName); 
+
+	// Load combobox from collection returned from getSectionNames();
+	CComboBox *cb = (CComboBox *)dlgBar.GetDlgItem(IDC_ARPEGGIO_COMBO);
+	cb->ResetContent();
+
+	toolBar.comboArpeggio.ResetContent();
+
+	SLArpeggio->RemoveAll();
+
+	// First entry is "default"
+	toolBar.comboArpeggio.AddString("default");
+	cb->AddString("default");
+	SLArpeggio->InsertAfter(SLArpeggio->GetTailPosition(), "default");
+
+	ArpeggioDefaultCount=1;
+	CStringList* myStringList = m_IniReader.getSectionNames();
+	POSITION pos;
+	for (pos = myStringList->GetHeadPosition(); pos != NULL; ) {
+		CString txt = myStringList->GetNext(pos);
+		toolBar.comboArpeggio.AddString(txt);
+		cb->AddString(txt);
+		SLArpeggio->InsertAfter(SLArpeggio->GetTailPosition(), txt);
+		ArpeggioDefaultCount++;
+	}
+
+	// Now, load custom arpeggios
+	GeneratorFileName(pathName, "Custom.arp");
+
+	m_IniReader.setINIFileName (pathName); 
+
+	// Load combobox from collection returned from getSectionNames();
+	myStringList = m_IniReader.getSectionNames();
+	for (pos = myStringList->GetHeadPosition(); pos != NULL; ) {
+		CString txt = myStringList->GetNext(pos);
+		toolBar.comboArpeggio.AddString(txt);
+		SLArpeggio->InsertAfter(SLArpeggio->GetTailPosition(), txt);
+		cb->AddString(txt);
+	}
+
+	toolBar.comboArpeggio.SetCurSel(ArpeggioComboIndex);
+	cb->SetCurSel(ArpeggioComboIndex);
 }
 
 note_bitset GetBaseChord(LPSTR txt)
@@ -1527,6 +1738,11 @@ void CEditorWnd::OnComboBarSelect()
 	pe.SetFocus();
 }
 
+void CEditorWnd::OnComboShrinkSelect()
+{
+	pe.SetFocus();
+}
+
 void CEditorWnd::OnComboTonalSelect()
 {
 	TonalComboIndex = GetComboBoxTonal();
@@ -1546,7 +1762,6 @@ void CEditorWnd::OnComboTransposeSelect()
 void CEditorWnd::OnButtonTonality()
 {
 	// Analyse the pattern to determine the tonality
-//	::MessageBox(NULL, "Analyses the pattern to determine the tonality ... not done yet.", "Pattern XP", MB_OK | MB_ICONWARNING);
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	if (pPattern == NULL)

@@ -18,6 +18,7 @@ static char const NoteTo2char[]     = "C-C#D-EbE-F-F#G-G#A-BbB-";
 static char const NoteToText[]      = "C-C#D-D#E-F-F#G-G#A-A#B-";
 static char const NoteToTextStrip[] = "C C#D D#E F F#G G#A A#B ";
 
+#define MAX_ARPEGGIO_ROWS 64
 
 class CEditorWnd : public CWnd
 {
@@ -39,6 +40,7 @@ public:
 	bool EnableCommandUI(int id);
 
 	void UpdateCanvasSize();
+	int  GetComboBoxInflate();
 
 	int GetEditorPatternPosition();
 	void ShowParamTextChanged();
@@ -47,6 +49,8 @@ public:
 	void OnUpdatePosition(); 
 	void AnalyseChords();
 	void SetComboBoxTonal(int index);
+	void SetComboBoxArpeggio(int index);
+
 
 
 private:
@@ -63,7 +67,7 @@ private:
 	void InitChords();
 	void InitTonal();
 	void InitTonality(LPSTR txt, int basenote, bool major, int sharpCount);
-
+	void InitArpeggio();
 
 	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
 
@@ -76,11 +80,13 @@ private:
 	int  GetEditBoxDelta();	
 	void SetEditBoxDelta(int AValue);
 
-	int  GetComboBoxInflate();
-
 	int  GetComboBoxBar();
 
 	int GetComboBoxTonal();
+	int GetComboBoxArpeggio();
+
+	void GetComboBoxArpeggioText(LPSTR AValue);
+
 
 	int GetComboBoxTranspose();
 
@@ -130,6 +136,13 @@ public:
 	// Tonality
 	tonality_vector TonalityList;
 	int tonality_notes[12];
+
+	// Arpeggios
+	int ArpeggioComboIndex;
+	int ArpeggioDefaultCount;
+	int ArpeggioRowCount;
+	char ArpeggioRows[MAX_ARPEGGIO_ROWS][256]; // MAX_ARPEGGIO_ROWS rows of 256 cols
+	CStringList* SLArpeggio;
 
 	CToolBar2 toolBar;
 	CDialogBar dlgBar;
@@ -202,6 +215,7 @@ public:
 	
 	afx_msg void OnCheckedHelp();
 	afx_msg void OnComboBarSelect();
+	afx_msg void OnComboShrinkSelect();
 
 	afx_msg void OnButtonInsertChord();
 	afx_msg void OnButtonSelectChordFile();
@@ -219,6 +233,11 @@ public:
 	afx_msg void OnComboTransposeSelect();
 	afx_msg void OnButtonTransposeUp();
 	afx_msg void OnButtonTransposeDown();
+
+	afx_msg void OnComboArpeggioSelect();
+	afx_msg void OnArpeggioSave();
+
+	
 	
 
 

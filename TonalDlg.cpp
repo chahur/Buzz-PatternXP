@@ -164,7 +164,7 @@ BOOL CTonalDialog::OnInitDialog()
 		}
 
 		CButton *pc;
-		pc = (CButton *)GetDlgItem(IDD_RADIOMINOR);
+		pc = (CButton *)GetDlgItem(IDD_RADIOMAJOR);
 		pc->SetCheck(BST_CHECKED);
 
 	}

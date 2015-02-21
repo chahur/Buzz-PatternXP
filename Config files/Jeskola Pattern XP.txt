@@ -1,6 +1,6 @@
 [ctrl]
 R: Randomize
-I: Linear Interpolate
+I: Interpolate according to the dropbox value
 T: Write State
 M: Mute Track
 B: Old Select(true)
@@ -11,7 +11,7 @@ G: Toggle Graphical Mode
 F: Clear Note Off
 J: Shift down Note Off
 A: Select All
-H: Insert chord
+H: Insert chord / chord dialog
 D: Reverse Selection
 P: Insert row
 PrevPage: First row
@@ -41,8 +41,8 @@ ADD: ShiftValues(1)
 I: Import Old
 X: Export pattern as 'csv'
 P: Import pattern from 'csv'
-SUBTRACT: shrink pattern / 2
-ADD: expand pattern * 2
+SUBTRACT: shrink pattern * dropbox value
+ADD: expand pattern * dropbox value
 
 PERIOD: Clear
 INSERT: Insert
@@ -56,3 +56,15 @@ HOME : do as built-in editor
 
 DblClick on MachineName opens the Machine window
 Ctrl + DblClick on MachineName opens the Machine help
+
+-------------------
+Chord expert dialog :
+Up, Down, Left, Right : move cursor in chords grid
+ENTER : insert chord in pattern
+ESC : close dialog
+[ctrl]
+Up : Prev row in pattern
+Down : Next row in pattern
+PrevPage: Prev measure in pattern
+NextPage : Next measure in pattern
+Delete : Clear current row in pattern

@@ -232,6 +232,10 @@ BEGIN_MESSAGE_MAP(CChordExpertDialog, CDialog)
 	ON_WM_KEYDOWN()
 	ON_BN_CLICKED(5, OnBnClickedUp) 
 	ON_BN_CLICKED(6, OnBnClickedDown) 
+	ON_BN_CLICKED(7, OnBnClickedClear) 
+	ON_LBN_SELCHANGE(9, OnListBoxSelectionChange)
+	ON_BN_CLICKED(IDD_SORTBYNOTE, OnBnClickedSortByNote) 
+	ON_BN_CLICKED(IDD_SORTBYDISTANCE, OnBnClickedSortByDistance) 
 
 END_MESSAGE_MAP()
 
@@ -269,10 +273,11 @@ BOOL CChordExpertDialog::OnKeyDown(UINT nChar)
 	{
 		switch(nChar)
 		{
-		case VK_UP:    OnBnClickedUp(); break;
-		case VK_DOWN:  OnBnClickedDown();  break;
-		case VK_PRIOR: pew->pe.MoveCursorPgUpDown(-1); break;
-		case VK_NEXT:  pew->pe.MoveCursorPgUpDown(1); break;
+		case VK_UP:      OnBnClickedUp(); break;
+		case VK_DOWN:    OnBnClickedDown();  break;
+		case VK_PRIOR:   pew->pe.MoveCursorPgUpDown(-1); break;
+		case VK_NEXT:    pew->pe.MoveCursorPgUpDown(1); break;
+		case VK_DELETE:  pew->pe.ClearRow(); break;
 
 		default : return false;
 		}
@@ -287,6 +292,7 @@ void CChordExpertDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
+#define ARP_WIDTH 150
 void CChordExpertDialog::UpdateWindowSize()
 {
 	CRect cr;
@@ -297,41 +303,80 @@ void CChordExpertDialog::UpdateWindowSize()
 	int cx = cr.Width();
 	int cy = cr.Height();
 
-	ceGrid.MoveWindow(0, 0, cx, cy - 36);
+	ceGrid.MoveWindow(0, 21, cx - ARP_WIDTH, cy - 57); 
 
 	CButton *pc = (CButton *)GetDlgItem(1); // Insert
-	if (pc!=NULL) pc->MoveWindow(cx - 165, cy-32, 60, 23);
+	if (pc!=NULL) pc->MoveWindow(cx - 145, cy-32, 60, 23, 1);
 	
 	pc = (CButton *)GetDlgItem(2);  // Close
-	if (pc!=NULL) pc->MoveWindow(cx -85, cy-32, 60, 23);
+	if (pc!=NULL) pc->MoveWindow(cx -75, cy-32, 60, 23, 1);
 
 	pc = (CButton *)GetDlgItem(5);  // Up
-	if (pc!=NULL) pc->MoveWindow(cx -245, cy-32, 32, 23);
+	if (pc!=NULL) pc->MoveWindow(cx -265, cy-32, 32, 23, 1);
 
 	pc = (CButton *)GetDlgItem(6);  // Down
-	if (pc!=NULL) pc->MoveWindow(cx -205, cy-32, 32, 23);
+	if (pc!=NULL) pc->MoveWindow(cx -225, cy-32, 32, 23, 1);
+
+	pc = (CButton *)GetDlgItem(7);  // Clear
+	if (pc!=NULL) pc->MoveWindow(cx -185, cy-32, 32, 23, 1);
 
 	CStatic *pt = (CStatic *)GetDlgItem(3);  // Current chord
 	if (pt!=NULL) pt->MoveWindow(25, cy-28, 150, 23);
+
+	pt = (CStatic *)GetDlgItem(8);  // Arpeggio
+	if (pt!=NULL) pt->MoveWindow(cx - ARP_WIDTH + 40, 5, 60, 23);
+
+	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
+	if (pl!=NULL) pl->MoveWindow(cx - ARP_WIDTH +2, 21, ARP_WIDTH-4, cy - 58); 
 
 	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord
 	if (ceGrid.labelChord!=NULL) ceGrid.labelChord->MoveWindow(200, cy-28, 150, 23);
 
 }
 
-void CChordExpertDialog::InitGrid()
+void CChordExpertDialog::OnBnClickedSortByNote()
 {
+	SortBy = SORT_BYNOTE;
+	InitGrid(SORT_BYNOTE);
+}
+
+void CChordExpertDialog::OnBnClickedSortByDistance()
+{
+	SortBy = SORT_BYDISTANCE;
+	InitGrid(SORT_BYDISTANCE);
+}
+
+void CChordExpertDialog::InitGrid(int SortType)
+{
+/*
+#define SORT_UNDEFINED 0
+#define SORT_BYNOTE 1
+#define SORT_BYDISTANCE 2
+*/
 	// Get the previous chord of the pattern
 	int ir = CursorRow-1;
 	while (ir>=0 && pew->RowNotes[ir].chord_index < 0) ir--;
 	
-	if (ir >=0)	{
+	CButton *pc;
+	pc = (CButton *)GetDlgItem(IDD_SORTBYDISTANCE);
+	pc->EnableWindow(TRUE);
+
+	if ((pew->TonalComboIndex >0) && (pew->TonalComboIndex < (int)pew->TonalityList.size() ))
+		// Start with Tonality root note of major mode
+		if (pew->TonalityList[pew->TonalComboIndex].major)
+			BaseNote = pew->TonalityList[pew->TonalComboIndex].base_note;
+		else
+		{
+			BaseNote = pew->TonalityList[pew->TonalComboIndex].base_note - 3;
+			if (BaseNote<0) BaseNote = BaseNote+12;
+		}
+	else
+		BaseNote=0; // Start with C
+
+	if (ir >=0)
+	{
 		BaseOctave = pew->RowNotes[ir].base_octave;
-
-		ceGrid.ChordRow = ir;
-		// Initialize the grid of chords
-		InitNotesGrid();
-
+	
 		char s_basenote[3];
 		string s_c;
 		s_basenote[0] = NoteTo2char[pew->RowNotes[ir].base_note*2+0];
@@ -340,18 +385,41 @@ void CChordExpertDialog::InitGrid()
 		s_c = s_basenote + pew->ChordsBase[pew->RowNotes[ir].chord_index].name;
 		ChordText =  "Current chord : " + s_c;
 	}
-	else {
-		ir = CursorRow;
-		while (ir>=0 && pew->RowNotes[ir].base_octave > 10)
-			ir--;
-		if (ir > 0) BaseOctave = pew->RowNotes[ir].base_octave;
+	else
+	{
+		pc = (CButton *)GetDlgItem(IDD_SORTBYDISTANCE);
+		pc->EnableWindow(FALSE);
+		int i = CursorRow;
+		while (i>=0 && pew->RowNotes[i].base_octave > 10)
+			i--;
+		if (i > 0) BaseOctave = pew->RowNotes[i].base_octave;
 		else BaseOctave = 4;
+
+		ChordText = "Current chord : Unknown";
+	}
+
+	if ((ir >=0) && (SortType==SORT_UNDEFINED || SortType==SORT_BYDISTANCE))
+	{
+		pc = (CButton *)GetDlgItem(IDD_SORTBYDISTANCE);
+		pc->SetCheck(BST_CHECKED);
+		pc = (CButton *)GetDlgItem(IDD_SORTBYNOTE);
+		pc->SetCheck(BST_UNCHECKED);
+
+		ceGrid.ChordRow = ir;
+		// Initialize the grid of chords
+		InitNotesGrid();
+	}
+	else 
+	{
+		pc = (CButton *)GetDlgItem(IDD_SORTBYNOTE);
+		pc->SetCheck(BST_CHECKED);
+		pc = (CButton *)GetDlgItem(IDD_SORTBYDISTANCE);
+		pc->SetCheck(BST_UNCHECKED);
 
 		ceGrid.ChordRow = -1;
 		// Empty the grid of chords
 		InitNotesGrid();
 
-		ChordText = "Current chord : Unknown";
 	}
 	ceGrid.RefreshCanvasSize();
 
@@ -384,9 +452,21 @@ BOOL CChordExpertDialog::OnInitDialog()
 	dialogrect.bottom = pew->pCB->GetProfileInt("ChordExpertDialog.bottom", 300);
 	dialogrect.right = pew->pCB->GetProfileInt("ChordExpertDialog.right", 300);
 	MoveWindow(dialogrect);
+	
 
+	// Load the list of arpeggios
+	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
+	if (pl!=NULL)  {
+		POSITION pos;
+		for (pos = pew->SLArpeggio->GetHeadPosition(); pos != NULL; ) {
+			pl->AddString(pew->SLArpeggio->GetNext(pos));
+		}
+		// Set it to the current selected arpeggio
+		pl->SetCurSel(pew->ArpeggioComboIndex);
+	}
+	
 	// Initialize the chord grid according to the current chord
-	InitGrid();
+	InitGrid(SORT_UNDEFINED);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -471,7 +551,12 @@ void CChordExpertDialog::InitNotesGrid()
 			else
 			{
 				if (inTonality)
-					ceGrid.NotesGrid[ir].delta = ib;
+				{
+					// Sort according to BaseNote
+					ceGrid.NotesGrid[ir].delta = ib+BaseNote;
+					if (ceGrid.NotesGrid[ir].delta>=12) 
+						ceGrid.NotesGrid[ir].delta = ceGrid.NotesGrid[ir].delta-12;
+				}
 				else
 					ceGrid.NotesGrid[ir].delta = 100;
 			}
@@ -531,6 +616,8 @@ void CChordExpertDialog::OnOK()
 	{
 		row_struct rs = ceGrid.SortedChords[ceGrid.CurrentCol][ceGrid.CurrentRow];
 		pew->pe.InsertChordNote((BaseOctave << 4) + rs.base_note + 1, rs.chord_index);
+		if (!pew->AutoChordExpert) pew->AnalyseChords();
+
 	}
 
 //	CDialog::OnOK(); do not close the dialog
@@ -547,7 +634,7 @@ void CChordExpertDialog::OnBnClickedUp()
 	// Move cursor 1 row up
 	pew->pe.MoveCursorUpDown(-1);
 	CursorRow = pew->pe.cursor.row;
-	InitGrid();
+	InitGrid(SortBy);
 }
 
 void CChordExpertDialog::OnBnClickedDown()
@@ -555,5 +642,25 @@ void CChordExpertDialog::OnBnClickedDown()
 	// Move cursor 1 row down
 	pew->pe.MoveCursorUpDown(1);
 	CursorRow = pew->pe.cursor.row;
-	InitGrid();
+	InitGrid(SortBy);
 }
+
+void CChordExpertDialog::OnBnClickedClear()
+{
+	// Clear current pattern row
+	pew->pe.ClearRow();
+	InitGrid(SortBy);
+}
+
+void CChordExpertDialog::OnListBoxSelectionChange()
+{
+	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
+	if (pl!=NULL) {
+		int index = pl->GetCurSel();	
+		pew->SetComboBoxArpeggio(index);
+		pew->OnComboArpeggioSelect();
+	}
+}
+
+
+

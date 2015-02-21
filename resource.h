@@ -51,8 +51,10 @@
 #define IDC_TONAL_COMBO					2046
 #define IDC_TONAL_BUTTON				2047
 #define IDC_TRANSPOSE_COMBO				2048
-#define IDC_MINUS_BUTTON				2049
+#define IDC_MINUS_BUTTON				2049 
 #define IDC_PLUS_BUTTON					2050
+#define IDC_ARPEGGIO_COMBO				2051
+#define IDC_ARPEGGIO_SAVE				2052
 
 
 
@@ -123,9 +125,16 @@
 #define ID_COMBO_TRANSPOSE				33811
 #define ID_BT_PLUS						32812
 
+#define ID_COMBO_ARPEGGIO_BT            32813
+#define ID_COMBO_ARPEGGIO               33813
+#define ID_BT_ARPEGGIO_SAVE             32814
+
+
 
 #define IDD_CHORD_EXPERT_DIALOG			4000
 #define IDD_TONAL_DIALOG				5000
+#define IDD_SAVE_ARPEGGIO_DIALOG		6000
+
 #define IDD_FIRST_NOTE					3 
 #define IDD_SHARP						100
 #define IDD_FLAT						101
@@ -134,6 +143,8 @@
 #define IDD_RADIOMINOR					104
 #define IDD_RADIOMAJOR					105
 
+#define IDD_SORTBYNOTE					10
+#define IDD_SORTBYDISTANCE				11
 
 
 

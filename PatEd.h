@@ -101,11 +101,13 @@ public:
 	void Mirror();
 	void InsertRow();
 	void DeleteRow();
+	void ClearRow();
 	void DoAnalyseChords();
 	void DoManualAnalyseChords();
 	void DoInsertChord(int ChordIndex);
 	void MoveCursorUpDown(int dy);
 	void MoveCursorPgUpDown(int dy);
+	bool SaveArpeggio();
 
 	void AnalyseTonality();
 
