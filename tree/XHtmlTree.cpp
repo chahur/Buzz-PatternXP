@@ -1670,7 +1670,7 @@ BOOL CXHtmlTree::IsLeftButtonUp()
 
 //=============================================================================
 // OnTimer - check if mouse has left, turn off underlining and hot state
-void CXHtmlTree::OnTimer(UINT nIDEvent)
+void CXHtmlTree::OnTimer(UINT_PTR nIDEvent)
 //=============================================================================
 {
 	CPoint point;
@@ -1686,8 +1686,12 @@ void CXHtmlTree::OnTimer(UINT nIDEvent)
 
 		if (!rectClient.PtInRect(point))
 		{
-			KillTimer(m_hWnd, nIDEvent); //BWC!!
 
+#ifdef _XP
+			KillTimer(m_hWnd, nIDEvent);
+#else
+			KillTimer(nIDEvent);
+#endif
 			// mouse has left the window
 
 			if (m_hHotItem)
@@ -1722,8 +1726,11 @@ void CXHtmlTree::OnTimer(UINT nIDEvent)
 		{
 			TRACE(_T("mouse button is up >>>>>\n"));
 
-			KillTimer(m_hWnd, nIDEvent); //BWC!!
-
+#ifdef _XP
+			KillTimer(m_hWnd, nIDEvent);
+#else
+			KillTimer(nIDEvent);
+#endif
 			HTREEITEM hItemSelected = GetSelectedItem();
 
 #ifdef XHTMLDRAGDROP

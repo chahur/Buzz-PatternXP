@@ -9,6 +9,7 @@
 class CEditorWnd;
 
 int HexToInt(char c);
+bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen);
 
 typedef bitset<12> note_bitset;
 
@@ -92,7 +93,7 @@ public:
 	void InflatePattern(int delta); //BWC 
 	void Humanize(int delta, bool hEmpty);
 
-	bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen);
+//	bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen);
 
 	void InsertChord(int ChordIndex = -1);
 	void InsertChordNote(int note, int ChordIndex);
@@ -175,7 +176,8 @@ private:
 	bool InSelection(int row, int column);
 	void Randomize();
 
-	void TestChords(note_bitset n, int ir);
+	int TestChords(note_bitset n, int ir);
+	void AnalyseChordsMeasure(int rStart, int rStop);
 	void CheckRefreshChords();
 	void AnalyseChords();
 

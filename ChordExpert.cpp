@@ -71,6 +71,7 @@ void CCEGrid::OnDraw(CDC *pDC)
 	*/
 	COLORREF textcolor = pew->pCB->GetThemeColor("PE Text");
 	pDC->FillSolidRect(&ur, bgcol);
+	pDC->SetTextColor(textcolor);
 
 	CObject *pOldFont = pDC->SelectObject(&pew->font);
 	pDC->SetBkMode(TRANSPARENT);
@@ -275,8 +276,14 @@ BOOL CChordExpertDialog::OnKeyDown(UINT nChar)
 		{
 		case VK_UP:      OnBnClickedUp(); break;
 		case VK_DOWN:    OnBnClickedDown();  break;
-		case VK_PRIOR:   pew->pe.MoveCursorPgUpDown(-1); break;
-		case VK_NEXT:    pew->pe.MoveCursorPgUpDown(1); break;
+		case VK_PRIOR:   pew->pe.MoveCursorPgUpDown(-1); 
+			CursorRow = pew->pe.cursor.row;
+			InitGrid(SortBy);
+			break;
+		case VK_NEXT:    pew->pe.MoveCursorPgUpDown(1); 
+			CursorRow = pew->pe.cursor.row;
+			InitGrid(SortBy);
+			break;
 		case VK_DELETE:  pew->pe.ClearRow(); break;
 
 		default : return false;

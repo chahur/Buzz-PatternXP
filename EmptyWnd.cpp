@@ -55,6 +55,9 @@ void CEmptyWnd::OnPaint()
 	
 	CObject *pOldFont = dc.SelectObject(&myWingFont);
 
+	COLORREF textcolor = pew->pCB->GetThemeColor("PE Text");
+	dc.SetTextColor(textcolor);
+
 	// Show / hide Chord expert button
 	CRect crce;
 	GetClientRect(&crce);
@@ -71,13 +74,13 @@ void CEmptyWnd::OnPaint()
 			;
 		else
 			dc.DrawEdge(crrb, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT|BF_SOFT);
-		s = 0x71; 
+		s = (char)0x71; 
 		if (!pew->ShowTrackToolbar) crrb.top = crrb.top - 1;
 		dc.DrawText(s, &crrb, DT_VCENTER|DT_SINGLELINE|DT_CENTER);
 	}
 	dc.DrawEdge(crce, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
-	if (pew->ChordExpertvisible) s = 0x33;//0x76;
-	else s = 0x34;//0x77;
+	if (pew->ChordExpertvisible) s = (char)0x33;//0x76;
+	else s = (char)0x34;//0x77;
 	dc.DrawText(s, &crce, DT_VCENTER|DT_SINGLELINE|DT_CENTER);
 	
 
@@ -87,10 +90,10 @@ void CEmptyWnd::OnPaint()
 	crtb.left = crce.right;
 	crtb.bottom = 13;
 	if (pew->ShowTrackToolbar) {
-		s = 0x35;//0x72;
+		s = (char)0x35;//0x72;
 		crtb.bottom = crtb.bottom+6;
 	}
-	else s = 0x36;//0x73;
+	else s = (char)0x36;//0x73;
 	dc.DrawEdge(crtb, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);		
 	crtb.top = crtb.top - 2;
 	dc.DrawText(s, &crtb, DT_VCENTER|DT_SINGLELINE|DT_CENTER);
@@ -102,9 +105,9 @@ void CEmptyWnd::OnPaint()
 	dc.DrawEdge(cr, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT);
 
 	if (pew->ShowParamText) {
-		s = 0x35;//72;
+		s = (char)0x35;//72;
 	}
-	else s = 0x36;//73;
+	else s = (char)0x36;//73;
 	cr.top = cr.top - 2;
 	dc.DrawText(s, &cr, DT_VCENTER|DT_SINGLELINE|DT_CENTER);
 	
@@ -201,7 +204,8 @@ void CEmptyWnd::DrawRefreshChordButton(bool down)
 		if (!down) dc.DrawEdge(crrb, BDR_RAISEDINNER| BDR_RAISEDOUTER, BF_RECT|BF_SOFT);
 		RefreshChordsButtonDown = down;
 
-		CString s = 0x71; 
+		CString s;
+		s = (char)0x71;
 		if (!pew->ShowTrackToolbar) crrb.top = crrb.top - 1;
 		dc.DrawText(s, &crrb, DT_VCENTER|DT_SINGLELINE|DT_CENTER);
 		dc.SelectObject(pOldFont);

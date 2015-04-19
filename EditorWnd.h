@@ -145,6 +145,8 @@ public:
 	CStringList* SLArpeggio;
 
 	CToolBar2 toolBar;
+	CToolBarExt toolBarExt;
+
 	CDialogBar dlgBar;
 
 	bool MidiEditMode;
@@ -156,6 +158,7 @@ public:
 	int ChordsComboIndex() {return GetComboBoxChords();};
 	int InterpolateComboIndex() {return GetComboBoxInterpolate();};
 	char ChordPathName[255];
+	char ArpeggioPathName[255];	
 	bool InsertChordOnce;
 	bool ShowParamText;
 	bool ShowTrackToolbar;
@@ -236,6 +239,10 @@ public:
 
 	afx_msg void OnComboArpeggioSelect();
 	afx_msg void OnArpeggioSave();
+	afx_msg void OnButtonDldChord();
+	afx_msg void OnButtonSelectArpeggioFile();
+	
+	
 
 	
 	

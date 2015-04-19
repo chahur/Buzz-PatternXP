@@ -8,8 +8,7 @@
 // CToolBar2
 
  
-IMPLEMENT_DYNAMIC(CToolBar2, CToolBar)
-
+IMPLEMENT_DYNAMIC(CToolBar2, CToolBarHint)
 CToolBar2::CToolBar2()
 {
 
@@ -19,9 +18,30 @@ CToolBar2::~CToolBar2()
 {
 }
 
+IMPLEMENT_DYNAMIC(CToolBarExt, CToolBarHint)
+CToolBarExt::CToolBarExt()
+{
+
+}
+
+CToolBarExt::~CToolBarExt()
+{
+}
 
 
-BEGIN_MESSAGE_MAP(CToolBar2, CToolBar)
+IMPLEMENT_DYNAMIC(CToolBarHint, CToolBar)
+CToolBarHint::CToolBarHint()
+{
+
+}
+
+CToolBarHint::~CToolBarHint()
+{
+}
+
+
+
+BEGIN_MESSAGE_MAP(CToolBarHint, CToolBar)
 	ON_MESSAGE(WM_IDLEUPDATECMDUI, OnIdleUpdateCmdUI)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXTW, 0, 0xFFFF, OnToolTipNotify)
 	ON_NOTIFY_EX_RANGE(TTN_NEEDTEXTA, 0, 0xFFFF, OnToolTipNotify)
@@ -29,7 +49,7 @@ BEGIN_MESSAGE_MAP(CToolBar2, CToolBar)
 END_MESSAGE_MAP()
 
 
-BOOL CToolBar2::OnToolTipNotify(UINT, NMHDR* pNMHDR, LRESULT* pResult)
+BOOL CToolBarHint::OnToolTipNotify(UINT, NMHDR* pNMHDR, LRESULT* pResult)
 {
    // need to handle both ANSI and UNICODE versions of the message
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -72,7 +92,7 @@ BOOL CToolBar2::OnToolTipNotify(UINT, NMHDR* pNMHDR, LRESULT* pResult)
  }
 
 
-LRESULT CToolBar2::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM)
+LRESULT CToolBarHint::OnIdleUpdateCmdUI(WPARAM wParam, LPARAM)
 {
 	if (IsWindowVisible())
     {

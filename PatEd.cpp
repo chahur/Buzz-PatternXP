@@ -430,13 +430,12 @@ CColumn *CPatEd::GetCursorColumn()
 	return pew->pPattern->columns[cursor.column].get();
 }
 
-
-bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen)
+bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR InitFilename, LPSTR pathName, bool DoOpen)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	char szFilters[255];
-	char ssuf[20];
+	char ssuf[255];
     sprintf(szFilters, "%s (*.%s)|*.%s|All Files (*.*)|*.*||", FileLibelle, Suffix, Suffix);
     sprintf(ssuf, "*.%s", Suffix);
 	int OpenMode = (DoOpen ? 1 : 0);
@@ -445,7 +444,9 @@ bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LP
 	CFileDialog dlgFile(OpenMode, Suffix, ssuf, OpenParams, szFilters);
 	
 	dlgFile.m_ofn.lpstrTitle = FileTitle;
-	dlgFile.m_ofn.lpstrFile = InitFilename;
+
+	CString InitName(InitFilename);
+	dlgFile.m_ofn.lpstrFile = InitName.GetBuffer(_MAX_PATH);
 
 	if (dlgFile.DoModal() != IDOK)
 		return false;
@@ -454,6 +455,8 @@ bool CPatEd::DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LP
 	return true;	
 }
 
+//#pragma optimize( "", off )
+// Turn optimizer off when calling DialogFileName ... to avoid a buffer overrun
 void CPatEd::ExportPattern()
 {
 	char exportpathName[255];
@@ -518,7 +521,10 @@ void CPatEd::ExportPattern()
 		expfile.close();  
     }
 }
+//#pragma optimize( "", on )
 
+//#pragma optimize( "", off )
+// Turn optimizer off when calling DialogFileName ... to avoid a buffer overrun
 void CPatEd::ImportPattern()
 {
 	char exportpathName[255];
@@ -617,6 +623,7 @@ void CPatEd::ImportPattern()
 	DoAnalyseChords();
 
 }
+//#pragma optimize( "", on )
 
 void CPatEd::InflatePattern(int delta)
 {
@@ -982,7 +989,10 @@ void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, 
 		if (!CheckNoteInTonality((b & 15) -1))
 		{
 			SetTextColorBack = true;
-			pDC->SetTextColor(RGB(255, 0, 0));
+			COLORREF color = RGB(255, 0, 0);
+			if (muted)
+				color = Blend(color, bgcol, 0.5f);
+			pDC->SetTextColor(color);
 		}
 	}
 
@@ -1328,29 +1338,31 @@ bool CPatEd::SaveArpeggio()
 	else
 		return false;
 	return true;
-
-
-
 }
 
 	
-void CPatEd::TestChords(note_bitset n, int ir)
+int CPatEd::TestChords(note_bitset n, int ir)
+// Return value
+//  0 : found
+//  1 : not enough notes
+// -1 : too much notes
+// -2 : not found
 {
 	// Test each 12 base notes for each chord
 	// first base note is C
 	if ((int)n.count() < pew->minChordNotes)
 		// Not enough notes to make a chord
-		return;
+		return 1;
 	else if ((int)n.count() > pew->maxChordNotes)
 		// Too much notes to make a chord
-		return;
+		return -1;
 	else {
 		for (int ib=0; ib<12; ib++) {
 			for (int ic=0; ic< (int)pew->ChordsBase.size(); ic++) {
 				if (n == pew->ChordsBase[ic].notes) {
 					pew->RowNotes[ir].chord_index = ic;
 					pew->RowNotes[ir].base_note = ib;
-					return;
+					return 0;
 				}
 			}
 			// test next base note
@@ -1360,6 +1372,7 @@ void CPatEd::TestChords(note_bitset n, int ir)
 		}
 		// No chord found, set a special value to chord_index
 		pew->RowNotes[ir].chord_index = -2;
+		return -2;
 	}
 }
 	
@@ -1424,6 +1437,62 @@ void CPatEd::AnalyseTonality()
 	}
 }
 
+void CPatEd::AnalyseChordsMeasure(int rStart, int rStop)
+// From rStart to rStop (not included)
+{
+	__try
+	{
+		CMachinePattern *ppat = pew->pPattern;
+		note_bitset n;
+
+		// Check if quitting the analyse quickly
+		if (pew->Closing) __leave;
+
+		n = 0;
+		for (int ir = rStart; ir < rStop; ir++)	{
+			n = n | pew->RowNotes[ir].notes;
+		}
+		int res = TestChords(n, rStart);
+
+		if (res == 0) return; // Found
+		if (res > 0) return;  // Not enough notes to make a chord
+
+		// res < 0, try with a subset
+		// 1. BeatsInMeasureBar();
+		// 2. ppat->rowsPerBeat;
+		// 3. 1 row
+		int bimb = BeatsInMeasureBar();
+
+		if (rStop - rStart > bimb)
+		{
+			int nbBIMB = ((rStop - rStart) / bimb);
+			for (int i = 0; i<nbBIMB; i++) {
+				AnalyseChordsMeasure(rStart, rStart + bimb);
+				rStart = rStart + bimb;
+			}
+		}
+		else if (rStop - rStart > ppat->rowsPerBeat)
+		{
+			int nbM = ((rStop - rStart) / ppat->rowsPerBeat);
+			for (int i = 0; i<nbM; i++) {
+				AnalyseChordsMeasure(rStart, rStart + ppat->rowsPerBeat);
+				rStart = rStart + ppat->rowsPerBeat;
+			}
+
+		}
+		else
+		{
+			for (int i = rStart; i<rStop; i++) {
+				TestChords(pew->RowNotes[i].notes, i);
+			}
+		}
+		
+	}
+	__finally
+	{
+	}
+}
+
 void CPatEd::AnalyseChords()
 {
 	if (AnalysingChords) return;
@@ -1476,6 +1545,12 @@ void CPatEd::AnalyseChords()
 			}
 		}
 
+		// Group beats up to BeatsInMeasureBar, don't try bigger sets
+		AnalyseChordsMeasure(0, (int)pew->RowNotes.size());
+
+
+		/*  Version 1
+		
 		// Now, analyse the rows to find the chords
 		for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)
 		{
@@ -1570,6 +1645,9 @@ void CPatEd::AnalyseChords()
 				}
 			}
 		}
+		*/
+
+
 	}
 	__finally
 	{
@@ -2353,7 +2431,7 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_NEXT: End(); break; //BWC
 		case VK_HOME: HomeTop(); break; //BWC
 		case VK_END: EndBottom(); break; //BWC
-		case 'H': pew->OnButtonInsertChord(); break;
+		case 'H': if (shiftdown)pew->OnButtonDldChord(); else pew->OnButtonInsertChord(); break;
 		case 'D': if (shiftdown) Mirror(); else Reverse(); break;
 		case 'P': if (shiftdown) DeleteRow(); else InsertRow(); break;
 		case VK_SUBTRACT: if (shiftdown) ShiftValues(-12); break; 
@@ -3538,7 +3616,7 @@ void CPatEd::Reverse()
 	DoAnalyseChords();
 }
 
-double round(double d)
+double rounddouble(double d)
 {
   return floor(d + 0.5);
 }
@@ -3693,7 +3771,7 @@ void CPatEd::Mirror()
 						int data = (*ei).second;
 						if (y>r.bottom) break;
 						if ((y>=r.top) && (y<=r.bottom))
-							pc->SetValue(y, round(ZeroVal - (data-ZeroVal)));					
+							pc->SetValue(y, rounddouble(ZeroVal - (data - ZeroVal)));
 					}
 				}
 				}

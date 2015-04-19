@@ -7,6 +7,8 @@
 #define IDC_NP_NAME                     1011
 #define IDC_NP_LENGTH                   1058
 #define IDR_TOOLBAR                     2000
+#define IDR_TOOLBAR_EXT                 1999
+
 #define IDD_COLUMN_DIALOG               2003
 #define IDC_TREE_STATIC                 2003
 #define IDC_COMBO1                      2005
@@ -55,7 +57,8 @@
 #define IDC_PLUS_BUTTON					2050
 #define IDC_ARPEGGIO_COMBO				2051
 #define IDC_ARPEGGIO_SAVE				2052
-
+#define IDC_DLG_CHORD		            2053
+#define IDC_ARPEGGIO_LOAD	            2054 
 
 
 #define IDD_PARAMETERS_DIALOG           3000
@@ -128,6 +131,10 @@
 #define ID_COMBO_ARPEGGIO_BT            32813
 #define ID_COMBO_ARPEGGIO               33813
 #define ID_BT_ARPEGGIO_SAVE             32814
+#define ID_BT_DLG_CHORD		            32815
+#define ID_BT_ARPEGGIO_LOAD	            32816
+
+
 
 
 

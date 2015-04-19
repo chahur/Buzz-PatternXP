@@ -57,16 +57,23 @@ CMachineInfo const MacInfo =
 	pParameters,
 	0, 
 	NULL,
-	#ifdef PXPMOD
+#ifdef PXPMOD
+#ifdef _WIN64
+	"Jeskola Pattern XP mod.x64",
+#else
 	"Jeskola Pattern XP mod",
+#endif
 	"Pattern XP mod",						// short name
-	"Oskari Tammelin", 						// author
-	#else
+
+#else
+#ifdef _WIN64
+	"Jeskola Pattern XP.x64",
+#else
 	"Jeskola Pattern XP",
-	"Pattern XP",							// short name
+#endif
+	"Pattern XP",						// short name
+#endif
 	"Oskari Tammelin", 						// author
-	#endif
-	
 	NULL
 };
 

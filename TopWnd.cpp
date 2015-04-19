@@ -114,7 +114,10 @@ void CTopWnd::OnDraw(CDC *pDC)
 							pDC->SetTextColor(Blend(textcolor, bgcolor, 0.5f));
 						else
 							pDC->SetTextColor(textcolor);
-						pDC->DrawText(tbc[i], &r, DT_CENTER);
+						char txt[2];
+						txt[0] = tbc[i];
+						txt[1] = 0;
+						pDC->DrawText(txt, &r, DT_CENTER);
 						r.left = r.left + tbbw;
 						r.right = r.right + tbbw;
 					}
