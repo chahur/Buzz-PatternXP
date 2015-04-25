@@ -20,7 +20,7 @@ CRowNumWnd::~CRowNumWnd()
 
 
 BEGIN_MESSAGE_MAP(CRowNumWnd, CScrollWnd)
-
+	ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
 
@@ -78,17 +78,49 @@ void CRowNumWnd::OnDraw(CDC *pDC)
 
 			}
 		}
+		CRect r;
+		r.left = lmargin;
+		r.right = clr.right;
+		r.top = y * pew->fontSize.cy;
+		r.bottom = r.top + pew->fontSize.cy +1;
+		InflateRect(r, -1, -1);
 
-		char buf[8];
-		sprintf(buf, "%5d  ", y);
-		pDC->TextOut(lmargin, y * pew->fontSize.cy, buf, 5);
+		char buf[10];
+		sprintf(buf, "%5d", y);
+//		pDC->TextOut(lmargin, y * pew->fontSize.cy, buf, 5);
+		pDC->DrawText(buf, &r, DT_RIGHT);
+
+		InflateRect(r, 1, 1);
+		pDC->DrawEdge(r, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT);
+
 	}
 
-	pDC->SelectObject(pOldFont);
+	pDC->SelectObject(pOldFont); 
 }
-
 
 
 // CRowNumWnd message handlers
 
+void CRowNumWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	int const lmargin = pew->ChordExpertvisible ? 60 : 0;
 
+	point = ClientToCanvas(point);
+
+	if (point.x >= lmargin) {
+
+		int row = pew->pe.GetRowY(point.y);
+		if (row >= 0) {
+
+			bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
+			bool shiftdown = (GetKeyState(VK_SHIFT) & (1 << 15)) != 0;
+
+			if (!ctrldown)	{
+				if (!shiftdown)	pew->pe.SelectRow(row);
+				else pew->pe.SelectBeat(row);
+			}
+			else pew->pe.SelectMesure(row);
+		}
+	}
+	CScrollWnd::OnLButtonDblClk(nFlags, point);
+}

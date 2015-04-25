@@ -142,6 +142,7 @@ public:
 	int ArpeggioDefaultCount;
 	int ArpeggioRowCount;
 	char ArpeggioRows[MAX_ARPEGGIO_ROWS][256]; // MAX_ARPEGGIO_ROWS rows of 256 cols
+	char ArpeggioNoteOffRows[MAX_ARPEGGIO_ROWS][256]; // MAX_ARPEGGIO_ROWS rows of 256 cols
 	CStringList* SLArpeggio;
 
 	CToolBar2 toolBar;

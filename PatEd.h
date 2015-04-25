@@ -103,6 +103,11 @@ public:
 	void InsertRow();
 	void DeleteRow();
 	void ClearRow();
+	void SelectRow(int r);
+	void SelectBeat(int r);
+	void SelectMesure(int r);
+
+
 	void DoAnalyseChords();
 	void DoManualAnalyseChords();
 	void DoInsertChord(int ChordIndex);
@@ -123,7 +128,8 @@ public:
 	int GetColumnAtX(int x);
 	int GetColumnX(int column);
 	void ShiftValues(int delta);
-	
+	int GetRowY(int y);
+
 	void InvalidateInTimer() { invalidateInTimer = true; }
 
 	int GetColumnWidth(int column);
@@ -138,6 +144,8 @@ private:
 	void DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, bool muted, bool hasvalue, COLORREF textcolor);
 	void DrawCursor(CDC *pDC);
 	bool CheckNoteInTonality(byte note);
+	bool CheckLeadingTone(byte note);
+
 	bool IsMajorTonality();
 
 	CRect GetCursorRect(CCursorPos const &p);
@@ -147,7 +155,6 @@ private:
 	void ShiftTab();
 	int GetDigitAtX(int x);
 	
-	int GetRowY(int y);
 	void UpdateStatusBar();
 	void InvalidateField(int row, int column);
 	void InvalidateGroup(int row, int column);

@@ -953,11 +953,27 @@ COLORREF CPatEd::GetFieldBackgroundColor(CMachinePattern *ppat, int row, int col
 bool CPatEd::CheckNoteInTonality(byte note)
 {
 	// If no tonality defined, return true
-	if (pew->TonalComboIndex <=0) return true;
+	if (pew->TonalComboIndex <= 0) return true;
 	if (pew->TonalComboIndex > (int)pew->TonalityList.size()) return true;
 
 	// Check if note is in the tonality defined for the pattern
 	return (pew->TonalityList[pew->TonalComboIndex].notes.test(note));
+}
+
+bool CPatEd::CheckLeadingTone(byte note)
+{
+	// If no tonality defined, return false
+	if (pew->TonalComboIndex <= 0) return false;
+	if (pew->TonalComboIndex > (int)pew->TonalityList.size()) return false;
+
+	// If Major tonality, return false
+	if (pew->TonalityList[pew->TonalComboIndex].major) return false;
+
+	// Test the "leading tone" of the minor mode (the seventh scale degree of the diatonic scale)
+	int leadingtone = pew->TonalityList[pew->TonalComboIndex].base_note - 1;
+	if (leadingtone < 0) leadingtone = leadingtone + 12;
+
+	return (note == leadingtone);
 }
 
 bool CPatEd::IsMajorTonality()
@@ -986,14 +1002,24 @@ void CPatEd::DrawField(CDC *pDC, int col, CColumn *pnc, int data, int x, int y, 
 	{
 		byte b = (byte)data;
 		if (b != NOTE_OFF)
-		if (!CheckNoteInTonality((b & 15) -1))
-		{
-			SetTextColorBack = true;
-			COLORREF color = RGB(255, 0, 0);
-			if (muted)
-				color = Blend(color, bgcol, 0.5f);
-			pDC->SetTextColor(color);
-		}
+			if (CheckNoteInTonality((b & 15) - 1))
+			{
+				if (CheckLeadingTone((b & 15) - 1)) {
+					COLORREF color;
+					SetTextColorBack = true;
+					color = RGB(0, 255, 0);
+					if (muted) color = Blend(color, bgcol, 0.5f);
+					pDC->SetTextColor(color);
+				}
+			}
+			else 
+			{
+				SetTextColorBack = true;
+				COLORREF color;
+				color = RGB(255, 0, 0);
+				if (muted) color = Blend(color, bgcol, 0.5f);
+				pDC->SetTextColor(color);
+			}
 	}
 
 	int len = (int)strlen(txt);
@@ -1264,6 +1290,32 @@ void CPatEd::DoInsertChord(int ChordIndex)
 					if (ppat->columns[c]->GetParamType() == pt_note)
 						ppat->columns[c]->ClearValue(irow+ArpeggioRow);
 
+				// Insert the NoteOff 
+				// ArpeggioNoteOffRows[ArpeggioRow][] gives the NoteOff to insert in the row
+				for (int iArpeggioCol = 0; pew->ArpeggioNoteOffRows[ArpeggioRow][iArpeggioCol] != 0; iArpeggioCol++)
+				{
+					int iNote = HexToInt(pew->ArpeggioNoteOffRows[ArpeggioRow][iArpeggioCol]);
+					// Insert noteOff (if iNote < ChordNotesIndex) at the iNoteth note column 
+					if (iNote <= ChordNotesIndex)
+					{
+						icol = cursor.column;
+						int icolcount;
+						// Get the column iNoteth
+						for (icolcount = 0; (icolcount<iNote) && (icol<columnsize); icolcount++)
+						{
+							while ((icol<columnsize) &&
+								(ppat->columns[icol]->GetParamType() != pt_note))
+								icol++;
+							if (icolcount<iNote - 1) icol++;
+						}
+						if ((icol < columnsize) && (icolcount == iNote))
+						{
+							ppat->columns[icol]->SetValue(irow + ArpeggioRow, NOTE_OFF);
+						}
+
+					}
+
+				}
 				// Insert the notes 
 				// ArpeggioRows[ArpeggioRow][] gives the notes to insert in the row
 				for (int iArpeggioCol=0; pew->ArpeggioRows[ArpeggioRow][iArpeggioCol]!=0; iArpeggioCol++)
@@ -1315,7 +1367,9 @@ bool CPatEd::SaveArpeggio()
 		for (int row=r.top; row<=r.bottom; row++)
 		{
 			char ArpBuf[256];
-			int iArpBuf=0;
+			char ArpNoteOffBuf[256];
+			int iArpBuf = 0;
+			int iArpNoteOffBuf = 0;
 			int iCol=0;
 
 			for (int col=r.left; col<=r.right; col++)
@@ -1325,14 +1379,24 @@ bool CPatEd::SaveArpeggio()
 				if (pc->GetParamType() == pt_note) {
 					iCol++;
 					int val = pc->GetValue(row);
-					if ((val != pc->GetNoValue())&&(val != NOTE_OFF)) {
-						ArpBuf[iArpBuf]=IntToHex(iCol);
-						iArpBuf++;
+					if (val != pc->GetNoValue()) {
+						if (val != NOTE_OFF) {
+							ArpBuf[iArpBuf] = IntToHex(iCol);
+							iArpBuf++;
+						}
+						else {
+							ArpNoteOffBuf[iArpNoteOffBuf] = IntToHex(iCol);
+							iArpNoteOffBuf++;
+						}
+
 					}
 				}
 			}
 			ArpBuf[iArpBuf]=0;
-			strcpy(pew->ArpeggioRows[row-r.top], ArpBuf);			
+			ArpNoteOffBuf[iArpNoteOffBuf] = 0;
+			strcpy(pew->ArpeggioRows[row-r.top], ArpBuf);	
+			strcpy(pew->ArpeggioNoteOffRows[row - r.top], ArpNoteOffBuf);
+			
 		}
 	}
 	else
@@ -2925,6 +2989,84 @@ void CPatEd::SelectTrack()
 
 	selEnd.x = selStart.x + ppat->GetGroupColumnCount(cursor.column) - 1;
 	selEnd.y = ppat->GetRowCount() - 1;
+
+	selection = true;
+	pew->OnUpdateSelection();
+	persistentSelection = false;
+	Invalidate();
+}
+
+//int CPatEd::
+
+void CPatEd::SelectMesure(int r)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	if (r < 0) r = cursor.row;
+
+	int mbegin;
+	int mend;
+	int bim = BeatsInMeasureBar();
+	if (bim <= 0) bim = 1;
+
+	mbegin = (r / bim) * bim;
+	mend = mbegin + bim - 1;
+
+	selStart.x = 0;
+	selStart.y = mbegin;
+
+	selEnd.x = (int)ppat->columns.size() - 1;
+	selEnd.y = mend;
+
+	selection = true;
+	pew->OnUpdateSelection();
+	persistentSelection = false;
+	Invalidate();
+}
+
+void CPatEd::SelectBeat(int r)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	if (r < 0) r = cursor.row;
+
+	int mbegin;
+	int mend;
+	int bim = ppat->rowsPerBeat;
+	if (bim <= 0) bim = 1;
+
+	mbegin = (r / bim) * bim;
+	mend = mbegin + bim - 1;
+
+	selStart.x = 0;
+	selStart.y = mbegin;
+
+	selEnd.x = (int)ppat->columns.size() - 1;
+	selEnd.y = mend;
+
+	selection = true;
+	pew->OnUpdateSelection();
+	persistentSelection = false;
+	Invalidate();
+}
+
+void CPatEd::SelectRow(int r)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	if (r < 0) r = cursor.row;
+
+	selStart.x = 0;
+	selStart.y = r;
+
+	selEnd.x = (int)ppat->columns.size() - 1;
+	selEnd.y = r;
 
 	selection = true;
 	pew->OnUpdateSelection();

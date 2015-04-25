@@ -840,7 +840,7 @@ void CEditorWnd::FontChanged()
 	dc.CreateCompatibleDC(NULL);
 	dc.SelectObject(&font);
 	fontSize = dc.GetOutputTextExtent("A");
-	rowNumWndWidth = fontSize.cx * 5 + 4;
+	rowNumWndWidth = fontSize.cx * 5 + 8;
 	topWndHeight = 2 * fontSize.cy + 4; 
 	if (ShowParamText) topWndHeight = topWndHeight + 72; //BWC
 	if (ShowTrackToolbar) topWndHeight = topWndHeight + 16; //BWC
@@ -1405,9 +1405,11 @@ void CEditorWnd::OnArpeggioSave()
 		m_IniReader.setKey(ArpRowCount, "Rows", ArpeggioName);
 		for (int i = 0; i<ArpeggioRowCount; i++)
 		{
-			char i_s[10];
-			sprintf(i_s,"%d", i+1);		
+			char i_s[12];
+			sprintf(i_s, "%d", i + 1);
 			m_IniReader.setKey(ArpeggioRows[i], i_s, ArpeggioName);
+			sprintf(i_s, "NoteOff%d", i + 1);
+			m_IniReader.setKey(ArpeggioNoteOffRows[i], i_s, ArpeggioName);
 		}
 
 		// Load the arpeggio combo
@@ -1466,13 +1468,20 @@ void CEditorWnd::OnComboArpeggioSelect()
 
 		for (int i=0; i<ArpeggioRowCount; i++)
 		{
-			char i_s[10]; // should not be > 32
-			sprintf(i_s,"%d", i+1);
+			char i_s[12]; // should not be > 32
+			sprintf(i_s, "%d", i + 1);
 			val = m_IniReader.getKeyValue(i_s, ArpeggioName);
 			if (strlen(val) >0)
 				strcpy(ArpeggioRows[i], val);
 			else
 				ArpeggioRows[i][0] = 0;
+
+			sprintf(i_s, "NoteOff%d", i + 1);
+			val = m_IniReader.getKeyValue(i_s, ArpeggioName);
+			if (strlen(val) >0)
+				strcpy(ArpeggioNoteOffRows[i], val);
+			else
+				ArpeggioNoteOffRows[i][0] = 0;
 		}
 	}
 	pe.SetFocus();
@@ -1715,7 +1724,6 @@ void CEditorWnd::OnButtonSelectChordFile()
 note_bitset GetTonality(int count)
 {
 	// Init in C major (no Flat or Sharp)
-//	note_bitset res("101011010101");
 	note_bitset res("101010110101"); // Bitsets are set from right to left
 
 	if (count <0)
@@ -1770,6 +1778,12 @@ void CEditorWnd::InitTonality(LPSTR txt, int basenote, bool major, int sharpCoun
 	else
 		cs.notes.reset();
 
+	// If minor mode, add the LeadingTone to the notes
+	if (!major){
+		int leadingtone = basenote - 1;
+		if (leadingtone < 0) leadingtone = leadingtone + 12;
+		cs.notes.set(leadingtone, true);
+	}
 	TonalityList.push_back(cs);
 }
 

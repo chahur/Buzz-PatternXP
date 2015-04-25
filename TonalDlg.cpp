@@ -163,8 +163,15 @@ BOOL CTonalDialog::OnInitDialog()
 			pt->SetWindowText(txt);
 		}
 
+		// Test the "leading tone" (the seventh scale degree of the diatonic scale) :
+		// Check minor mode
 		CButton *pc;
-		pc = (CButton *)GetDlgItem(IDD_RADIOMAJOR);
+		int leadingtone = pew->TonalityList[indexminor].base_note - 1;
+		if (leadingtone < 0) leadingtone = leadingtone + 12;
+		if (pew->tonality_notes[leadingtone] > 0)
+			pc = (CButton *)GetDlgItem(IDD_RADIOMINOR);
+		else
+			pc = (CButton *)GetDlgItem(IDD_RADIOMAJOR);
 		pc->SetCheck(BST_CHECKED);
 
 	}
