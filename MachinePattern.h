@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include "../../buzz/MachineInterface.h"
+#include "MachineInterface.h"
 #include "ActionStack.h"
 #include "RecQueue.h"
 

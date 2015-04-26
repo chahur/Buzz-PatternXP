@@ -27,6 +27,7 @@ W: Rotate Reverse
 V: Merge
 T: Select track
 F: Add Note Off
+H: Chord dialog
 J: Shift up Note Off
 D: Mirror Selection
 P: Delete row
@@ -56,6 +57,9 @@ HOME : do as built-in editor
 
 DblClick on MachineName opens the Machine window
 Ctrl + DblClick on MachineName opens the Machine help
+dblclick on the row number : Select row.
+shift + dblclick on the row number : Select beat.
+ctrl + dblclick on the row number : Select measure.
 
 -------------------
 Chord expert dialog :
