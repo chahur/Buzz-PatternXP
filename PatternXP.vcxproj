@@ -919,7 +919,6 @@
     <ClCompile Include="TonalDlg.cpp" />
     <ClCompile Include="ToolBar2.cpp" />
     <ClCompile Include="TopWnd.cpp" />
-    <ClCompile Include="..\..\buzz\XMemDC.cpp" />
     <ClCompile Include="tree\CreateCheckboxImageList.cpp" />
     <ClCompile Include="tree\VisualStylesXP.cpp" />
     <ClCompile Include="tree\XHtmlDraw.cpp">
@@ -1059,6 +1058,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='SSE2 with symbols|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="XMemDC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionStack.h" />
@@ -1095,6 +1095,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PatternXP.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="toolbarExtPXP.bmp" />
+    <Image Include="toolbarPXP.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

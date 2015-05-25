@@ -77,6 +77,7 @@ public:
 //	int ChordRow;
 	string ChordText;
 	int SortBy;
+	CComboBox *comboOctave;
 
 private:
 

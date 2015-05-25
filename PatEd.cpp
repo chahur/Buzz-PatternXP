@@ -1421,15 +1421,27 @@ int CPatEd::TestChords(note_bitset n, int ir)
 		// Too much notes to make a chord
 		return -1;
 	else {
-		for (int ib=0; ib<12; ib++) {
-			for (int ic=0; ic< (int)pew->ChordsBase.size(); ic++) {
-				if (n == pew->ChordsBase[ic].notes) {
-					pew->RowNotes[ir].chord_index = ic;
-					pew->RowNotes[ir].base_note = ib;
-					return 0;
+		int octave = pew->RowNotes[ir].base_data >> 4;
+		int note = (pew->RowNotes[ir].base_data & 15) - 1;
+
+		// Start with base note (should be the root of the chord)
+		for (int ib = 0; ib < note; ib++) {
+			bool n0 = n[0];
+			n = (n >> 1);
+			n.set(11, n0);
+		}
+
+		// Test the 12 root notes chords
+		for (int ib = note; ib<note + 12; ib++) {
+			for (int ic = 0; ic< (int)pew->ChordsBase.size(); ic++) {
+			if (n == pew->ChordsBase[ic].notes) {
+				pew->RowNotes[ir].chord_index = ic;
+				pew->RowNotes[ir].base_note = ib % 12;
+				pew->RowNotes[ir].base_octave = octave;
+				return 0;
 				}
 			}
-			// test next base note
+			// No match, test next base note
 			bool n0 = n[0];
 			n = (n>>1);
 			n.set(11, n0);
@@ -1513,13 +1525,21 @@ void CPatEd::AnalyseChordsMeasure(int rStart, int rStop)
 		if (pew->Closing) __leave;
 
 		n = 0;
+		int bn = 1000;
+		// Get the notes of the interval
 		for (int ir = rStart; ir < rStop; ir++)	{
 			n = n | pew->RowNotes[ir].notes;
+			bn = min(bn, pew->RowNotes[ir].base_data);
 		}
+		// Test if it's a chord
 		int res = TestChords(n, rStart);
 
-		if (res == 0) return; // Found
-		if (res > 0) return;  // Not enough notes to make a chord
+		if (res == 0) // Chord found
+		{
+			pew->RowNotes[rStart].base_data = bn;
+			return; 
+		}
+		if (res > 0) return;  // Not enough notes to make a chord : no need to test smaller interval
 
 		// res < 0, try with a subset
 		// 1. BeatsInMeasureBar();
@@ -1600,8 +1620,14 @@ void CPatEd::AnalyseChords()
 					byte data = (byte)(*ei).second;
 					if (data != NOTE_OFF)
 					{
-						int octave = data >> 4;
-						pew->RowNotes[y].base_octave = min(pew->RowNotes[y].base_octave, octave);
+						// Keep the lowest note of the row
+						pew->RowNotes[y].base_data = min(pew->RowNotes[y].base_data, data);
+						
+						// Keep the lowest octave of the row
+//						int octave = data >> 4;
+//						pew->RowNotes[y].base_octave = min(pew->RowNotes[y].base_octave, octave);
+						
+						// Set the current note in the array of the row
 						int note = (data & 15) -1;
 						pew->RowNotes[y].notes.set(note, true); 
 					}
@@ -1609,108 +1635,7 @@ void CPatEd::AnalyseChords()
 			}
 		}
 
-		// Group beats up to BeatsInMeasureBar, don't try bigger sets
 		AnalyseChordsMeasure(0, (int)pew->RowNotes.size());
-
-
-		/*  Version 1
-		
-		// Now, analyse the rows to find the chords
-		for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)
-		{
-			// init chord_index to -1 (no chord)
-			pew->RowNotes[ir].chord_index = -1;
-
-			note_bitset n;
-			n = pew->RowNotes[ir].notes;
-
-			// Check if quitting the analyse quickly
-			if (pew->Closing) __leave;
-
-			// Test each 12 base notes for each chord
-			TestChords(n, ir);		
-		}
-
-		// Now, try to find chords in a beat or in a set of beats
-	
-		// Group beats up to BeatsInMeasureBar, don't try bigger sets
-		int BIMB = BeatsInMeasureBar() / ppat->rowsPerBeat;
-	
-		for (int irpb=1; irpb <= BIMB; irpb++) {
-			note_bitset n;
-			bool addnotes = false;
-			int startSetBeat = 0;
-		
-			// Test only subsets of the measure bar
-			if (BIMB % irpb == 0) {
-
-				for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)	{
-					// Check if quitting the analyse quickly
-					if (pew->Closing) __leave;
-
-					// ir Row is the start of a set of beats
-					if (ir % (irpb*ppat->rowsPerBeat) == 0) {
-						if (addnotes) {	
-							// We have been adding notes to the previous set, let's test it
-							TestChords(n, startSetBeat);
-							addnotes = false;
-						}
-
-						startSetBeat = ir;
-						// Shall we start with this new set ?
-						if (pew->RowNotes[ir].chord_index < 0) {
-							n = pew->RowNotes[ir].notes;
-							addnotes = true;
-						}
-		
-					}
-					else if (addnotes) 
-						n = n | pew->RowNotes[ir].notes;					
-				}
-
-				// Don't forget the last set
-				if (addnotes)
-					// Check chords for previous set of Beats
-					TestChords(n, startSetBeat);
-			}
-		}
-
-		// Finally, clean duplicates
-		bool cleanDuplicate = true;
-		int cleanNote = -1;
-		int cleanIndex = -1;
-		int cleanRow = -1;
-		BIMB = BeatsInMeasureBar();
-
-		for (int ir=0; ir <(int)pew->RowNotes.size(); ir++)	{
-			// Check if quitting the analyse quickly
-			if (pew->Closing) __leave;
-
-			if (ir % BIMB == 0)
-				// Starting a new measure, reset the cleaning
-				cleanDuplicate = false;
-
-			if (pew->RowNotes[ir].chord_index >= 0) {
-				// A chord is found
-				if ((cleanDuplicate) &&
-					(pew->RowNotes[ir].chord_index == cleanIndex) && 
-					(pew->RowNotes[ir].base_note == cleanNote)) {
-					// Same chord, clean it
-					pew->RowNotes[ir].chord_index = -1;
-					// Update the base_octave if necessary
-					pew->RowNotes[cleanRow].base_octave = min(pew->RowNotes[cleanRow].base_octave, pew->RowNotes[ir].base_octave);
-				}
-				else {
-					// New chord, reset the cleaning
-					cleanRow = ir;
-					cleanIndex = pew->RowNotes[ir].chord_index;
-					cleanNote = pew->RowNotes[ir].base_note;
-					cleanDuplicate = true;
-				}
-			}
-		}
-		*/
-
 
 	}
 	__finally
@@ -2495,11 +2420,11 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_NEXT: End(); break; //BWC
 		case VK_HOME: HomeTop(); break; //BWC
 		case VK_END: EndBottom(); break; //BWC
-		case 'H': if (shiftdown)pew->OnButtonDldChord(); else pew->OnButtonInsertChord(); break;
+		case 'H': if (shiftdown) pew->OnButtonDldChord(); else pew->OnButtonInsertChord(); break;
 		case 'D': if (shiftdown) Mirror(); else Reverse(); break;
 		case 'P': if (shiftdown) DeleteRow(); else InsertRow(); break;
-		case VK_SUBTRACT: if (shiftdown) ShiftValues(-12); break; 
-		case VK_ADD: if (shiftdown) ShiftValues(12); break; 
+		case VK_SUBTRACT: if (shiftdown) ShiftValues(-12, false); break; 
+		case VK_ADD: if (shiftdown) ShiftValues(12, false); break; 
 		}
 
 		if (nChar >= '0' && nChar <= '9')
@@ -2518,8 +2443,8 @@ void CPatEd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_NEXT: CursorSelect(0, BeatsInMeasureBar()); break; 
 		case VK_HOME: CursorSelect(0, -(1 << 24)); break;
 		case VK_END: CursorSelect(0, (1 << 24)); break;
-		case VK_SUBTRACT: ShiftValues(-1); break;
-		case VK_ADD: ShiftValues(1); break;
+		case VK_SUBTRACT: ShiftValues(-1, false); break;
+		case VK_ADD: ShiftValues(1, false); break;
 		}
 
 	}
@@ -3940,7 +3865,7 @@ void CPatEd::Mirror()
 }
 
 
-void CPatEd::ShiftValues(int delta)
+void CPatEd::ShiftValues(int delta, bool OnlyNotes)
 {
 	CMachinePattern *ppat = pew->pPattern;
 	if (ppat == NULL || ppat->columns.size() == 0)
@@ -3958,41 +3883,43 @@ void CPatEd::ShiftValues(int delta)
 		for (int col = r.left; col <= r.right; col++)
 		{
 			CColumn *pc = ppat->columns[col].get();
-			// if Shift <12 and Pattern is tonal and column is note
-			if ((delta!=12 && delta!=-12) && (pew->TonalComboIndex >0) && (pc->GetParamType()==pt_note))
-			{
-				for (int row = r.top; row <= r.bottom; row++) 
+			if (pc->GetParamType() == pt_note || !OnlyNotes) {
+				// if Shift <12 and Pattern is tonal and column is note
+				if ((delta!=12 && delta!=-12) && (pew->TonalComboIndex >0) && (pc->GetParamType()==pt_note))
 				{
-					int val= pc->GetValue(row);
-					// If it's a note
-					if ((val != pc->GetNoValue()) && (val != NOTE_OFF)) {
-						// if note in tonality
-						if (CheckNoteInTonality((val & 15) -1)) 
-						{
-							ppat->columns[col]->ShiftValue(row, delta);
-							val= pc->GetValue(row);
-							// Stay in tonality
-							if (!CheckNoteInTonality((val & 15) -1)) 
-								ppat->columns[col]->ShiftValue(row, delta1);
-						}
-						else
-						{
-							ppat->columns[col]->ShiftValue(row, delta);
-							val= pc->GetValue(row);
-							// Stay out of tonality
+					for (int row = r.top; row <= r.bottom; row++) 
+					{
+						int val= pc->GetValue(row);
+						// If it's a note
+						if ((val != pc->GetNoValue()) && (val != NOTE_OFF)) {
+							// if note in tonality
 							if (CheckNoteInTonality((val & 15) -1)) 
-								ppat->columns[col]->ShiftValue(row, delta1);
-							val= pc->GetValue(row);
-							if (CheckNoteInTonality((val & 15) -1)) 
-								ppat->columns[col]->ShiftValue(row, delta1);
+							{
+								ppat->columns[col]->ShiftValue(row, delta);
+								val= pc->GetValue(row);
+								// Stay in tonality
+								if (!CheckNoteInTonality((val & 15) -1)) 
+									ppat->columns[col]->ShiftValue(row, delta1);
+							}
+							else
+							{
+								ppat->columns[col]->ShiftValue(row, delta);
+								val= pc->GetValue(row);
+								// Stay out of tonality
+								if (CheckNoteInTonality((val & 15) -1)) 
+									ppat->columns[col]->ShiftValue(row, delta1);
+								val= pc->GetValue(row);
+								if (CheckNoteInTonality((val & 15) -1)) 
+									ppat->columns[col]->ShiftValue(row, delta1);
+							}
 						}
-					}
 
+					}
 				}
+				else
+				for (int row = r.top; row <= r.bottom; row++)
+					ppat->columns[col]->ShiftValue(row, delta);
 			}
-			else
-			for (int row = r.top; row <= r.bottom; row++)
-				ppat->columns[col]->ShiftValue(row, delta);
 		}
 
 	}

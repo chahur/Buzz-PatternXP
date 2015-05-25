@@ -1,5 +1,5 @@
 // Microsoft Visual C++ generated resource script.
-// 
+//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -16,13 +16,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -30,12 +28,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#ifndef APSTUDIO_INVOKED\r\n"
     "#include ""targetver.h""\r\n"
@@ -44,7 +42,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
     "#define _AFX_NO_OLE_RESOURCES\r\n"
@@ -106,15 +104,15 @@ END
 // Toolbar
 //
 
-IDR_TOOLBAR TOOLBAR  16, 16
+IDR_TOOLBAR TOOLBAR 16, 16
 BEGIN
     SEPARATOR
     BUTTON      ID_COLUMNS_BUTTON
     BUTTON      ID_SELECT_FONT
-	BUTTON      ID_PARAMETERS_BUTTON
+    BUTTON      ID_PARAMETERS_BUTTON
     SEPARATOR
     BUTTON      ID_CHECK_MIDI_BT
-	BUTTON      ID_COMBO_BAR_LABEL_BT
+    BUTTON      ID_COMBO_BAR_LABEL_BT
     BUTTON      ID_COMBO_BAR_BT
     SEPARATOR
     BUTTON      ID_BT_COPY
@@ -128,7 +126,7 @@ BEGIN
     BUTTON      ID_BT_DOWNOFF
     SEPARATOR
     BUTTON      ID_BT_REVERSE
-	BUTTON      ID_BT_MIRROR
+    BUTTON      ID_BT_MIRROR
     SEPARATOR
     BUTTON      ID_BT_INSROW
     BUTTON      ID_BT_DELROW
@@ -140,12 +138,12 @@ BEGIN
     BUTTON      ID_COMBO_SHRINK_BT
     BUTTON      ID_BT_EXPAND
     SEPARATOR
-	BUTTON      ID_BT_HUMANIZE
-	BUTTON      ID_HUMANIZE_DELTA_BT
-	BUTTON      ID_CHECK_HUMANIZE_EMPTY_BT
-	SEPARATOR
-	BUTTON      ID_BT_INTERPOLATE
-	BUTTON      ID_INTERPOLATE_PARAM_BT
+    BUTTON      ID_BT_HUMANIZE
+    BUTTON      ID_HUMANIZE_DELTA_BT
+    BUTTON      ID_CHECK_HUMANIZE_EMPTY_BT
+    SEPARATOR
+    BUTTON      ID_BT_INTERPOLATE
+    BUTTON      ID_INTERPOLATE_PARAM_BT
     SEPARATOR
     SEPARATOR
     SEPARATOR
@@ -153,35 +151,34 @@ BEGIN
     BUTTON      ID_CHECK_HELP_BT
 END
 
-
-IDR_TOOLBAR_EXT TOOLBAR  16, 16 
+IDR_TOOLBAR_EXT TOOLBAR 16, 16
 BEGIN
     SEPARATOR
-	BUTTON      ID_BT_DLG_CHORD
+    BUTTON      ID_BT_DLG_CHORD
     SEPARATOR
-	BUTTON      ID_BT_INSERT_CHORD
-	BUTTON      ID_COMBO_CHORD_BT
-	BUTTON      ID_BT_CHORD_FILE
-	BUTTON      ID_CHECK_CHORD_ONCE_BT
+    BUTTON      ID_BT_INSERT_CHORD
+    BUTTON      ID_COMBO_CHORD_BT
+    BUTTON      ID_BT_CHORD_FILE
+    BUTTON      ID_CHECK_CHORD_ONCE_BT
     SEPARATOR
-	BUTTON      ID_COMBO_ARPEGGIO_BT
-	BUTTON      ID_BT_ARPEGGIO_LOAD
-	BUTTON      ID_BT_ARPEGGIO_SAVE
-	SEPARATOR
-	BUTTON      ID_LABEL_TONAL_BT
+    BUTTON      ID_COMBO_ARPEGGIO_BT
+    BUTTON      ID_BT_ARPEGGIO_LOAD
+    BUTTON      ID_BT_ARPEGGIO_SAVE
+    SEPARATOR
+    BUTTON      ID_LABEL_TONAL_BT
     BUTTON      ID_COMBO_TONAL_BT
     BUTTON      ID_TONAL_BT
     SEPARATOR
-	BUTTON      ID_BT_MINUS
-	BUTTON      ID_COMBO_TRANSPOSE_BT
-	BUTTON      ID_BT_PLUS
+    BUTTON      ID_BT_MINUS
+    BUTTON      ID_COMBO_TRANSPOSE_BT
+    BUTTON      ID_BT_PLUS
     SEPARATOR
 END
 
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap--
+// Bitmap
 //
 
 IDR_TOOLBAR             BITMAP                  "toolbarPXP.bmp"
@@ -197,6 +194,11 @@ IDB_TOOLBAR24           BITMAP                  "toolbar24.bmp"
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO
 BEGIN
+    IDD_CHORD_EXPERT_DIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 447
+    END
+
     IDD_COLUMN_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -215,92 +217,88 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog 
+// Dialog
 //
-IDD_CHORD_EXPERT_DIALOG
-DIALOGEX 0, 0, 447, 245
-STYLE WS_THICKFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+
+IDD_CHORD_EXPERT_DIALOG DIALOGEX 0, 0, 561, 245
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Chord expert"
-FONT 8, "MS Shell Dlg", 400, 0, 1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    AUTORADIOBUTTON "Sort by note", 10, 21, 3, 54, 8, WS_GROUP, WS_EX_LEFT
-    AUTORADIOBUTTON "Sort by distance", 11, 97, 3, 67, 8, 0, WS_EX_LEFT
-    LTEXT           "Arpeggio", 8, 375, 5, 29, 8, SS_LEFT, WS_EX_LEFT
-    LISTBOX         9, 342, 16, 105, 210, WS_TABSTOP | WS_VSCROLL | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY, WS_EX_LEFT
-    DEFPUSHBUTTON   "Insert", 1, 339, 231, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Close", 2, 397, 230, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Up", 5, 245, 231, 23, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Down", 6, 271, 231, 22, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Clear", 7, 296, 231, 26, 14, 0, WS_EX_LEFT
-    LTEXT           "Chord : Unknown", 3, 1, 235, 120, 7, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Undefined", 4, 146, 235, 98, 7, SS_LEFT, WS_EX_LEFT
+    CONTROL         "Sort by note",10,"Button",BS_AUTORADIOBUTTON | WS_GROUP,21,3,54,8
+    CONTROL         "Sort by distance",11,"Button",BS_AUTORADIOBUTTON,97,3,67,8
+    LTEXT           "Arpeggio",8,375,5,29,8
+    LISTBOX         9,456,16,105,210,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Insert",1,460,230,50,14
+    PUSHBUTTON      "Close",2,511,230,50,14
+    PUSHBUTTON      "Up",5,379,231,23,14
+    PUSHBUTTON      "Down",6,405,231,22,14
+    PUSHBUTTON      "Clear",7,430,231,26,14
+    LTEXT           "Octave : ",12,3,234,30,8
+    COMBOBOX        13,34,232,34,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    LTEXT           "Chord : Unknown",3,75,234,120,8
+    LTEXT           "Undefined",4,207,234,98,8
 END
 
-IDD_TONAL_DIALOG
-DIALOGEX 0, 0, 289, 162
-STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+IDD_TONAL_DIALOG DIALOGEX 0, 0, 289, 162
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Tonality detection"
-FONT 8, "MS Shell Dlg", 400, 0, 1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK", 1,				126, 145, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", 2,			206, 145, 50, 14, 0, WS_EX_LEFT
-    LTEXT           "C",  IDD_FIRST_NOTE,   21, 14, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "C#", IDD_FIRST_NOTE+1, 21, 24, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "D",  IDD_FIRST_NOTE+2, 21, 34, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "D#", IDD_FIRST_NOTE+3, 21, 44, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "E",  IDD_FIRST_NOTE+4, 21, 54, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "F",  IDD_FIRST_NOTE+5, 21, 64, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "F#", IDD_FIRST_NOTE+6, 21, 74, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "G",  IDD_FIRST_NOTE+7, 21, 84, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "G#", IDD_FIRST_NOTE+8, 21, 94, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "A",  IDD_FIRST_NOTE+9, 21, 104, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "A#", IDD_FIRST_NOTE+10,21, 114, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "B",  IDD_FIRST_NOTE+11,21, 124, 50, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "Sharp", IDD_SHARP,		89, 24, 190, 8, SS_LEFT, WS_EX_LEFT
-	LTEXT           "Flat",  IDD_FLAT,		89, 42, 190, 8, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Minor", IDD_MINOR,     89, 72, 60, 8, SS_LEFT, WS_EX_LEFT
-    LTEXT           "Major", IDD_MAJOR,     89, 90, 60, 8, SS_LEFT, WS_EX_LEFT
-    GROUPBOX        "Notes", 90,		     9, 3, 70, 137, 0, WS_EX_LEFT
-    GROUPBOX        "Select tonality", 91,  84, 111, 199, 29, 0, WS_EX_LEFT
-    GROUPBOX        "Analyse", 92, 			84, 3, 199, 108, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "Minor", IDD_RADIOMINOR,116, 125, 33, 8, WS_GROUP, WS_EX_LEFT
-    AUTORADIOBUTTON "Major", IDD_RADIOMAJOR,170, 125, 33, 8, 0, WS_EX_LEFT
-
+    DEFPUSHBUTTON   "OK",1,126,145,50,14
+    PUSHBUTTON      "Cancel",2,206,145,50,14
+    LTEXT           "C",IDD_FIRST_NOTE,21,14,50,8
+    LTEXT           "C#",4,21,24,50,8
+    LTEXT           "D",5,21,34,50,8
+    LTEXT           "D#",6,21,44,50,8
+    LTEXT           "E",7,21,54,50,8
+    LTEXT           "F",8,21,64,50,8
+    LTEXT           "F#",9,21,74,50,8
+    LTEXT           "G",10,21,84,50,8
+    LTEXT           "G#",11,21,94,50,8
+    LTEXT           "A",12,21,104,50,8
+    LTEXT           "A#",13,21,114,50,8
+    LTEXT           "B",14,21,124,50,8
+    LTEXT           "Sharp",IDD_SHARP,89,24,190,8
+    LTEXT           "Flat",IDD_FLAT,89,42,190,8
+    LTEXT           "Minor",IDD_MINOR,89,72,60,8
+    LTEXT           "Major",IDD_MAJOR,89,90,60,8
+    GROUPBOX        "Notes",90,9,3,70,137
+    GROUPBOX        "Select tonality",91,84,111,199,29
+    GROUPBOX        "Analyse",92,84,3,199,108
+    CONTROL         "Minor",IDD_RADIOMINOR,"Button",BS_AUTORADIOBUTTON | WS_GROUP,116,125,33,8
+    CONTROL         "Major",IDD_RADIOMAJOR,"Button",BS_AUTORADIOBUTTON,170,125,33,8
 END
 
-IDD_PARAMETERS_DIALOG
-DIALOGEX 0, 0, 183, 148
-STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+IDD_PARAMETERS_DIALOG DIALOGEX 0, 0, 183, 148
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "PatternXP Parameters"
-FONT 8, "MS Shell Dlg", 400, 0, 1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    AUTOCHECKBOX    "Use Toolbar", 3003, 19, 11, 76, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Persistent selection (pattern change)", 3001, 19, 25, 150, 10, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Persistent play position display (on stop)", 3002, 19, 39, 150, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Import pattern : auto resize (rows)", 3004, 19, 53, 150, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Chord expert auto refresh", 3005, 19, 67, 150, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Disable PgUp/Down enhancement", 3006, 19, 81, 150, 8, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Disable Home enhancement", 3007, 19, 95, 150, 8, 0, WS_EX_LEFT
-//    AUTOCHECKBOX    "Import pattern : auto resize (tracks) ", 3002, 19, 67, 76, 8, 0, WS_EX_LEFT
-    DEFPUSHBUTTON   "OK", 1, 67, 128, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", 2, 122, 128, 50, 14, 0, WS_EX_LEFT
+    CONTROL         "Use Toolbar",3003,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,11,76,8
+    CONTROL         "Persistent selection (pattern change)",3001,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,25,150,10
+    CONTROL         "Persistent play position display (on stop)",3002,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,39,150,8
+    CONTROL         "Import pattern : auto resize (rows)",3004,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,53,150,8
+    CONTROL         "Chord expert auto refresh",3005,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,67,150,8
+    CONTROL         "Disable PgUp/Down enhancement",3006,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,81,150,8
+    CONTROL         "Disable Home enhancement",3007,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,95,150,8
+    DEFPUSHBUTTON   "OK",1,67,128,50,14
+    PUSHBUTTON      "Cancel",2,122,128,50,14
 END
 
-IDD_SAVE_ARPEGGIO_DIALOG
-DIALOGEX 0, 0, 183, 58
-STYLE DS_MODALFRAME | DS_SETFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+IDD_SAVE_ARPEGGIO_DIALOG DIALOGEX 0, 0, 183, 58
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Save Arpeggio as"
-FONT 8, "MS Shell Dlg", 400, 0, 1
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-	LTEXT           "Name :", 3, 9, 12, 29, 9, SS_LEFT, WS_EX_LEFT
-    EDITTEXT        4, 46, 11, 125, 12, ES_AUTOHSCROLL, WS_EX_LEFT
-    DEFPUSHBUTTON   "OK", 1, 67, 39, 50, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cancel", 2, 122, 39, 50, 14, 0, WS_EX_LEFT
+    LTEXT           "Name :",3,9,12,29,9
+    EDITTEXT        4,46,11,125,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",1,67,39,50,14
+    PUSHBUTTON      "Cancel",2,122,39,50,14
 END
-
-
 
 IDD_COLUMN_DIALOG DIALOGEX 0, 0, 179, 272
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -320,54 +318,53 @@ BEGIN
 END
 
 IDD_DIALOGBAR DIALOGEX 0, 0, 867, 33
-STYLE DS_SETFONT | WS_CHILDWINDOW
-FONT 8, "MS Shell Dlg", 400, 0, 0
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    PUSHBUTTON      "Columns...", 2009, 3, 2, 45, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Parameters", 2043, 49, 2, 44, 14, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "MIDI Edit", 2007, 52, 19, 45, 10, 0, WS_EX_LEFT
-    PUSHBUTTON      "Font...", 2008, 3, 16, 45, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Copy", 2015, 167, 2, 24, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Cut", 2014, 191, 2, 25, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Paste", 2013, 167, 16, 23, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Add off", 2028, 230, 16, 32, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Up", 2029, 263, 16, 14, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Down", 2030, 277, 16, 24, 14, 0, WS_EX_LEFT
-    COMBOBOX        2010, 108, 17, 48, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "Merge", 2011, 191, 16, 25, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Clear off", 2022, 230, 2, 36, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Reverse", 2041, 307, 2, 32, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Mirror", 2042, 307, 16, 32, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Ins row", 2044, 343, 2, 28, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Del row", 2045, 343, 16, 29, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Import", 2023, 380, 2, 31, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Export", 2024, 380, 16, 31, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Shrink", 2025, 418, 2, 36, 14, 0, WS_EX_LEFT
-    COMBOBOX        2026, 454, 9, 20, 14, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "Expand", 2027, 418, 16, 36, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Humanize", 2032, 480, 2, 36, 14, 0, WS_EX_LEFT
-    EDITTEXT        2033, 517, 3, 17, 12, ES_AUTOHSCROLL | ES_NUMBER, WS_EX_LEFT
-    AUTOCHECKBOX    "and empty", 2034, 482, 18, 48, 8, 0, WS_EX_LEFT
-    PUSHBUTTON      "Chord", 2035, 565, 2, 30, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Dlg...", 2053, 543, 2, 22, 14, 0, WS_EX_LEFT
-    COMBOBOX        2036, 595, 2, 58, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "...", 2038, 654, 2, 15, 14, 0, WS_EX_LEFT
-    AUTOCHECKBOX    "Once", 2037, 544, 18, 29, 8, 0, WS_EX_LEFT
-    COMBOBOX        2051, 599, 16, 54, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "Load", 2054, 577, 16, 21, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Save", 2052, 654, 16, 22, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      "Interpolate", 2039, 685, 2, 46, 14, 0, WS_EX_LEFT
-    COMBOBOX        2040, 686, 16, 48, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      "#b ?", 2047, 771, 2, 20, 14, 0, WS_EX_LEFT
-    LTEXT           "Tonal", 1998, 744, 5, 19, 8, SS_LEFT, WS_EX_LEFT
-    COMBOBOX        2046, 743, 16, 48, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    PUSHBUTTON      " -- ", 2049, 795, 2, 13, 14, 0, WS_EX_LEFT
-    PUSHBUTTON      " + ", 2050, 814, 2, 13, 14, 0, WS_EX_LEFT
-    COMBOBOX        2048, 795, 16, 33, 14, WS_VSCROLL | CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    AUTOCHECKBOX    "Help", 2012, 836, 18, 31, 8, 0, WS_EX_LEFT
-    LTEXT           "Bar", 1999, 111, 5, 12, 8, SS_LEFT, WS_EX_LEFT
+    PUSHBUTTON      "Columns...",2009,3,2,45,14
+    PUSHBUTTON      "Parameters",2043,49,2,44,14
+    CONTROL         "MIDI Edit",2007,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,52,19,45,10
+    PUSHBUTTON      "Font...",2008,3,16,45,14
+    PUSHBUTTON      "Copy",2015,167,2,24,14
+    PUSHBUTTON      "Cut",2014,191,2,25,14
+    PUSHBUTTON      "Paste",2013,167,16,23,14
+    PUSHBUTTON      "Add off",2028,230,16,32,14
+    PUSHBUTTON      "Up",2029,263,16,14,14
+    PUSHBUTTON      "Down",2030,277,16,24,14
+    COMBOBOX        2010,108,17,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS
+    PUSHBUTTON      "Merge",2011,191,16,25,14
+    PUSHBUTTON      "Clear off",2022,230,2,36,14
+    PUSHBUTTON      "Reverse",2041,307,2,32,14
+    PUSHBUTTON      "Mirror",2042,307,16,32,14
+    PUSHBUTTON      "Ins row",2044,343,2,28,14
+    PUSHBUTTON      "Del row",2045,343,16,29,14
+    PUSHBUTTON      "Import",2023,380,2,31,14
+    PUSHBUTTON      "Export",2024,380,16,31,14
+    PUSHBUTTON      "Shrink",2025,418,2,36,14
+    COMBOBOX        2026,454,9,20,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS
+    PUSHBUTTON      "Expand",2027,418,16,36,14
+    PUSHBUTTON      "Humanize",2032,480,2,36,14
+    EDITTEXT        2033,517,3,17,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "and empty",2034,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,482,18,48,8
+    PUSHBUTTON      "Chord",2035,565,2,30,14
+    PUSHBUTTON      "Dlg...",2053,543,2,22,14
+    COMBOBOX        2036,595,2,58,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      "...",2038,654,2,15,14
+    CONTROL         "Once",2037,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,544,18,29,8
+    COMBOBOX        2051,599,16,54,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      "Load",2054,577,16,21,14
+    PUSHBUTTON      "Save",2052,654,16,22,14
+    PUSHBUTTON      "Interpolate",2039,685,2,46,14
+    COMBOBOX        2040,686,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      "#b ?",2047,771,2,20,14
+    LTEXT           "Tonal",1998,744,5,19,8
+    COMBOBOX        2046,743,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      " -- ",2049,795,2,13,14
+    PUSHBUTTON      " + ",2050,814,2,13,14
+    COMBOBOX        2048,795,16,33,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    CONTROL         "Help",2012,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,836,18,31,8
+    LTEXT           "Bar",1999,111,5,12,8
 END
-
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -378,67 +375,67 @@ END
 IDD_COLUMN_DIALOG DLGINIT
 BEGIN
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0031,
+0x0031, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0032,
+0x0032, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0033,
+0x0033, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0034,
+0x0034, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0035,
+0x0035, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0036,
+0x0036, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0037,
+0x0037, 
     IDC_NP_LENGTH, 0x403, 2, 0
-0x0038,
+0x0038, 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3231, "\000"
+0x3231, "\000" 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3631, "\000"
+0x3631, "\000" 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3432, "\000"
+0x3432, "\000" 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3233, "\000"
+0x3233, "\000" 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3834, "\000"
+0x3834, "\000" 
     IDC_NP_LENGTH, 0x403, 3, 0
-0x3436, "\000"
+0x3436, "\000" 
     IDC_NP_LENGTH, 0x403, 4, 0
-0x3231, 0x0038,
+0x3231, 0x0038, 
     IDC_COMBO1, 0x403, 2, 0
-0x0031,
+0x0031, 
     IDC_COMBO1, 0x403, 2, 0
-0x0032,
+0x0032, 
     IDC_COMBO1, 0x403, 2, 0
-0x0033,
+0x0033, 
     IDC_COMBO1, 0x403, 2, 0
-0x0034,
+0x0034, 
     IDC_COMBO1, 0x403, 2, 0
-0x0035,
+0x0035, 
     IDC_COMBO1, 0x403, 2, 0
-0x0036,
+0x0036, 
     IDC_COMBO1, 0x403, 2, 0
-0x0037,
+0x0037, 
     IDC_COMBO1, 0x403, 2, 0
-0x0038,
+0x0038, 
     IDC_COMBO1, 0x403, 2, 0
-0x0039,
+0x0039, 
     IDC_COMBO1, 0x403, 3, 0
-0x3031, "\000"
+0x3031, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3131, "\000"
+0x3131, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3231, "\000"
+0x3231, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3331, "\000"
+0x3331, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3431, "\000"
+0x3431, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3531, "\000"
+0x3531, "\000" 
     IDC_COMBO1, 0x403, 3, 0
-0x3631, "\000"
+0x3631, "\000" 
     0
 END
 
@@ -452,7 +449,6 @@ STRINGTABLE
 BEGIN
     ID_COLUMNS_BUTTON       "Select Columns"
     ID_SELECT_FONT          "Select Font"
-	ID_PARAMETERS_BUTTON	"Parameters"
     ID_BT_COPY              "Copy (ctrl+C)"
     ID_BT_CUT               "Cut (ctrl+X)"
     ID_BT_PASTE             "Paste (ctrl+V)"
@@ -460,25 +456,33 @@ BEGIN
     ID_BT_CLEAROFF          "Clear ""off"" (ctrl+F)"
     ID_BT_ADDOFF            "Add ""off"" (ctrl+shift+F)"
     ID_BT_UPOFF             "Shift ""off"" up (ctrl+shift+J)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_BT_INTERPOLATE       "Interpolate (ctrl+I)"
+    ID_BT_REVERSE           "Reverse order (ctrl+D)"
+    ID_BT_MIRROR            "Mirror (ctrl+shift+D)"
+    ID_PARAMETERS_BUTTON    "Parameters"
+    ID_BT_INSROW            "Insert row (ctrl+P)"
+    ID_BT_DELROW            "Delete row (ctrl+shift+P)"
+    ID_TONAL_BT             "Tonality detection"
+    ID_BT_MINUS             "Shift down xN"
+    ID_BT_PLUS              "Shift up xN"
+    ID_BT_ARPEGGIO_SAVE     "Save Arpeggio"
+    ID_BT_DLG_CHORD         "Chord dialog (ctrl+shift+H)"
+END
+
+STRINGTABLE
+BEGIN
     ID_BT_DOWNOFF           "Shift ""off"" down (ctrl+J)"
     ID_BT_IMPORT            "Import pattern (ctrl+alt+P)"
     ID_BT_EXPORT            "Export pattern (ctrl+alt+X)"
     ID_BT_SHRINK            "Shrink pattern (ctrl+alt+SUBSTRACT)"
     ID_BT_EXPAND            "Expand pattern (ctrl+alt+ADD)"
-	ID_BT_HUMANIZE			"Humanize (0..99) (ctrl+shift+R)"
-	ID_BT_INSERT_CHORD		"Insert chord / chord dialog (ctrl+H)"
-	ID_BT_DLG_CHORD			"Chord dialog (ctrl+shift+H)"
-	ID_BT_CHORD_FILE		"Select chords file"
-	ID_BT_INTERPOLATE		"Interpolate (ctrl+I)"
-	ID_BT_REVERSE			"Reverse order (ctrl+D)"
-	ID_BT_MIRROR			"Mirror (ctrl+shift+D)"
-	ID_BT_INSROW			"Insert row (ctrl+P)"
-	ID_BT_DELROW			"Delete row (ctrl+shift+P)"
-	ID_TONAL_BT				"Tonality detection"
-	ID_BT_MINUS				"Shift down xN" 
-	ID_BT_PLUS				"Shift up xN"
-	ID_BT_ARPEGGIO_SAVE		"Save Arpeggio"
-
+    ID_BT_HUMANIZE          "Humanize (0..99) (ctrl+shift+R)"
+    ID_BT_INSERT_CHORD      "Insert chord / chord dialog (ctrl+H)"
+    ID_BT_CHORD_FILE        "Select chords file"
 END
 
 STRINGTABLE
@@ -487,7 +491,7 @@ BEGIN
     ID_EDIT_REDO            "Redo (Ctrl+Y)"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

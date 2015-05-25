@@ -54,9 +54,6 @@
     <ClCompile Include="TopWnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\buzz\XMemDC.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="tree\CreateCheckboxImageList.cpp">
       <Filter>Tree</Filter>
     </ClCompile>
@@ -91,6 +88,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TonalDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XMemDC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -187,5 +187,13 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="toolbarPXP.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="toolbarExtPXP.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -164,10 +164,6 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	ON_COMMAND(ID_BT_ARPEGGIO_LOAD, OnButtonSelectArpeggioFile)
 	ON_BN_CLICKED(IDC_ARPEGGIO_LOAD, OnButtonSelectArpeggioFile) 
 
-	
-
-
-
 END_MESSAGE_MAP()
 
 /* Windows hook to receive the ToolTips messages */
@@ -207,6 +203,7 @@ void CEditorWnd::Create(HWND parent)
 	// Install WindowsHook only once
 	if (IsWindowsVistaOrHigher())
 		if (g_hHook==0) g_hHook = SetWindowsHookEx (WH_GETMESSAGE, PreTranslateGetMsgProc, AfxGetInstanceHandle(), GetCurrentThreadId());
+
 }
 
 void CEditorWnd::SetPattern(CMachinePattern *p)
@@ -2007,13 +2004,13 @@ void CEditorWnd::OnButtonDeleteRow()
 
 void CEditorWnd::OnButtonTransposeUp()
 {
-	pe.ShiftValues(TransposeComboIndex+1);
+	pe.ShiftValues(TransposeComboIndex+1, true);
 	pe.SetFocus();
 }
 
 void CEditorWnd::OnButtonTransposeDown()
 {
-	pe.ShiftValues(-TransposeComboIndex-1);
+	pe.ShiftValues(-TransposeComboIndex - 1, true);
 	pe.SetFocus();
 }
 

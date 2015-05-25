@@ -32,6 +32,7 @@ struct row_struct
 {
 	note_bitset notes;
 	int chord_index;
+	int base_data;
 	int base_note;
 	int base_octave;
 };
@@ -127,7 +128,7 @@ public:
 
 	int GetColumnAtX(int x);
 	int GetColumnX(int column);
-	void ShiftValues(int delta);
+	void ShiftValues(int delta, bool OnlyNotes);
 	int GetRowY(int y);
 
 	void InvalidateInTimer() { invalidateInTimer = true; }

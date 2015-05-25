@@ -322,13 +322,22 @@ void CChordExpertDialog::UpdateWindowSize()
 	if (pc!=NULL) pc->MoveWindow(cx -265, cy-32, 32, 23, 1);
 
 	pc = (CButton *)GetDlgItem(6);  // Down
-	if (pc!=NULL) pc->MoveWindow(cx -225, cy-32, 32, 23, 1);
+	if (pc!=NULL) pc->MoveWindow(cx -227, cy-32, 38, 23, 1);
 
 	pc = (CButton *)GetDlgItem(7);  // Clear
 	if (pc!=NULL) pc->MoveWindow(cx -185, cy-32, 32, 23, 1);
 
-	CStatic *pt = (CStatic *)GetDlgItem(3);  // Current chord
-	if (pt!=NULL) pt->MoveWindow(25, cy-28, 150, 23);
+	CStatic *pt = (CStatic *)GetDlgItem(12);  // Octave label (l 45)
+	if (pt != NULL) pt->MoveWindow(12, cy - 28, 45, 23);
+
+	CComboBox * pcb = (CComboBox *)GetDlgItem(13);  // Current octave (l 34)
+	if (pcb != NULL) pcb->MoveWindow(60, cy - 32, 34, 23);
+
+	pt = (CStatic *)GetDlgItem(3);  // Current chord (l 150)
+	if (pt != NULL) pt->MoveWindow(100, cy - 28, 150, 23);
+
+	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord (l 150)
+	if (ceGrid.labelChord != NULL) ceGrid.labelChord->MoveWindow(240, cy - 28, 150, 23);
 
 	pt = (CStatic *)GetDlgItem(8);  // Arpeggio
 	if (pt!=NULL) pt->MoveWindow(cx - ARP_WIDTH + 40, 5, 60, 23);
@@ -336,8 +345,6 @@ void CChordExpertDialog::UpdateWindowSize()
 	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
 	if (pl!=NULL) pl->MoveWindow(cx - ARP_WIDTH +2, 21, ARP_WIDTH-4, cy - 58); 
 
-	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord
-	if (ceGrid.labelChord!=NULL) ceGrid.labelChord->MoveWindow(200, cy-28, 150, 23);
 
 }
 
@@ -430,10 +437,12 @@ void CChordExpertDialog::InitGrid(int SortType)
 	}
 	ceGrid.RefreshCanvasSize();
 
+	// Display current chord
 	CStatic *pt = (CStatic *)GetDlgItem(3);
 	if (pt!=NULL)
 		pt->SetWindowText(ChordText.c_str());
-
+	// Display current base octave
+	comboOctave->SetCurSel(BaseOctave-1);
 
 	UpdateWindowSize();
 	ceGrid.Invalidate();
@@ -460,6 +469,17 @@ BOOL CChordExpertDialog::OnInitDialog()
 	dialogrect.right = pew->pCB->GetProfileInt("ChordExpertDialog.right", 300);
 	MoveWindow(dialogrect);
 	
+	// Load Octave combo
+	comboOctave = (CComboBox *)GetDlgItem(13);
+	comboOctave->AddString("1");
+	comboOctave->AddString("2");
+	comboOctave->AddString("3");
+	comboOctave->AddString("4");
+	comboOctave->AddString("5");
+	comboOctave->AddString("6");
+	comboOctave->AddString("7");
+	comboOctave->AddString("8");
+
 
 	// Load the list of arpeggios
 	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
@@ -622,7 +642,16 @@ void CChordExpertDialog::OnOK()
 	if (ceGrid.CurrentRow < (int)ceGrid.SortedChords[ceGrid.CurrentCol].size()) 
 	{
 		row_struct rs = ceGrid.SortedChords[ceGrid.CurrentCol][ceGrid.CurrentRow];
-		pew->pe.InsertChordNote((BaseOctave << 4) + rs.base_note + 1, rs.chord_index);
+		
+		// Get octave to use
+		int bo = comboOctave->GetCurSel()+1;
+		if (bo < 1) bo = 1;
+		if (bo > 8) bo = 8;
+		
+		// Insert the chord
+		pew->pe.InsertChordNote((bo << 4) + rs.base_note + 1, rs.chord_index);
+
+		// Refresh the chord expert
 		if (!pew->AutoChordExpert) pew->AnalyseChords();
 
 	}
