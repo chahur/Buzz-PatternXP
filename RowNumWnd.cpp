@@ -24,8 +24,6 @@ BEGIN_MESSAGE_MAP(CRowNumWnd, CScrollWnd)
 END_MESSAGE_MAP()
 
 
-//static char const NoteTo2char[] = "C-C#D-EbE-F-F#G-G#A-BbB-";
-
 void CRowNumWnd::OnDraw(CDC *pDC)
 {
 	CRect clr;
@@ -90,9 +88,11 @@ void CRowNumWnd::OnDraw(CDC *pDC)
 //		pDC->TextOut(lmargin, y * pew->fontSize.cy, buf, 5);
 		pDC->DrawText(buf, &r, DT_RIGHT);
 
-		InflateRect(r, 1, 1);
-		pDC->DrawEdge(r, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT);
-
+		if (pew->DrawRowNumberButton) {
+			InflateRect(r, 1, 1);
+			pDC->DrawEdge(r, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT);
+		}
+		
 	}
 
 	pDC->SelectObject(pOldFont); 

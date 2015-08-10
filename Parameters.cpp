@@ -56,12 +56,29 @@ BOOL CParametersDialog::OnInitDialog()
 	pc = (CButton *)GetDlgItem(ID_PGUPDOWN_DISABLED);
 	pc->SetCheck(BST_VAL);
 
-	if (pew->HomeDisabled) BST_VAL=BST_CHECKED; else BST_VAL=BST_UNCHECKED;
+	if (pew->HomeDisabled) BST_VAL = BST_CHECKED; else BST_VAL = BST_UNCHECKED;
 	pc = (CButton *)GetDlgItem(ID_HOME_DISABLED);
 	pc->SetCheck(BST_VAL);
 
+	if (pew->DrawRowNumberButton) BST_VAL = BST_CHECKED; else BST_VAL = BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_DRAW_ROW_BUTTON);
+	pc->SetCheck(BST_VAL);	
 
-	
+	CEdit *pet = (CEdit*)GetDlgItem(ID_GRAPHICALWIDTH);
+	CString sgw;
+	int gw = pew->pCB->GetProfileInt("GraphicalWidth", 10);
+	if ((gw >= 0) && (gw <= 100))
+		sgw.Format(_T("%d"), gw);
+	else 
+		sgw.Format(_T("%d"), 10);
+	pet->SetWindowText(sgw);
+
+
+	if (pew->UpdateGraphicalRow) BST_VAL = BST_CHECKED; else BST_VAL = BST_UNCHECKED;
+	pc = (CButton *)GetDlgItem(ID_GRAPHICALROW);
+	pc->SetCheck(BST_VAL);
+
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -94,7 +111,22 @@ void CParametersDialog::OnOK()
 
 	pc = (CButton *)GetDlgItem(ID_HOME_DISABLED);
 	pew->pCB->WriteProfileInt("HomeDisabled", pc->GetCheck() == BST_CHECKED);
-	pew->HomeDisabled= pew->pCB->GetProfileInt("HomeDisabled", false)!=0;
+	pew->HomeDisabled = pew->pCB->GetProfileInt("HomeDisabled", false) != 0;
+
+	pc = (CButton *)GetDlgItem(ID_DRAW_ROW_BUTTON);
+	pew->pCB->WriteProfileInt("DrawRowNumberButton", pc->GetCheck() == BST_CHECKED);
+	pew->DrawRowNumberButton = pew->pCB->GetProfileInt("DrawRowNumberButton", true) != 0;
+
+	CEdit *pet = (CEdit*)GetDlgItem(ID_GRAPHICALWIDTH);
+	CString sgw;
+	pet->GetWindowText(sgw);
+	int gw = atoi(sgw);
+	if ((gw >= 0) && (gw <= 100))
+		pew->pCB->WriteProfileInt("GraphicalWidth", gw);
+
+	pc = (CButton *)GetDlgItem(ID_GRAPHICALROW);
+	pew->pCB->WriteProfileInt("UpdateGraphicalRow", pc->GetCheck() == BST_CHECKED);
+	pew->UpdateGraphicalRow = pew->pCB->GetProfileInt("UpdateGraphicalRow", true) != 0;
 
 
 	CDialog::OnOK();

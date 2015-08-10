@@ -31,6 +31,10 @@ CEditorWnd::CEditorWnd()
 	TonalComboIndex  = 0;
 	PgUpDownDisabled = false;
 	HomeDisabled = false;
+	DrawRowNumberButton = true;
+	toolbarhidden = false;
+	UpdateGraphicalRow = true;
+
 	ArpeggioComboIndex = 0;
 	SLArpeggio = new CStringList();
 }
@@ -242,7 +246,7 @@ void CEditorWnd::UpdateCanvasSize()
 
 	int width = -1;
 	for (ColumnVector::iterator i = pPattern->columns.begin(); i != pPattern->columns.end(); i++)
-		width += (*i)->GetWidth();
+		width += (*i)->GetWidth(pCB);
 	
 	pe.SetCanvasSize(CSize(width, height));
 	leftwnd.SetCanvasSize(CSize(5, height));
@@ -510,13 +514,16 @@ void CEditorWnd::ReadParamProfile()
 
 	PgUpDownDisabled= pCB->GetProfileInt("PgUpDownDisabled", false)!=0;
 	HomeDisabled= pCB->GetProfileInt("HomeDisabled", false)!=0;
+	DrawRowNumberButton = pCB->GetProfileInt("DrawRowNumberButton", true) != 0;
 
 	ChordPathName[0]=0;
 	pCB->GetProfileString("ChordPathName", ChordPathName, "");
 	
 	ArpeggioPathName[0]=0;
 	pCB->GetProfileString("ArpeggioPathName", ArpeggioPathName, "");
-	
+
+	UpdateGraphicalRow = pCB->GetProfileInt("UpdateGraphicalRow", true) != 0;
+
 }
 
 
@@ -766,15 +773,18 @@ void CEditorWnd::ToolbarChanged()
 	/* Disable controls action */
 	UpdatingToolbar = true;
 
+	int val_SW_SHOW;
+	if (toolbarhidden) val_SW_SHOW = SW_HIDE; else val_SW_SHOW = SW_SHOWNORMAL;
+
 	if (toolbarvisible) 
 	{
-		toolBar.ShowWindow(SW_SHOWNORMAL);
-		toolBarExt.ShowWindow(SW_SHOWNORMAL);
+		toolBar.ShowWindow(val_SW_SHOW);
+		toolBarExt.ShowWindow(val_SW_SHOW);
 		dlgBar.ShowWindow(SW_HIDE);
 	}
 	else
 	{
-		dlgBar.ShowWindow(SW_SHOWNORMAL);
+		dlgBar.ShowWindow(val_SW_SHOW);
 		toolBar.ShowWindow(SW_HIDE);
 		toolBarExt.ShowWindow(SW_HIDE);
 	}

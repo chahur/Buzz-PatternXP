@@ -50,6 +50,7 @@ public:
 	void AnalyseChords();
 	void SetComboBoxTonal(int index);
 	void SetComboBoxArpeggio(int index);
+	void ToolbarChanged();
 
 
 
@@ -57,7 +58,6 @@ private:
 	bool UpdatingToolbar;
 	void UpdateWindowSizes();
 	void FontChanged();
-	void ToolbarChanged();
 	void ReadParamProfile();
 
 
@@ -117,6 +117,7 @@ public:
 	int helpwidth;
 	bool helpvisible;
 	bool toolbarvisible;
+	bool toolbarhidden;
 	bool ChordExpertvisible;
 	bool Closing;
 
@@ -171,6 +172,8 @@ public:
 	bool AutoChordExpert;
 	bool PgUpDownDisabled;
 	bool HomeDisabled;
+	bool DrawRowNumberButton;
+	bool UpdateGraphicalRow;
 
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);

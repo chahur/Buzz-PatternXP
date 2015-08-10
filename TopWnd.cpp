@@ -61,7 +61,14 @@ void CTopWnd::OnDraw(CDC *pDC)
 	CFont myVerticalFont;
 	VERIFY(myVerticalFont.CreatePointFontIndirect(&lf, pDC));   
 
-			
+	LOGFONT lfw;
+	memset(&lfw, 0, sizeof(LOGFONT)); // clear out structure.
+	lfw.lfHeight = 90;
+	lfw.lfCharSet = SYMBOL_CHARSET;
+	strcpy(lfw.lfFaceName, _T("Webdings"));
+	CFont myWingFont;
+	myWingFont.CreatePointFontIndirect(&lfw, pDC);
+
 	CColumn *lastcolumn = ppat->columns[0].get();
 	int startx = 0;
 	int macstartx = 0;
@@ -73,6 +80,30 @@ void CTopWnd::OnDraw(CDC *pDC)
 		if (col < (int)ppat->columns.size())
 			pc = ppat->columns[col].get();
 
+		if (col == 0)
+		{ // Show / hide toolbars button
+			CRect r;
+			r.left = 0;
+			r.right = pew->pe.GetColumnWidth(0);
+			r.top = 0;
+			r.bottom = pew->fontSize.cy;
+			
+			CString s;
+			if (!pew->toolbarhidden) {
+				s = (char)0x35;//72;
+			}
+			else s = (char)0x36;//73;
+
+			CFont *pOldFont = pDC->SelectObject(&myWingFont);
+		
+			pDC->DrawText(s, &r, DT_VCENTER | DT_SINGLELINE | DT_CENTER);
+
+			pDC->SelectObject(pOldFont);
+
+			pDC->DrawEdge(r, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT);
+
+		}
+		
 		if (pc == NULL || ((x - startx) > 0 && !pc->MatchGroupAndTrack(*lastcolumn)))
 		{
 			if (lastcolumn->IsTrackParam())
@@ -218,7 +249,7 @@ void CTopWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 	if (point.y < pew->fontSize.cy)
 	{
 		int col = pew->pe.GetColumnAtX(point.x);
-		if (col < 0)
+		if (col <= 0) // Button to hide / show the toolbars
 			return;
 
 		bool ctrldown = (GetKeyState(VK_CONTROL) & (1 << 15)) != 0;
@@ -273,14 +304,21 @@ void CTopWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 void CTopWnd::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	point = ClientToCanvas(point);
+
 	if (point.y < pew->fontSize.cy)
+	{
+		int col = pew->pe.GetColumnAtX(point.x);
+		if (col <= 0)
+		{
+			pew->toolbarhidden = !pew->toolbarhidden;
+			pew->ToolbarChanged();
+			return;
+		}
 		return;
+	}
 
 	if (pew->ShowTrackToolbar) 
 	{
-	/*	char debugtxt[256];
-		sprintf(debugtxt,"CTopWnd::OnLButtonDown y:%d", point.y);
-		pew->pCB->WriteLine(debugtxt); */
 
 		if (point.y < 2*pew->fontSize.cy) MuteTrack(point);
 		else if (point.y > 16 +2*pew->fontSize.cy) MuteTrack(point);

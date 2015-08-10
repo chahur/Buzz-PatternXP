@@ -390,7 +390,6 @@ void CPatEd::TextToFieldImport(char *txt, CColumn *pc, int irow)
 		break;
 
 	}
-//	pCB->WriteLine(debugtxt);
 
 }
 
@@ -455,8 +454,6 @@ bool DialogFileName(LPSTR Suffix, LPSTR FileLibelle, LPSTR FileTitle, LPSTR Init
 	return true;	
 }
 
-//#pragma optimize( "", off )
-// Turn optimizer off when calling DialogFileName ... to avoid a buffer overrun
 void CPatEd::ExportPattern()
 {
 	char exportpathName[255];
@@ -521,10 +518,7 @@ void CPatEd::ExportPattern()
 		expfile.close();  
     }
 }
-//#pragma optimize( "", on )
 
-//#pragma optimize( "", off )
-// Turn optimizer off when calling DialogFileName ... to avoid a buffer overrun
 void CPatEd::ImportPattern()
 {
 	char exportpathName[255];
@@ -623,7 +617,6 @@ void CPatEd::ImportPattern()
 	DoAnalyseChords();
 
 }
-//#pragma optimize( "", on )
 
 void CPatEd::InflatePattern(int delta)
 {
@@ -1052,7 +1045,7 @@ void CPatEd::DrawGraphicalField(CDC *pDC, int col, CColumn *pnc, int data, int x
 	CMachinePattern *ppat = pew->pPattern;
 	CColumn *pc = ppat->columns[col].get();
 
-	int w = pc->GetWidth();
+	int w = pc->GetWidth(pCB);
 	bool extraspace = pnc != NULL && pc->MatchGroupAndTrack(*pnc);
 	if (!extraspace)
 		w--;
@@ -1598,8 +1591,9 @@ void CPatEd::AnalyseChords()
 		row_struct rs;
 		rs.base_octave=12;
 		rs.chord_index=-1;
-		rs.base_note=0;
-		rs.notes=0;
+		rs.base_note = 0;
+		rs.base_data = 255;
+		rs.notes = 0;
 		pew->RowNotes.resize(pew->pPattern->GetRowCount(), rs);
 
 		// Fill the note rows 
@@ -1648,7 +1642,7 @@ void CPatEd::AnalyseChords()
 int CPatEd::GetColumnWidth(int column)
 {
 	CMachinePattern *ppat = pew->pPattern;
-	return (ppat->columns[column]->GetWidth()) * pew->fontSize.cx;
+	return (ppat->columns[column]->GetWidth(pCB)) * pew->fontSize.cx;
 }
 
 int CPatEd::GetFirstColumnofTrack(int column)
@@ -2649,7 +2643,7 @@ void CPatEd::Draw(CPoint point)
 	point = ClientToCanvas(point);
 	
 	CColumn *pc = ppat->columns[drawColumn].get();
-	int w = (pc->GetWidth() - 1) * pew->fontSize.cx - 4;
+	int w = (pc->GetWidth(pCB) - 1) * pew->fontSize.cx - 4;
 	int x = max(0, min(w, point.x - (GetColumnX(drawColumn) + 2)));
 
 	double v = (double)x / w;
@@ -2658,6 +2652,9 @@ void CPatEd::Draw(CPoint point)
 	pc->SetValueNormalized(cp.row, v);
 
 	InvalidateField(cp.row, drawColumn);
+
+	if (pew->UpdateGraphicalRow) MoveCursor(cp, false);
+
 }
 
 void CPatEd::OnMouseMove(UINT nFlags, CPoint point)

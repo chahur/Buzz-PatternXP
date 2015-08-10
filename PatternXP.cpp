@@ -73,7 +73,7 @@ CMachineInfo const MacInfo =
 #endif
 	"Pattern XP",						// short name
 #endif
-	"Oskari Tammelin", 						// author
+	"Oskari Tammelin / Ronan Daniel", 	// author
 	NULL
 };
 

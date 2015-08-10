@@ -247,6 +247,7 @@ public:
 		pMachine = NULL;
 		pParam = NULL;
 		graphical = false;
+//		InternalGraphicalWidth = 0;
 	}
 
 	CColumn(CColumn *pc, bool copydata, bool inctrack = false)
@@ -703,10 +704,21 @@ public:
 		}
 	}
 
-	int GetWidth() const
+	int GraphicalWidth(CMICallbacks *pcb) 
+	{
+//		if (InternalGraphicalWidth > 0) return InternalGraphicalWidth;
+
+		int InternalGraphicalWidth = pcb->GetProfileInt("GraphicalWidth", 10);
+		if (InternalGraphicalWidth > 0) 
+			return InternalGraphicalWidth;
+		else 
+			return 10;
+	}
+
+	int GetWidth(CMICallbacks *pcb)
 	{
 		if (graphical)
-			return 10;
+			return GraphicalWidth(pcb);
 		else
 			return GetDigitCount() + (IsTiedToNext() ? 0 : 1);
 	}
@@ -1079,6 +1091,7 @@ private:
 
 	int numGlobalParameters;
 	bool graphical;
+//	int InternalGraphicalWidth;
 
 };
 
