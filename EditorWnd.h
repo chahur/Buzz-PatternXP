@@ -69,8 +69,6 @@ private:
 	void InitTonality(LPSTR txt, int basenote, bool major, int sharpCount);
 	void InitArpeggio();
 
-	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
-
 	bool GetCheckBoxHelp();
 	void SetCheckBoxHelp(bool AValue);
 
@@ -175,6 +173,8 @@ public:
 	bool DrawRowNumberButton;
 	bool UpdateGraphicalRow;
 
+	void GeneratorFileName(LPSTR FullFilename, LPSTR AFilename);
+
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnClose();
@@ -245,6 +245,10 @@ public:
 	afx_msg void OnArpeggioSave();
 	afx_msg void OnButtonDldChord();
 	afx_msg void OnButtonSelectArpeggioFile();
+
+	afx_msg void OnButtonMinMaxLimiter();
+
+	
 	
 	
 

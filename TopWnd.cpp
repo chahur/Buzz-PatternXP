@@ -174,7 +174,8 @@ void CTopWnd::OnDraw(CDC *pDC)
 				CString s;
 				s.Format("Global");
 
-				pDC->DrawText(s, &r, DT_CENTER);			}
+				pDC->DrawText(s, &r, DT_CENTER);			
+			}
  
 			startx = x;
 		}

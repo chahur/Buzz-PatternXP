@@ -57,6 +57,13 @@ public:
 #define SORT_BYNOTE 1
 #define SORT_BYDISTANCE 2
 
+#define ARP_WIDTH 150
+#define ARP_WIDTH_MIN 80
+#define SPLITTER_WIDTH 6
+#define GRID_WIDTH_MIN 80
+
+
+
 class CChordExpertDialog : public CDialog
 {
 	DECLARE_DYNAMIC(CChordExpertDialog)
@@ -70,6 +77,8 @@ public:
 
 	CEditorWnd *pew;
 	CCEGrid ceGrid;
+	CMICallbacks *pCB;
+
 
 	int CursorRow;
 	int BaseOctave;
@@ -78,6 +87,11 @@ public:
 	string ChordText;
 	int SortBy;
 	CComboBox *comboOctave;
+	int ArpWidth;
+	int ArpPosX;
+	int Current_Cursor;
+	int New_Cursor;
+	BOOL Move_Splitter;
 
 private:
 
@@ -95,7 +109,6 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	BOOL CChordExpertDialog::OnKeyDown(UINT nChar);
 
-
 protected:
 	virtual void OnOK();
 	virtual void OnCancel();
@@ -103,10 +116,15 @@ public:
 //	afx_msg void OnCbnEditupdateCombo1();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnBnClickedUp();
 	afx_msg void OnBnClickedDown();
 	afx_msg void OnBnClickedClear();
 	afx_msg void OnListBoxSelectionChange();
 	afx_msg void OnBnClickedSortByNote();
 	afx_msg void OnBnClickedSortByDistance();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+//	afx_msg void OnPaint();
 };

@@ -16,7 +16,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (United States) resources
+// Anglais (États-Unis) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -173,6 +173,8 @@ BEGIN
     BUTTON      ID_COMBO_TRANSPOSE_BT
     BUTTON      ID_BT_PLUS
     SEPARATOR
+    BUTTON      ID_MIN_MAX_LIMITER
+    SEPARATOR
 END
 
 
@@ -182,9 +184,13 @@ END
 //
 
 IDR_TOOLBAR             BITMAP                  "toolbarPXP.bmp"
+
 IDR_TOOLBAR_EXT         BITMAP                  "toolbarExtPXP.bmp"
+
 IDB_TREE_IMAGES         BITMAP                  "treeimages.bmp"
+
 IDB_TOOLBAR24           BITMAP                  "toolbar24.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -197,6 +203,11 @@ BEGIN
     IDD_CHORD_EXPERT_DIALOG, DIALOG
     BEGIN
         RIGHTMARGIN, 447
+    END
+
+    IDD_MINMAXLIMITER_DIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 238
     END
 
     IDD_PARAMETERS_DIALOG, DIALOG
@@ -247,6 +258,7 @@ BEGIN
     COMBOBOX        13,34,232,34,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
     LTEXT           "Chord : Unknown",3,75,234,120,8
     LTEXT           "Undefined",4,207,234,98,8
+    CTEXT           "<->",14,335,6,8,8
 END
 
 IDD_TONAL_DIALOG DIALOGEX 0, 0, 289, 162
@@ -277,6 +289,27 @@ BEGIN
     GROUPBOX        "Analyse",92,84,3,199,108
     CONTROL         "Minor",IDD_RADIOMINOR,"Button",BS_AUTORADIOBUTTON | WS_GROUP,116,125,33,8
     CONTROL         "Major",IDD_RADIOMAJOR,"Button",BS_AUTORADIOBUTTON,170,125,33,8
+END
+
+IDD_MINMAXLIMITER_DIALOG DIALOGEX 0, 0, 241, 145
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Min max limiter - Notes transposition"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",1,113,124,50,14
+    PUSHBUTTON      "Cancel",2,175,124,50,14
+    GROUPBOX        "Min limiter",IDC_STATIC,12,29,96,77
+    LTEXT           "Octave",IDC_STATIC,25,41,56,10
+    LTEXT           "Note",IDC_STATIC,25,68,16,8
+    COMBOBOX        IDC_COMBO1,23,51,71,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO2,23,79,71,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Max limiter",IDC_STATIC,132,29,96,77
+    LTEXT           "Octave",IDC_STATIC,146,40,56,10
+    LTEXT           "Note",IDC_STATIC,146,67,16,8
+    COMBOBOX        IDC_COMBO3,144,51,71,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO4,144,78,71,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO5,116,7,111,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Preset",IDC_STATIC,84,9,22,8
 END
 
 IDD_PARAMETERS_DIALOG DIALOGEX 0, 0, 193, 199
@@ -329,7 +362,7 @@ BEGIN
 END
 
 IDD_DIALOGBAR DIALOGEX 0, 0, 867, 33
-STYLE DS_SETFONT | WS_CHILD
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     PUSHBUTTON      "Columns...",2009,3,2,45,14
@@ -365,16 +398,17 @@ BEGIN
     COMBOBOX        2051,599,16,54,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
     PUSHBUTTON      "Load",2054,577,16,21,14
     PUSHBUTTON      "Save",2052,654,16,22,14
-    PUSHBUTTON      "Interpolate",2039,685,2,46,14
-    COMBOBOX        2040,686,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
-    PUSHBUTTON      "#b ?",2047,771,2,20,14
-    LTEXT           "Tonal",1998,744,5,19,8
-    COMBOBOX        2046,743,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
-    PUSHBUTTON      " -- ",2049,795,2,13,14
-    PUSHBUTTON      " + ",2050,814,2,13,14
-    COMBOBOX        2048,795,16,33,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      "Interpolate",2039,679,2,46,14
+    COMBOBOX        2040,680,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      "#b ?",2047,760,2,20,14
+    LTEXT           "Tonal",1998,733,5,19,8
+    COMBOBOX        2046,732,16,48,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
+    PUSHBUTTON      " -- ",2049,784,2,13,14
+    PUSHBUTTON      " + ",2050,803,2,13,14
+    COMBOBOX        2048,784,16,33,14,CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL
     CONTROL         "Help",2012,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,836,18,31,8
     LTEXT           "Bar",1999,111,5,12,8
+    PUSHBUTTON      "Transpose",2055,821,2,39,14
 END
 
 
@@ -453,6 +487,27 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CHORD_EXPERT_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_MINMAXLIMITER_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOGBAR AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
@@ -486,6 +541,11 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_MIN_MAX_LIMITER      "Transpose notes into a min-max subset"
+END
+
+STRINGTABLE
+BEGIN
     ID_BT_DOWNOFF           "Shift ""off"" down (ctrl+J)"
     ID_BT_IMPORT            "Import pattern (ctrl+alt+P)"
     ID_BT_EXPORT            "Export pattern (ctrl+alt+X)"
@@ -502,7 +562,7 @@ BEGIN
     ID_EDIT_REDO            "Redo (Ctrl+Y)"
 END
 
-#endif    // English (United States) resources
+#endif    // Anglais (États-Unis) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

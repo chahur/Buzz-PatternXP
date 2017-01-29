@@ -172,7 +172,7 @@ void CCEGrid::OnLButtonDown(UINT nFlags, CPoint point)
 		Invalidate();
 	}
 
-	CWnd::OnLButtonDown(nFlags, point);
+	CScrollWnd::OnLButtonDown(nFlags, point);
 }
 
 void CCEGrid::OnLButtonDblClk(UINT nFlags, CPoint point)
@@ -229,9 +229,14 @@ CChordExpertDialog::~CChordExpertDialog()
 
 
 BEGIN_MESSAGE_MAP(CChordExpertDialog, CDialog)
+//	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_KEYDOWN()
-	ON_BN_CLICKED(5, OnBnClickedUp) 
+	ON_WM_MOUSEMOVE()
+	ON_WM_SETCURSOR()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_BN_CLICKED(5, OnBnClickedUp)
 	ON_BN_CLICKED(6, OnBnClickedDown) 
 	ON_BN_CLICKED(7, OnBnClickedClear) 
 	ON_LBN_SELCHANGE(9, OnListBoxSelectionChange)
@@ -299,7 +304,61 @@ void CChordExpertDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
-#define ARP_WIDTH 150
+void CChordExpertDialog::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CPoint p;
+	int d;
+
+	if (Move_Splitter) {
+		p = point;
+		d = ArpPosX - p.x;
+
+		ArpWidth = ArpWidth + d;
+		UpdateWindowSize();
+		UpdateWindow();
+	}
+	else
+	{ 
+		p = point;
+		if (((p.x > ArpPosX - SPLITTER_WIDTH-2) && (p.x < ArpPosX)) &&
+		   (p.y < 21))
+		{
+			New_Cursor = 1; // IDC_SIZEWE
+		}
+		else {
+		New_Cursor = 0; // IDC_ARROW
+		}
+	}
+	CDialog::OnMouseMove(nFlags, point);
+}
+
+void CChordExpertDialog::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	Move_Splitter = (Current_Cursor == 1);
+	CDialog::OnLButtonDown(nFlags, point);
+}
+
+void CChordExpertDialog::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	Move_Splitter = false;
+	CDialog::OnLButtonUp(nFlags, point);
+}
+
+BOOL CChordExpertDialog::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	if (nHitTest != HTCLIENT)
+		if (!Move_Splitter) New_Cursor = 0;
+
+	Current_Cursor = New_Cursor;
+	if (New_Cursor == 1) {
+		SetCursor(AfxGetApp()->LoadStandardCursor(IDC_SIZEWE));
+		return TRUE;
+	}
+	else 
+	  return CDialog::OnSetCursor(pWnd, nHitTest, message);
+		
+}
+
 void CChordExpertDialog::UpdateWindowSize()
 {
 	CRect cr;
@@ -310,7 +369,10 @@ void CChordExpertDialog::UpdateWindowSize()
 	int cx = cr.Width();
 	int cy = cr.Height();
 
-	ceGrid.MoveWindow(0, 21, cx - ARP_WIDTH, cy - 57); 
+	if (ArpWidth < ARP_WIDTH_MIN) ArpWidth = ARP_WIDTH_MIN;
+	if (ArpWidth > cx - GRID_WIDTH_MIN) ArpWidth = cx - GRID_WIDTH_MIN;
+
+	ceGrid.MoveWindow(0, 21, cx - ArpWidth - SPLITTER_WIDTH, cy - 57);
 
 	CButton *pc = (CButton *)GetDlgItem(1); // Insert
 	if (pc!=NULL) pc->MoveWindow(cx - 145, cy-32, 60, 23, 1);
@@ -339,11 +401,15 @@ void CChordExpertDialog::UpdateWindowSize()
 	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord (l 150)
 	if (ceGrid.labelChord != NULL) ceGrid.labelChord->MoveWindow(240, cy - 28, 150, 23);
 
+	pt = (CStatic *)GetDlgItem(14);  // Separateur
+	if (pt != NULL) pt->MoveWindow(cx - ArpWidth - SPLITTER_WIDTH - 8, 3, 20, 17);
+
 	pt = (CStatic *)GetDlgItem(8);  // Arpeggio
-	if (pt!=NULL) pt->MoveWindow(cx - ARP_WIDTH + 40, 5, 60, 23);
+	if (pt!=NULL) pt->MoveWindow(cx - ArpWidth + 40, 5, 60, 23);
 
 	CListBox * pl = (CListBox *)GetDlgItem(9);  // List of Arpeggio 
-	if (pl!=NULL) pl->MoveWindow(cx - ARP_WIDTH +2, 21, ARP_WIDTH-4, cy - 58); 
+	if (pl!=NULL) pl->MoveWindow(cx - ArpWidth -1, 21, ArpWidth, cy - 58);
+	ArpPosX = cx - ArpWidth;
 
 
 }
@@ -453,6 +519,9 @@ BOOL CChordExpertDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	New_Cursor = 0;
+	Move_Splitter = false;
+
 	ceGrid.Create(NULL, NULL, WS_CHILD | WS_VISIBLE, CRect(0, 0, 10, 10), this, 1, NULL);
 	ceGrid.pew = pew;
 	ceGrid.ModifyStyleEx(0, WS_EX_CLIENTEDGE, SWP_DRAWFRAME);
@@ -460,6 +529,9 @@ BOOL CChordExpertDialog::OnInitDialog()
 	ceGrid.AlwaysShowHorizontalScrollBar(true);
 
 	ceGrid.ShowWindow(SW_SHOW);
+
+
+	ArpWidth = pew->pCB->GetProfileInt("ArpWidth", ARP_WIDTH);
 
 	// Resize the dialog to the last saved datas
 	CRect dialogrect;
@@ -633,6 +705,9 @@ void CChordExpertDialog::SaveDialogPos()
 	pew->pCB->WriteProfileInt("ChordExpertDialog.left", dialogrect.left);
 	pew->pCB->WriteProfileInt("ChordExpertDialog.bottom", dialogrect.bottom);
 	pew->pCB->WriteProfileInt("ChordExpertDialog.right", dialogrect.right);
+
+	pew->pCB->WriteProfileInt("ArpWidth", ArpWidth);
+
 }
 
 void CChordExpertDialog::OnOK()

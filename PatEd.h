@@ -130,6 +130,9 @@ public:
 	int GetColumnX(int column);
 	void ShiftValues(int delta, bool OnlyNotes);
 	int GetRowY(int y);
+	void Transpose(int MinValue, int MaxValue);
+	int TestTranspose(int MinValue, int MaxValue, int delta, int *count_min, int *count_max);
+
 
 	void InvalidateInTimer() { invalidateInTimer = true; }
 

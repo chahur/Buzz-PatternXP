@@ -12,6 +12,7 @@
 #include "TonalDlg.h"
 #include "INI.h"
 #include "SaveArpeggio.h"
+#include "MinMaxLimiter.h"
 
 HHOOK g_hHook = 0;
 
@@ -167,6 +168,10 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 	
 	ON_COMMAND(ID_BT_ARPEGGIO_LOAD, OnButtonSelectArpeggioFile)
 	ON_BN_CLICKED(IDC_ARPEGGIO_LOAD, OnButtonSelectArpeggioFile) 
+
+	ON_COMMAND(ID_MIN_MAX_LIMITER, OnButtonMinMaxLimiter)
+	ON_BN_CLICKED(IDC_TRANSPOSE, OnButtonMinMaxLimiter)
+		
 
 END_MESSAGE_MAP()
 
@@ -957,12 +962,15 @@ void CEditorWnd::OnChordExpert()
 		return;
 
 	CChordExpertDialog dlg(this);
+	dlg.pCB = pCB;
 	dlg.pew = this;
+
 	dlg.CursorRow = pe.cursor.row;
 	if (dlg.DoModal() == IDOK)
 	{
 		
-	}	
+	}
+
 }
 
 void CEditorWnd::OnParameters()
@@ -1123,7 +1131,8 @@ void CEditorWnd::UpdateButtons()
 	EnableToolbarButtonByCommand(&toolBarExt, ID_BT_MINUS, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBarExt, ID_BT_PLUS, pe.CanCopy());
 	EnableToolbarButtonByCommand(&toolBarExt, ID_BT_ARPEGGIO_SAVE, pe.CanCopy());
-	
+	EnableToolbarButtonByCommand(&toolBarExt, ID_MIN_MAX_LIMITER, pe.CanCopy());
+
 }
 
 void CEditorWnd::OnEditCut() { pe.OnEditCut(); pe.SetFocus();}
@@ -2022,6 +2031,25 @@ void CEditorWnd::OnButtonTransposeDown()
 {
 	pe.ShiftValues(-TransposeComboIndex - 1, true);
 	pe.SetFocus();
+}
+
+void CEditorWnd::OnButtonMinMaxLimiter()
+{
+	// Dialog to specify the parameters of the note transposition
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+	if (pPattern == NULL)
+		return;
+
+	CMinMaxLimiterDialog dlg(this);
+	dlg.pCB = pCB;
+	dlg.pew = this;
+
+	if (dlg.DoModal() == IDOK)
+	{
+
+	}
+
 }
 
 void CEditorWnd::AnalyseChords()

@@ -93,6 +93,9 @@
     <ClCompile Include="XMemDC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MinMaxLimiter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionStack.h">

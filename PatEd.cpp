@@ -3861,6 +3861,140 @@ void CPatEd::Mirror()
 	DoAnalyseChords();
 }
 
+int CPatEd::TestTranspose(int MinValue, int MaxValue, int delta, int *count_min, int *count_max)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return 0;
+
+	CRect r = GetSelOrCursorRect();
+
+	*count_min = 0;
+	*count_max = 0;
+	int count = 0;
+
+	for (int col = r.left; col <= r.right; col++) {
+		CColumn *pc = ppat->columns[col].get();
+		if (pc->GetParamType() == pt_note) {
+			for (int row = r.top; row <= r.bottom; row++)
+			{
+				int val = pc->GetValue(row);
+				// If it's a note
+				if ((val != pc->GetNoValue()) && (val != NOTE_OFF)) {
+					count++;
+					val = val + delta;
+					if (val < MinValue) *count_min = *count_min +1;
+					if (val > MaxValue) *count_max = *count_max +1;
+				}
+			}
+		}
+	}
+	return count;
+}
+
+void CPatEd::Transpose(int MinValue, int MaxValue)
+{
+	CMachinePattern *ppat = pew->pPattern;
+	if (ppat == NULL || ppat->columns.size() == 0)
+		return;
+
+	CRect r = GetSelOrCursorRect();
+
+	// Analyse first
+	int count_min = 0;
+	int count_max = 0;
+	int count = TestTranspose(MinValue, MaxValue, 0, &count_min, &count_max);
+	if (count == 0) return; // Nothing to do
+
+	int delta_transpose = 0;
+
+	if ((count_min > 0) && (count_max > 0)) {
+		// Limit the note on both sides
+	}
+	else if (count_min > 0) {
+		// Limit lower notes
+		// Try to transpose up
+		int count_min_d = 0;
+		int count_max_d = 0;
+		int delta = 16;
+		delta_transpose++;
+		int prev_count_min = count_min;
+		count = TestTranspose(MinValue, MaxValue, delta, &count_min_d, &count_max_d);
+		while ((count_max_d == 0) && (count_min_d > 0)) {
+			delta = delta + 16;
+			delta_transpose++;
+			prev_count_min = count_min_d;
+			count = TestTranspose(MinValue, MaxValue, delta, &count_min_d, &count_max_d);
+		}
+		if (prev_count_min < (count_min_d + count_max_d)) {
+			// Was better before
+			delta_transpose--;
+		}
+			
+	}
+	else if (count_max > 0) {
+		// Limit upper notes
+		// Try to transpose down
+		int count_min_d = 0;
+		int count_max_d = 0;
+		int delta = -16;
+		delta_transpose--;
+		int prev_count_max = count_max;
+		count = TestTranspose(MinValue, MaxValue, delta, &count_min_d, &count_max_d);
+		while ((count_min_d == 0) && (count_max_d > 0)) {
+			delta = delta - 16;
+			delta_transpose--;
+			prev_count_max = count_max_d;
+			count = TestTranspose(MinValue, MaxValue, delta, &count_min_d, &count_max_d);
+		}
+		if (prev_count_max < (count_min_d + count_max_d)) {
+			// Was better before
+			delta_transpose++;
+		}
+	}
+	else return; // Nothing to do
+
+
+	ppat->actions.BeginAction(pew, "Transpose Values");
+	{
+		MACHINE_LOCK;
+		for (int col = r.left; col <= r.right; col++)
+		{
+			CColumn *pc = ppat->columns[col].get();
+			if (pc->GetParamType() == pt_note) {
+				for (int row = r.top; row <= r.bottom; row++)
+				{
+					int val = pc->GetValue(row);
+					// If it's a note
+					if ((val != pc->GetNoValue()) && (val != NOTE_OFF)) {
+						// First shift according to delta_transpose
+						if (delta_transpose != 0) {
+							ppat->columns[col]->ShiftValue(row, 12 * delta_transpose);
+							val = pc->GetValue(row);
+						}
+							
+						// Shift if out of limits
+						while (val < MinValue) {
+						  ppat->columns[col]->ShiftValue(row, 12);
+						  val = pc->GetValue(row);
+						}
+						while (val > MaxValue) {
+							ppat->columns[col]->ShiftValue(row, -12);
+							val = pc->GetValue(row);
+						}
+					}
+				}
+			}
+
+		}
+
+
+	}
+
+	Invalidate();
+	DoAnalyseChords();
+}
+	
 
 void CPatEd::ShiftValues(int delta, bool OnlyNotes)
 {

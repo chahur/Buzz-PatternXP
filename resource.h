@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by PatternXP.rc
+// fichier Include Microsoft Visual C++.
+// Utilisé par PatternXP.rc
 //
 #define IDD_FIRST_NOTE                  3
 #define IDD_SORTBYNOTE                  10
@@ -21,6 +21,7 @@
 #define IDC_COMBO1                      2005
 #define IDB_TREE_IMAGES                 2006
 #define IDC_LIST1                       2006
+#define IDC_COMBO3                      2006
 #define IDB_BITMAP1                     2007
 #define IDB_TOOLBAR24                   2007
 #define IDC_CHECK1                      2007
@@ -29,8 +30,11 @@
 #define IDC_COLUMNS_BUTTON              2009
 #define IDC_EDIT1                       2009
 #define IDC_BAR_COMBO                   2010
+#define IDC_COMBO2                      2010
 #define IDC_MISC_BUTTON                 2011
+#define IDC_COMBO4                      2011
 #define IDC_HELP_CHECK                  2012
+#define IDC_COMBO5                      2012
 #define IDC_PASTE_BUTTON                2013
 #define IDC_CUT_BUTTON                  2014
 #define IDC_COPY_BUTTON                 2015
@@ -67,6 +71,7 @@
 #define IDC_ARPEGGIO_SAVE               2052
 #define IDC_DLG_CHORD                   2053
 #define IDC_ARPEGGIO_LOAD               2054
+#define IDC_TRANSPOSE		            2055
 #define IDD_PARAMETERS_DIALOG           3000
 #define ID_PERSISTENT_SELECTION         3001
 #define ID_PERSISTENT_PLAYPOS           3002
@@ -77,9 +82,8 @@
 #define ID_HOME_DISABLED                3007
 #define ID_DRAW_ROW_BUTTON              3008
 #define ID_GRAPHICALWIDTH               3009
-#define ID_GRAPHICALROW		            3011
-
-
+#define ID_GRAPHICALROW                 3011
+#define IDD_MINMAXLIMITER_DIALOG        3012
 #define IDD_CHORD_EXPERT_DIALOG         4000
 #define IDD_TONAL_DIALOG                5000
 #define IDD_SAVE_ARPEGGIO_DIALOG        6000
@@ -127,6 +131,7 @@
 #define ID_BT_ARPEGGIO_SAVE             32814
 #define ID_BT_DLG_CHORD                 32815
 #define ID_BT_ARPEGGIO_LOAD             32816
+#define ID_MIN_MAX_LIMITER              32817
 #define ID_CHECK_MIDI                   33775
 #define ID_COMBO_BAR                    33776
 #define ID_COMBO_SHRINK                 33788
@@ -147,9 +152,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        2015
+#define _APS_NEXT_RESOURCE_VALUE        2016
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         2010
+#define _APS_NEXT_CONTROL_VALUE         2013
 #define _APS_NEXT_SYMED_VALUE           2000
 #endif
 #endif
