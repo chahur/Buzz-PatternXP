@@ -113,6 +113,7 @@ public:
 	void DoManualAnalyseChords();
 	void DoInsertChord(int ChordIndex);
 	void MoveCursorUpDown(int dy);
+	void MoveCursorRow(int row);
 	void MoveCursorPgUpDown(int dy);
 	bool SaveArpeggio();
 
@@ -141,6 +142,8 @@ public:
 	int GetTrackWidth(int column);
 	
 	void SelectTrackByNo(int col); //BWC
+	CRect GetSelOrAll();
+
 private:
 	void TextToFieldImport(char *txt, CColumn *pc, int irow);
 	void DrawColumn(CDC *pDC, int col, int x, COLORREF textcolor, CRect const &clipbox);
@@ -178,7 +181,7 @@ private:
 	void End();
 	CRect GetSelRect();
 	CRect GetSelOrCursorRect();
-	CRect GetSelOrAll();
+	
 	void KillSelection();
 	void CursorSelect(int dx, int dy);
 	void SelectAll(); //BWC

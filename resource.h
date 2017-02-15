@@ -36,8 +36,11 @@
 #define IDC_HELP_CHECK                  2012
 #define IDC_COMBO5                      2012
 #define IDC_PASTE_BUTTON                2013
+#define IDC_BUTTON1                     2013
 #define IDC_CUT_BUTTON                  2014
+#define IDC_MFCBUTTON1                  2014
 #define IDC_COPY_BUTTON                 2015
+#define IDC_GENERATE                    2015
 #define IDC_CLEAR_BUTTON                2022
 #define IDC_IMPORT_BUTTON               2023
 #define IDC_EXPORT_BUTTON               2024
@@ -71,7 +74,11 @@
 #define IDC_ARPEGGIO_SAVE               2052
 #define IDC_DLG_CHORD                   2053
 #define IDC_ARPEGGIO_LOAD               2054
-#define IDC_TRANSPOSE		            2055
+#define IDC_TRANSPOSE                   2055
+#define IDC_SAVE_PROGRESSION            2056
+
+
+
 #define IDD_PARAMETERS_DIALOG           3000
 #define ID_PERSISTENT_SELECTION         3001
 #define ID_PERSISTENT_PLAYPOS           3002
@@ -147,6 +154,7 @@
 #define ID_COMBO_TONAL                  33808
 #define ID_COMBO_TRANSPOSE              33811
 #define ID_COMBO_ARPEGGIO               33813
+#define ID_SAVE_PROGRESSION             33814
 
 // Next default values for new objects
 // 
@@ -154,7 +162,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        2016
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         2013
+#define _APS_NEXT_CONTROL_VALUE         2016
 #define _APS_NEXT_SYMED_VALUE           2000
 #endif
 #endif

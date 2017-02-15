@@ -333,6 +333,13 @@ void mi::Init(CMachineDataInput * const pi)
 		  patEd->TonalComboIndex = ci;
 		else
 		  patEd->TonalComboIndex = 0;
+
+		// Load the Chords Progression datas
+		if (gChordsProgression == NULL) {
+			// First PatternXP loaded, create the global ChrodsProgression object
+			gChordsProgression = new CChordsProgression();
+		}
+		gChordsProgression->Init(pi);
 	}
 
 }
@@ -357,6 +364,9 @@ void mi::Save(CMachineDataOutput * const po)
 
 	ci = patEd->TonalComboIndex;
 	po->Write(ci);
+
+	// Save the Chords Progression datas
+	gChordsProgression->Save(po);
 }
 
 void *miex::CreatePatternEditor(void *parenthwnd)

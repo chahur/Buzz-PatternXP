@@ -5,6 +5,8 @@
 #include "MinMaxLimiter.h"
 #include "EditorWnd.h"
 #include <io.h>
+#include "SaveArpeggio.h"
+
 
 
 
@@ -27,11 +29,65 @@ CMinMaxLimiterDialog::~CMinMaxLimiterDialog()
 
 BEGIN_MESSAGE_MAP(CMinMaxLimiterDialog, CDialog)
 //	ON_WM_PAINT()
-//	ON_BN_CLICKED(5, OnBnClickedUp)
-  ON_CBN_SELENDOK(IDC_COMBO5, OnComboPresetSelect)
+	ON_BN_CLICKED(IDC_BUTTON1, OnBnClickedSave)
+	ON_CBN_SELENDOK(IDC_COMBO5, OnComboPresetSelect)
 
 END_MESSAGE_MAP()
 
+void CMinMaxLimiterDialog::InitPresetCombo()
+{
+	IniOK = false;
+	InicOK = false;
+
+	cbPreset->ResetContent();
+
+	char pathName[255];
+	pew->GeneratorFileName(pathName, "transpose.prs");
+	// Check if the file exists
+	if (_access(pathName, 0) == 0) {
+		CStringList* myStringList;
+		POSITION pos;
+
+		m_IniReader.setINIFileName(pathName);
+		IniOK = true;
+
+		myStringList = m_IniReader.getSectionNames();
+
+		for (pos = myStringList->GetHeadPosition(); pos != NULL; ) {
+			CString txt = myStringList->GetNext(pos);
+			cbPreset->AddString(txt);
+		}
+	}
+
+	pew->GeneratorFileName(pathName, "custom_transpose.prs");
+	// Check if the file exists
+	if (_access(pathName, 0) == 0) {
+		CStringList* myStringList;
+		POSITION pos;
+
+		mc_IniReader.setINIFileName(pathName);
+		InicOK = true;
+
+		myStringList = mc_IniReader.getSectionNames();
+
+		for (pos = myStringList->GetHeadPosition(); pos != NULL; ) {
+			CString txt = myStringList->GetNext(pos);
+			// Check if the prs already exists
+			int iPreset = cbPreset->FindStringExact(0, txt);
+			if (iPreset == CB_ERR) {
+				cbPreset->AddString(txt);
+			}
+
+			
+		}
+	}
+	else {
+		// Create the custom preset file
+		mc_IniReader.setINIFileName(pathName);
+		InicOK = true;
+	}
+
+}
 
 BOOL CMinMaxLimiterDialog::OnInitDialog()
 {
@@ -102,27 +158,9 @@ BOOL CMinMaxLimiterDialog::OnInitDialog()
 
 	// Load Presets
 	// Load chords filename
-	IniOK = false;
-
-	char pathName[255];
-	pew->GeneratorFileName(pathName, "transpose.prs");
-	// Check if the file exists
-	if (_access(pathName, 0) == 0) {
-		CComboBox *cb = (CComboBox *)GetDlgItem(IDC_COMBO5);
-		cb->ResetContent();
-		CStringList* myStringList;
-		POSITION pos;
-
-		m_IniReader.setINIFileName(pathName);
-		IniOK = true;
-		
-		myStringList = m_IniReader.getSectionNames();
-
-		for (pos = myStringList->GetHeadPosition(); pos != NULL; ) {
-			CString txt = myStringList->GetNext(pos);
-			cb->AddString(txt);
-		}
-	}
+	cbPreset = (CComboBox *)GetDlgItem(IDC_COMBO5);
+	
+	InitPresetCombo();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -145,27 +183,110 @@ void CMinMaxLimiterDialog::OnComboPresetSelect()
 {
 	if (IniOK) {
 		char PrsName[255];
-		CComboBox *cb = (CComboBox *)GetDlgItem(IDC_COMBO5);
-		int index = cb->GetCurSel();
-		cb->GetLBText(index, PrsName);
+		int index = cbPreset->GetCurSel();
+		cbPreset->GetLBText(index, PrsName);
 
-		CString val_minO = m_IniReader.getKeyValue("minOctave", PrsName);
-		cbOctaveMin = (CComboBox *)GetDlgItem(IDC_COMBO1);
-		cbOctaveMin->SelectString(0, val_minO);
+		// First, look in the custom preset file
+		if (InicOK && mc_IniReader.sectionExists(PrsName)) {
+			CString val_minO = mc_IniReader.getKeyValue("minOctave", PrsName);
+			cbOctaveMin = (CComboBox *)GetDlgItem(IDC_COMBO1);
+			cbOctaveMin->SelectString(0, val_minO);
 
-		CString val_minN = m_IniReader.getKeyValue("minNote", PrsName);
-		cbNoteMin = (CComboBox *)GetDlgItem(IDC_COMBO2);
-		cbNoteMin->SelectString(0, val_minN);
+			CString val_minN = mc_IniReader.getKeyValue("minNote", PrsName);
+			cbNoteMin = (CComboBox *)GetDlgItem(IDC_COMBO2);
+			cbNoteMin->SelectString(0, val_minN);
 
-		CString val_maxO = m_IniReader.getKeyValue("maxOctave", PrsName);
-		cbOctaveMax = (CComboBox *)GetDlgItem(IDC_COMBO3);
-		cbOctaveMax->SelectString(0, val_maxO);
+			CString val_maxO = mc_IniReader.getKeyValue("maxOctave", PrsName);
+			cbOctaveMax = (CComboBox *)GetDlgItem(IDC_COMBO3);
+			cbOctaveMax->SelectString(0, val_maxO);
 
-		CString val_maxN = m_IniReader.getKeyValue("maxNote", PrsName);
-		cbNoteMax = (CComboBox *)GetDlgItem(IDC_COMBO4);
-		cbNoteMax->SelectString(0, val_maxN);
+			CString val_maxN = mc_IniReader.getKeyValue("maxNote", PrsName);
+			cbNoteMax = (CComboBox *)GetDlgItem(IDC_COMBO4);
+			cbNoteMax->SelectString(0, val_maxN);
+		}
+		else
+		{
+			CString val_minO = m_IniReader.getKeyValue("minOctave", PrsName);
+			cbOctaveMin = (CComboBox *)GetDlgItem(IDC_COMBO1);
+			cbOctaveMin->SelectString(0, val_minO);
+
+			CString val_minN = m_IniReader.getKeyValue("minNote", PrsName);
+			cbNoteMin = (CComboBox *)GetDlgItem(IDC_COMBO2);
+			cbNoteMin->SelectString(0, val_minN);
+
+			CString val_maxO = m_IniReader.getKeyValue("maxOctave", PrsName);
+			cbOctaveMax = (CComboBox *)GetDlgItem(IDC_COMBO3);
+			cbOctaveMax->SelectString(0, val_maxO);
+
+			CString val_maxN = m_IniReader.getKeyValue("maxNote", PrsName);
+			cbNoteMax = (CComboBox *)GetDlgItem(IDC_COMBO4);
+			cbNoteMax->SelectString(0, val_maxN);
+
+		}
+
 	}
 
+}
+
+void CMinMaxLimiterDialog::OnBnClickedSave()
+{
+	// Save preset
+	char PrsName[255]; 
+	CSaveArpeggioDialog dlg(this);
+	dlg.Caption = _T("Save preset as");
+
+	if (dlg.DoModal() == IDOK)
+	{
+		strcpy(PrsName, dlg.SaveName);
+		if (strlen(PrsName) <= 0) return;
+
+		if (!InicOK) {
+		// Something goes wrong
+			char txt[255];
+			sprintf(txt, "Saving preset failed !");
+			AfxMessageBox(txt, MB_OK);
+			return;
+		}
+		else {
+			if (mc_IniReader.sectionExists(PrsName)) {
+				// Override ?
+				char txt[255];
+				sprintf(txt, "[%s] already exists. Override ?", PrsName);
+				if (AfxMessageBox(txt, MB_YESNO) != IDYES)
+					return;
+			}
+			char val[20];
+			
+			cbOctaveMin = (CComboBox *)GetDlgItem(IDC_COMBO1);
+			int i = cbOctaveMin->GetCurSel();
+			cbOctaveMin->GetLBText(i, val); 
+			mc_IniReader.setKey(val, "minOctave", PrsName);
+
+			cbNoteMin = (CComboBox *)GetDlgItem(IDC_COMBO2); 
+			i = cbNoteMin->GetCurSel();
+			cbNoteMin->GetLBText(i, val);
+			mc_IniReader.setKey(val, "minNote", PrsName); 
+
+			cbOctaveMax = (CComboBox *)GetDlgItem(IDC_COMBO3); 
+			i = cbOctaveMax->GetCurSel();
+			cbOctaveMax->GetLBText(i, val);
+			mc_IniReader.setKey(val, "maxOctave", PrsName); 
+			
+			cbNoteMax = (CComboBox *)GetDlgItem(IDC_COMBO4); 
+			i = cbNoteMax->GetCurSel();
+			cbNoteMax->GetLBText(i, val);
+			mc_IniReader.setKey(val, "maxNote", PrsName); 
+
+			// Reset the preset combo
+			InitPresetCombo();
+
+			// Set the combo to the new preset
+			int iPreset = cbPreset->FindStringExact(0, PrsName);
+			if (iPreset != CB_ERR) {
+				cbPreset->SetCurSel(iPreset);
+			}
+		}
+	}
 }
 
 void CMinMaxLimiterDialog::OnOK()

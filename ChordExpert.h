@@ -24,6 +24,7 @@ public:
 	void RefreshCanvasSize();
 	void CursorSelect(int dx, int dy);
 	void DisplaySelectedChord(int col, int row);
+	void MoveToChord(int note, string name);
 
 
 protected:
@@ -61,6 +62,7 @@ public:
 #define ARP_WIDTH_MIN 80
 #define SPLITTER_WIDTH 6
 #define GRID_WIDTH_MIN 80
+#define MARGIN_HEIGHT 57
 
 
 
@@ -87,11 +89,17 @@ public:
 	string ChordText;
 	int SortBy;
 	CComboBox *comboOctave;
+	CComboBox *comboChordsProgression;
+	CListBox *listChordsProgression;
 	int ArpWidth;
+	int ChordsProgressionWidth;
 	int ArpPosX;
+	int ProgPosX;
 	int Current_Cursor;
 	int New_Cursor;
-	BOOL Move_Splitter;
+	
+	BOOL Move_Splitter; 
+	BOOL Move_SplitterProg;
 
 private:
 
@@ -126,5 +134,8 @@ public:
 	afx_msg void OnBnClickedSortByDistance();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-//	afx_msg void OnPaint();
+	afx_msg void OnComboChordsProgressionSelect(); 
+	afx_msg void OnBnClickedGenerate();
+	afx_msg void OnListBoxChordsProgressionDblClick();
+	
 };

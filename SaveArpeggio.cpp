@@ -28,7 +28,7 @@ END_MESSAGE_MAP()
 BOOL CSaveArpeggioDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-
+	SetWindowText(Caption); 
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE

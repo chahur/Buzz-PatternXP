@@ -889,6 +889,7 @@
     <ClCompile Include="ActionStack.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ChordExpert.cpp" />
+    <ClCompile Include="ChordsProgression.cpp" />
     <ClCompile Include="ColumnDialog.cpp" />
     <ClCompile Include="EditorWnd.cpp" />
     <ClCompile Include="EmptyWnd.cpp" />

@@ -26,6 +26,7 @@ private:
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
+	CString Caption;
 	virtual BOOL OnInitDialog();
 protected:
 	virtual void OnOK();

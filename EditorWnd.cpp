@@ -14,7 +14,9 @@
 #include "SaveArpeggio.h"
 #include "MinMaxLimiter.h"
 
+
 HHOOK g_hHook = 0;
+
 
 void CMachineDataOutput::Write(void *pbuf, int const numbytes) {}
 void CMachineDataInput::Read(void *pbuf, int const numbytes) {}
@@ -171,7 +173,9 @@ BEGIN_MESSAGE_MAP(CEditorWnd, CWnd)
 
 	ON_COMMAND(ID_MIN_MAX_LIMITER, OnButtonMinMaxLimiter)
 	ON_BN_CLICKED(IDC_TRANSPOSE, OnButtonMinMaxLimiter)
-		
+
+	ON_COMMAND(ID_SAVE_PROGRESSION, OnButtonSaveProgression)
+	ON_BN_CLICKED(IDC_SAVE_PROGRESSION, OnButtonSaveProgression)
 
 END_MESSAGE_MAP()
 
@@ -1397,6 +1401,7 @@ void CEditorWnd::OnArpeggioSave()
 		m_IniReader.setINIFileName(pathName); 
 
 		CSaveArpeggioDialog dlg(this);
+		dlg.Caption = _T("Save arpeggio as");
 		dlg.pew = this;
 		if (dlg.DoModal() == IDOK)
 		{
@@ -2048,6 +2053,29 @@ void CEditorWnd::OnButtonMinMaxLimiter()
 	if (dlg.DoModal() == IDOK)
 	{
 
+	}
+
+}
+
+void CEditorWnd::OnButtonSaveProgression()
+{
+	// Save preset
+	char ProgressName[255];
+	CSaveArpeggioDialog dlg(this);
+	dlg.Caption = _T("Save progression as");
+
+	if (dlg.DoModal() == IDOK)
+	{
+		strcpy(ProgressName, dlg.SaveName);
+		if (strlen(ProgressName) <= 0) return;
+		if (gChordsProgression->FindProgression(ProgressName)>=0) {
+			// Override ?
+			char txt[255];
+			sprintf(txt, "[%s] already exists. Override ?", ProgressName);
+			if (AfxMessageBox(txt, MB_YESNO) != IDNO)
+				return;
+		}
+		gChordsProgression->SaveProgression(ProgressName, this);
 	}
 
 }

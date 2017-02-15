@@ -1329,7 +1329,9 @@ void CPatEd::DoInsertChord(int ChordIndex)
 						}
 						if ((icol < columnsize) && (icolcount==iNote))
 						{
-							ppat->columns[icol]->SetValue(irow+ArpeggioRow, ChordNotes[iNote-1]);
+							// Beware not to reach the end of the pattern
+							if (irow + ArpeggioRow < pew->pPattern->GetRowCount())
+								ppat->columns[icol]->SetValue(irow+ArpeggioRow, ChordNotes[iNote-1]);
 						}
 
 					}
@@ -1802,6 +1804,13 @@ void CPatEd::InvalidateGroup(int row, int column)
 void CPatEd::MoveCursorUpDown(int dy)
 {
 	MoveCursorDelta(0, dy);
+}
+
+void CPatEd::MoveCursorRow(int row)
+{
+	CCursorPos newpos = cursor;
+	newpos.row = row;
+	MoveCursor(newpos, false); 
 }
 
 void CPatEd::MoveCursorPgUpDown(int dy)

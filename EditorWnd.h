@@ -5,13 +5,13 @@
 #include "EmptyWnd.h"
 #include "RowNumWnd.h"
 #include "TopWnd.h"
-// #include "FuBar.h"
 #include "ToolBar2.h"
 #include "afxext.h"
 #include <afxpriv.h>
 #include "ColumnDialog.h"
 #include "ActionStack.h"
 #include <bitset>
+#include "ChordsProgression.h"
 
 
 static char const NoteTo2char[]     = "C-C#D-EbE-F-F#G-G#A-BbB-";
@@ -247,15 +247,7 @@ public:
 	afx_msg void OnButtonSelectArpeggioFile();
 
 	afx_msg void OnButtonMinMaxLimiter();
-
-	
-	
-	
-
-	
-	
-
-
+	afx_msg void OnButtonSaveProgression();
 };
 
 

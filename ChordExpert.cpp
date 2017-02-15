@@ -131,6 +131,21 @@ void CCEGrid::GetCellText(LPSTR sText, int col, int row)
 		sText[0] = 0;
 }
 
+void CCEGrid::MoveToChord(int note, string name)
+{
+	for (int col = 0; col < ColCount; col++)
+		for (int row = 0; row < RowCount; row++)
+			if (row < (int)SortedChords[col].size()) {
+				row_struct rs = SortedChords[col][row];
+				if ((note == rs.base_note) && (name == pew->ChordsBase[rs.chord_index].name)) {
+					int dx = col - CurrentCol;
+					int dy = row - CurrentRow;
+					CursorSelect(dx, dy);
+					return;
+				}
+			}
+}
+
 void CCEGrid::CursorSelect(int dx, int dy)
 {
 	CurrentRow = max(min(CurrentRow + dy, RowCount-1), 0);
@@ -229,7 +244,6 @@ CChordExpertDialog::~CChordExpertDialog()
 
 
 BEGIN_MESSAGE_MAP(CChordExpertDialog, CDialog)
-//	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_KEYDOWN()
 	ON_WM_MOUSEMOVE()
@@ -242,7 +256,9 @@ BEGIN_MESSAGE_MAP(CChordExpertDialog, CDialog)
 	ON_LBN_SELCHANGE(9, OnListBoxSelectionChange)
 	ON_BN_CLICKED(IDD_SORTBYNOTE, OnBnClickedSortByNote) 
 	ON_BN_CLICKED(IDD_SORTBYDISTANCE, OnBnClickedSortByDistance) 
-
+	ON_CBN_SELENDOK(IDC_COMBO1, OnComboChordsProgressionSelect)
+	ON_BN_CLICKED(IDC_GENERATE, OnBnClickedGenerate)
+	ON_LBN_DBLCLK(IDC_LIST1, OnListBoxChordsProgressionDblClick)
 END_MESSAGE_MAP()
 
 
@@ -289,14 +305,20 @@ BOOL CChordExpertDialog::OnKeyDown(UINT nChar)
 			CursorRow = pew->pe.cursor.row;
 			InitGrid(SortBy);
 			break;
-		case VK_DELETE:  pew->pe.ClearRow(); break;
+		case VK_DELETE:  pew->pe.ClearRow(); break;		
 
 		default : return false;
 		}
 		return true;
 	}
 	else
-		return false;
+		switch (nChar)	{
+		case VK_F5:  pew->pCB->Play(); break;
+		// case VK_F6:  pew->pCB->Play(); break;
+		case VK_F8:  pew->pCB->Stop(); break;
+		default: return false;
+		}
+	return true;
 }
 
 void CChordExpertDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -306,57 +328,59 @@ void CChordExpertDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 void CChordExpertDialog::OnMouseMove(UINT nFlags, CPoint point)
 {
-	CPoint p;
+	CPoint p = point;
 	int d;
 
 	if (Move_Splitter) {
-		p = point;
 		d = ArpPosX - p.x;
-
-		ArpWidth = ArpWidth + d;
-		UpdateWindowSize();
-		UpdateWindow();
-	}
-	else
-	{ 
-		p = point;
-		if (((p.x > ArpPosX - SPLITTER_WIDTH-2) && (p.x < ArpPosX)) &&
-		   (p.y < 21))
-		{
-			New_Cursor = 1; // IDC_SIZEWE
+		if (d != 0) {
+			ArpWidth = ArpWidth + d;
+			UpdateWindowSize();
+			UpdateWindow();
 		}
-		else {
-		New_Cursor = 0; // IDC_ARROW
+		
+	}
+	else if (Move_SplitterProg) {
+		d = ProgPosX - p.x;
+		if (d != 0) {
+			ChordsProgressionWidth = ChordsProgressionWidth - d;
+			UpdateWindowSize();
+			UpdateWindow();
 		}
 	}
+	else if (p.y > 21) New_Cursor = 0; // Not in the upper part of the dialog
+	else if ((p.x > ArpPosX - SPLITTER_WIDTH-2)  && (p.x < ArpPosX)) New_Cursor = 1; // Arpeggio splitter
+	else if ((p.x > ProgPosX - SPLITTER_WIDTH-2) && (p.x < ProgPosX)) New_Cursor = 2; // Chords progression splitter
+	else New_Cursor = 0; // IDC_ARROW
+		
 	CDialog::OnMouseMove(nFlags, point);
 }
 
 void CChordExpertDialog::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	Move_Splitter = (Current_Cursor == 1);
+	Move_SplitterProg = (Current_Cursor == 2);
 	CDialog::OnLButtonDown(nFlags, point);
 }
 
 void CChordExpertDialog::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	Move_Splitter = false;
+	Move_SplitterProg = false;
 	CDialog::OnLButtonUp(nFlags, point);
 }
 
 BOOL CChordExpertDialog::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
 	if (nHitTest != HTCLIENT)
-		if (!Move_Splitter) New_Cursor = 0;
+		if (!Move_Splitter && !Move_SplitterProg) New_Cursor = 0;
 
 	Current_Cursor = New_Cursor;
-	if (New_Cursor == 1) {
+	if (New_Cursor != 0) {
 		SetCursor(AfxGetApp()->LoadStandardCursor(IDC_SIZEWE));
 		return TRUE;
 	}
-	else 
-	  return CDialog::OnSetCursor(pWnd, nHitTest, message);
-		
+	else return CDialog::OnSetCursor(pWnd, nHitTest, message);		
 }
 
 void CChordExpertDialog::UpdateWindowSize()
@@ -369,11 +393,18 @@ void CChordExpertDialog::UpdateWindowSize()
 	int cx = cr.Width();
 	int cy = cr.Height();
 
+	// Validate the width of the Arpeggio list
 	if (ArpWidth < ARP_WIDTH_MIN) ArpWidth = ARP_WIDTH_MIN;
 	if (ArpWidth > cx - GRID_WIDTH_MIN) ArpWidth = cx - GRID_WIDTH_MIN;
 
-	ceGrid.MoveWindow(0, 21, cx - ArpWidth - SPLITTER_WIDTH, cy - 57);
+	// Validate the width of the Progression list
+	if (ChordsProgressionWidth < ARP_WIDTH_MIN) ChordsProgressionWidth = ARP_WIDTH_MIN;
+	if (ChordsProgressionWidth > cx - GRID_WIDTH_MIN) ChordsProgressionWidth = cx - GRID_WIDTH_MIN;
 
+	// The chords grid
+	ceGrid.MoveWindow(ChordsProgressionWidth + SPLITTER_WIDTH, 21, cx - ArpWidth - ChordsProgressionWidth - 2* SPLITTER_WIDTH, cy - MARGIN_HEIGHT);
+
+	// The buttons
 	CButton *pc = (CButton *)GetDlgItem(1); // Insert
 	if (pc!=NULL) pc->MoveWindow(cx - 145, cy-32, 60, 23, 1);
 	
@@ -387,23 +418,38 @@ void CChordExpertDialog::UpdateWindowSize()
 	if (pc!=NULL) pc->MoveWindow(cx -227, cy-32, 38, 23, 1);
 
 	pc = (CButton *)GetDlgItem(7);  // Clear
-	if (pc!=NULL) pc->MoveWindow(cx -185, cy-32, 32, 23, 1);
+	if (pc != NULL) pc->MoveWindow(cx - 185, cy - 32, 32, 23, 1);
+
+	pc = (CButton *)GetDlgItem(IDC_GENERATE);  // Generate
+	if (pc != NULL) pc->MoveWindow(4, cy - 32, 64, 23, 1);
 
 	CStatic *pt = (CStatic *)GetDlgItem(12);  // Octave label (l 45)
-	if (pt != NULL) pt->MoveWindow(12, cy - 28, 45, 23);
+	if (pt != NULL) pt->MoveWindow(ChordsProgressionWidth + 12, cy - 28, 45, 23);
 
 	CComboBox * pcb = (CComboBox *)GetDlgItem(13);  // Current octave (l 34)
-	if (pcb != NULL) pcb->MoveWindow(60, cy - 32, 34, 23);
+	if (pcb != NULL) pcb->MoveWindow(ChordsProgressionWidth + 60, cy - 32, 34, 23);
 
 	pt = (CStatic *)GetDlgItem(3);  // Current chord (l 150)
-	if (pt != NULL) pt->MoveWindow(100, cy - 28, 150, 23);
+	if (pt != NULL) pt->MoveWindow(ChordsProgressionWidth + 100, cy - 28, 150, 23);
 
 	ceGrid.labelChord = (CStatic *)GetDlgItem(4);  // Selected chord (l 150)
-	if (ceGrid.labelChord != NULL) ceGrid.labelChord->MoveWindow(240, cy - 28, 150, 23);
+	if (ceGrid.labelChord != NULL) ceGrid.labelChord->MoveWindow(ChordsProgressionWidth + 245, cy - 28, 150, 23);
 
-	pt = (CStatic *)GetDlgItem(14);  // Separateur
+	// 10 Sort by note
+	pc = (CButton *)GetDlgItem(10);
+	if (pc != NULL) pc->MoveWindow(ChordsProgressionWidth +30, 0, 100, 21);
+	// 11 Sort by distance
+	pc = (CButton *)GetDlgItem(11);
+	if (pc != NULL) pc->MoveWindow(ChordsProgressionWidth + 130, 0, 120, 21);
+
+	// Splitters
+	pt = (CStatic *)GetDlgItem(14);  // Separator
 	if (pt != NULL) pt->MoveWindow(cx - ArpWidth - SPLITTER_WIDTH - 8, 3, 20, 17);
 
+	pt = (CStatic *)GetDlgItem(15);  // Separator
+	if (pt != NULL) pt->MoveWindow(ChordsProgressionWidth - SPLITTER_WIDTH, 3, 20, 17);
+
+	// Arpeggio list
 	pt = (CStatic *)GetDlgItem(8);  // Arpeggio
 	if (pt!=NULL) pt->MoveWindow(cx - ArpWidth + 40, 5, 60, 23);
 
@@ -411,7 +457,14 @@ void CChordExpertDialog::UpdateWindowSize()
 	if (pl!=NULL) pl->MoveWindow(cx - ArpWidth -1, 21, ArpWidth, cy - 58);
 	ArpPosX = cx - ArpWidth;
 
+	// Chord progression selection
+	comboChordsProgression = (CComboBox *)GetDlgItem(IDC_COMBO1); 
+	if (comboChordsProgression != NULL) comboChordsProgression->MoveWindow(1, 22, ChordsProgressionWidth - 1, 20);
 
+	// Chord progression description
+	listChordsProgression = (CListBox *)GetDlgItem(IDC_LIST1);
+	if (listChordsProgression != NULL) listChordsProgression->MoveWindow(1, 44, ChordsProgressionWidth - 1, cy - MARGIN_HEIGHT - 22);
+	ProgPosX = ChordsProgressionWidth+4;
 }
 
 void CChordExpertDialog::OnBnClickedSortByNote()
@@ -521,6 +574,7 @@ BOOL CChordExpertDialog::OnInitDialog()
 
 	New_Cursor = 0;
 	Move_Splitter = false;
+	Move_SplitterProg = false;
 
 	ceGrid.Create(NULL, NULL, WS_CHILD | WS_VISIBLE, CRect(0, 0, 10, 10), this, 1, NULL);
 	ceGrid.pew = pew;
@@ -530,8 +584,8 @@ BOOL CChordExpertDialog::OnInitDialog()
 
 	ceGrid.ShowWindow(SW_SHOW);
 
-
 	ArpWidth = pew->pCB->GetProfileInt("ArpWidth", ARP_WIDTH);
+	ChordsProgressionWidth = pew->pCB->GetProfileInt("ChordsProgressionWidth", ARP_WIDTH);
 
 	// Resize the dialog to the last saved datas
 	CRect dialogrect;
@@ -566,6 +620,13 @@ BOOL CChordExpertDialog::OnInitDialog()
 	
 	// Initialize the chord grid according to the current chord
 	InitGrid(SORT_UNDEFINED);
+
+	// Load the list of Chords progression
+	comboChordsProgression = (CComboBox *)GetDlgItem(IDC_COMBO1); 
+	if (comboChordsProgression != NULL)
+		gChordsProgression->LoadList(comboChordsProgression);
+
+	listChordsProgression = (CListBox *)GetDlgItem(IDC_LIST1);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -707,6 +768,8 @@ void CChordExpertDialog::SaveDialogPos()
 	pew->pCB->WriteProfileInt("ChordExpertDialog.right", dialogrect.right);
 
 	pew->pCB->WriteProfileInt("ArpWidth", ArpWidth);
+	pew->pCB->WriteProfileInt("ChordsProgressionWidth", ChordsProgressionWidth);
+	
 
 }
 
@@ -773,5 +836,48 @@ void CChordExpertDialog::OnListBoxSelectionChange()
 	}
 }
 
+void CChordExpertDialog::OnComboChordsProgressionSelect()
+{
+	CString txt;
+	comboChordsProgression->GetLBText(comboChordsProgression->GetCurSel(), txt);
+	gChordsProgression->LoadChordsProgression(listChordsProgression, txt);
+
+}
+
+void CChordExpertDialog::OnBnClickedGenerate()
+{
+	CString txt;
+	int i = comboChordsProgression->GetCurSel();
+	if (i>=0) comboChordsProgression->GetLBText(i, txt);
+	if ((i<0) || (txt == "")) {
+		CString msg = "A chord progression must be selected.";
+		AfxMessageBox(msg, MB_OK);
+		return;
+	}
+
+	// Get octave to use
+	int bo = comboOctave->GetCurSel() + 1;
+	if (bo < 1) bo = 1;
+	if (bo > 8) bo = 8;
+	gChordsProgression->GenerateChordsProgression(txt, bo, pew);
+
+}
+
+void CChordExpertDialog::OnListBoxChordsProgressionDblClick()
+{
+	int index = listChordsProgression->GetCurSel();
+	if (index >= 0) {
+		// Move the cursor to the position defined in the progression
+		int position = gChordsProgression->GetCurrentProgressionChord_position(index);
+		if (position >=0)
+			pew->pe.MoveCursorRow(position);
+
+		// Select the current chord in the grid
+		int note = gChordsProgression->GetCurrentProgressionChord_note(index);
+		string chord = gChordsProgression->GetCurrentProgressionChord_chord(index);
+		if ((note>=0) && (chord !=""))
+		  ceGrid.MoveToChord(note, chord);
+	}
+}
 
 
